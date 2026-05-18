@@ -1,0 +1,41 @@
+# Unity generated files
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+
+# Unity cache and generated metadata
+.vs/
+.gradle/
+.idea/
+ExportedObj/
+consulo/
+sysinfo.txt
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity crash reports
+*.stackdump
+
+# macOS
+.DS_Store
+
+# Local distribution/output
+.dist/
+
+Docs/

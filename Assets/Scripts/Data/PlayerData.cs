@@ -1,0 +1,105 @@
+using UnityEngine;
+
+namespace Sugoroku.Data
+{
+    public enum PlayerStatus { Active, Graduated, Dropout }
+
+    [System.Serializable]
+    public class PlayerData
+    {
+        public int           Index;
+        public string        Name;
+        public CharacterType Character;
+        public bool          IsCpu;
+
+        public int Money;
+        public int IfScore;
+        public int Mental;
+        public int MaxMental;
+        public int Virtue;
+
+        public int  BoardPosition;
+        public int  SkipTurns;
+        public int  IgnoreNextEvents;
+        public bool SkillUsedThisTurn;
+        public bool GeniusBonusActive;
+        public bool AthleticMentalImmunity;
+
+        public PlayerStatus Status;
+        public int          FinishRank;
+        public Color        PieceTint = Color.white;
+
+        public static PlayerData Create(int index, CharacterType character, bool isCpu)
+        {
+            var profile = character.GetProfile();
+            return new PlayerData
+            {
+                Index            = index,
+                Name             = isCpu ? $"CPU" : $"P{index + 1}",
+                Character        = character,
+                IsCpu            = isCpu,
+                Money            = profile.Money,
+                IfScore          = profile.IfScore,
+                Mental           = profile.Mental,
+                MaxMental        = profile.MaxMental,
+                Virtue           = profile.Virtue,
+                BoardPosition    = 0,
+                SkipTurns        = 0,
+                IgnoreNextEvents = 0,
+                SkillUsedThisTurn= false,
+                GeniusBonusActive= false,
+                Status           = PlayerStatus.Active,
+                FinishRank       = 0
+            };
+        }
+
+        public bool IsEliminated => Status == PlayerStatus.Dropout;
+        public bool IsFinished   => Status != PlayerStatus.Active;
+
+        public void ApplyStatChange(int money, int ifScore, int mental, int virtue)
+        {
+            ApplyStatChange(money, ifScore, mental, virtue, applyCharacterPassives: true);
+        }
+
+        public void ApplyStatChange(int money, int ifScore, int mental, int virtue, bool applyCharacterPassives)
+        {
+            if (applyCharacterPassives)
+            {
+                if (Character == CharacterType.Athletic && mental < 0)
+                {
+                    if (AthleticMentalImmunity || SkillUsedThisTurn)
+                        mental = 0;
+                    else
+                        mental = mental / 2;
+                }
+
+                if (Character == CharacterType.Hobbyist && mental <= -15)
+                {
+                    SkipTurns++;
+                    mental = 0;
+                }
+
+                if (Character == CharacterType.Rich && money < 0 && Money >= GameConfig.RichSkillCost)
+                    money = -GameConfig.RichSkillCost;
+            }
+
+            int prevMoney  = Money;
+            int prevIf     = IfScore;
+            int prevMental = Mental;
+            int prevVirtue = Virtue;
+
+            Money   = PlayerStatRules.ClampMoney(Money + money);
+            IfScore = PlayerStatRules.ClampIfScore(IfScore + ifScore);
+            Mental  = PlayerStatRules.ClampMental(Mental + mental, MaxMental);
+            Virtue += virtue;
+
+            StatChangeNotifier.Notify(this,
+                Money - prevMoney,
+                IfScore - prevIf,
+                Mental - prevMental,
+                Virtue - prevVirtue);
+        }
+
+        public int CalculateScore() => ScoreCalculator.Total(this);
+    }
+}
