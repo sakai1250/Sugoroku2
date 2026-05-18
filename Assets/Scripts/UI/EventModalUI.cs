@@ -28,6 +28,13 @@ namespace Sugoroku.UI
         private int _lastShownFrame = -1;
         private bool _hasVisibleContent;
 
+        public static bool HasVisibleModal => Instance != null && Instance.IsVisible;
+
+        private bool IsVisible =>
+            _hasVisibleContent &&
+            _panel != null &&
+            _panel.activeInHierarchy;
+
         private void Awake()
         {
             Instance = this;
@@ -118,6 +125,7 @@ namespace Sugoroku.UI
         {
             _hasVisibleContent = true;
             if (_panel != null) _panel.SetActive(true);
+            BringToFront();
             EventModalLayout.Apply(transform, ev);
             if (_titleText != null) _titleText.text = ev.Title;
             if (_tagsText != null)
@@ -127,17 +135,20 @@ namespace Sugoroku.UI
             if (_descriptionText != null) _descriptionText.text = ev.Description;
             ClearChoiceButtons();
             AddCloseButton();
+            ConfigureModalRaycasts();
         }
 
         private void ShowSquarePreviewOnly(Sugoroku.Data.SquareType type, string title, string description)
         {
             _hasVisibleContent = true;
             if (_panel != null) _panel.SetActive(true);
+            BringToFront();
             if (_titleText != null) _titleText.text = title;
             if (_tagsText != null) _tagsText.text = $"[{type}]";
             if (_descriptionText != null) _descriptionText.text = description;
             ClearChoiceButtons();
             AddCloseButton();
+            ConfigureModalRaycasts();
         }
 
         private void ClearChoiceButtons()
@@ -212,7 +223,7 @@ namespace Sugoroku.UI
                 if (canSelect) selectable++;
 
                 int idx = i;
-                var btn = CreateChoiceButton(choice, canSelect, forceSingle ? null : failReason);
+                var btn = CreateChoiceButton(choice, canSelect, forceSingle ? null : failReason, player);
                 btn.interactable = canSelect;
                 btn.onClick.AddListener(() => OnChoiceSelected(idx));
                 _buttons.Add(btn);
@@ -421,7 +432,7 @@ namespace Sugoroku.UI
             return canvas.gameObject.AddComponent<GameWorldPresentationDimmer>();
         }
 
-        private Button CreateChoiceButton(EventChoice c, bool interactable, string failReason)
+        private Button CreateChoiceButton(EventChoice c, bool interactable, string failReason, PlayerData player = null)
         {
             var go = new GameObject("ChoiceButton");
             go.transform.SetParent(_choiceButtonParent, false);
@@ -480,7 +491,7 @@ namespace Sugoroku.UI
             var previewGo = new GameObject("Preview");
             previewGo.transform.SetParent(content.transform, false);
             var previewTmp = previewGo.AddComponent<TextMeshProUGUI>();
-            previewTmp.text = EventChoicePreview.FormatRich(c);
+            previewTmp.text = EventChoicePreview.FormatRich(c, player);
             previewTmp.fontSize = EventModalLayout.PreviewFontSize;
             previewTmp.alignment = TextAlignmentOptions.Left;
             previewTmp.richText = true;

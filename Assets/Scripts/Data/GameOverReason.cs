@@ -5,6 +5,6 @@ namespace Sugoroku.Data
         None,
         Bankruptcy,  // 所持金 <= 0
         Missing,     // メンタル == 0
-        Expelled     // IF == 0（留年）
+        Expelled     // 旧仕様: IF 0 による留年
     }
 }

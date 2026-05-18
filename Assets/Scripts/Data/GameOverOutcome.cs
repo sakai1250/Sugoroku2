@@ -61,7 +61,7 @@ namespace Sugoroku.Data
             GameOverReason.Expelled => new GameOverOutcome(
                 "【留年】業績不振による除籍",
                 "除籍対象者一覧",
-                "IFが0以下となり、業績不振により除籍となりました。\n\n" +
+                "研究業績が不足し、業績不振により除籍となりました。\n\n" +
                 "教授室の前に貼られた「除籍対象者一覧」に、自分の学籍番号が載っている。",
                 new Color(0.75f, 0.55f, 0.2f, 0.95f),
                 DarkBg,

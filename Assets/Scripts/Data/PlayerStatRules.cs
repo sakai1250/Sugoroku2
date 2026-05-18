@@ -25,13 +25,12 @@ namespace Sugoroku.Data
             player.Mental    = ClampMental(player.Mental, player.MaxMental);
         }
 
-        /// <summary>敗北条件: 所持金&lt;=0 / メンタル&lt;=0 / IF&lt;=0（いずれもクランプ後）。</summary>
+        /// <summary>敗北条件: 所持金&lt;=0 / メンタル&lt;=0（各ステータスはクランプ後に判定）。</summary>
         public static GameOverReason EvaluateDefeat(PlayerData player)
         {
             if (player == null || player.IsFinished) return GameOverReason.None;
             if (player.Money <= GameConfig.BankruptcyMoney) return GameOverReason.Bankruptcy;
             if (player.Mental <= GameConfig.MissingMental)  return GameOverReason.Missing;
-            if (player.IfScore <= 0)                          return GameOverReason.Expelled;
             return GameOverReason.None;
         }
     }

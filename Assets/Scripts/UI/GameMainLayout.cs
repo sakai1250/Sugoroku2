@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Sugoroku.Board;
+using Sugoroku.Data;
 
 namespace Sugoroku.UI
 {
@@ -24,6 +26,7 @@ namespace Sugoroku.UI
             LayoutActionArea(canvas.transform);
             LayoutMenuButton(canvas.transform);
             LayoutLogPanel(canvas.transform);
+            LayoutSquareLegend(canvas.transform);
             KenneyUiStyler.StyleCanvas(canvas);
             EnsurePresentationDimmer(canvas);
             EnsureFontBootstrap(canvas);
@@ -156,6 +159,184 @@ namespace Sugoroku.UI
                 HudTextStyle.ApplyLog(tmp);
                 tmp.alignment = TextAlignmentOptions.BottomLeft;
             }
+        }
+
+        private static void LayoutSquareLegend(Transform canvas)
+        {
+            var panel = EnsurePanel(canvas, "SquareLegendPanel", new Color(0.035f, 0.045f, 0.08f, 0.88f));
+            var rt = panel.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+            rt.anchoredPosition = new Vector2(-20f, -ResourceHudVisuals.TopBarHeight - 68f);
+            rt.sizeDelta = new Vector2(268f, 460f);
+
+            var v = panel.GetComponent<VerticalLayoutGroup>();
+            if (v == null) v = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            v.padding = new RectOffset(12, 12, 10, 10);
+            v.spacing = 6f;
+            v.childAlignment = TextAnchor.UpperLeft;
+            v.childControlWidth = true;
+            v.childControlHeight = false;
+            v.childForceExpandWidth = true;
+            v.childForceExpandHeight = false;
+
+            var fitter = panel.GetComponent<ContentSizeFitter>();
+            if (fitter == null) fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            EnsureLegendTitle(panel, "LegendTitle", "マス凡例");
+            EnsureLegendRow(panel, "Legend_Event", SquareType.Event, "イベント", "選択肢");
+            EnsureLegendRow(panel, "Legend_Tuition", SquareType.Tuition, "学費", "所持金減");
+            EnsureLegendRow(panel, "Legend_Journal", SquareType.Journal, "論文", "IF増");
+            EnsureLegendRow(panel, "Legend_Lecture", SquareType.Lecture, "ゼミ", "能力変動");
+            EnsureLegendRow(panel, "Legend_Rest", SquareType.Rest, "休息", "メンタル回復");
+            EnsureLegendRow(panel, "Legend_PartTime", SquareType.PartTime, "バイト", "所持金増");
+            EnsureLegendRow(panel, "Legend_Bonus", SquareType.Bonus, "チャンス", "良効果");
+            EnsureLegendRow(panel, "Legend_Penalty", SquareType.Penalty, "ペナルティ", "悪効果");
+            EnsureLegendTitle(panel, "LegendEventTitle", "イベント色");
+            EnsureTagLegendRow(panel, "LegendTag_Trouble", "トラブル", "赤: 事故/負荷");
+            EnsureTagLegendRow(panel, "LegendTag_Urgent", "緊急", "橙: 即対応");
+            EnsureTagLegendRow(panel, "LegendTag_Research", "研究", "青: 研究進行");
+            EnsureTagLegendRow(panel, "LegendTag_Conference", "学会", "紺: 学会関連");
+            EnsureTagLegendRow(panel, "LegendTag_Life", "生活", "緑: 生活/回復");
+            EnsureTagLegendRow(panel, "LegendTag_Professor", "教授", "紫: 教授対応");
+        }
+
+        private static void EnsureLegendTitle(Transform panel, string name, string label)
+        {
+            var title = panel.Find(name);
+            if (title == null)
+            {
+                var go = new GameObject(name, typeof(RectTransform));
+                go.transform.SetParent(panel, false);
+                title = go.transform;
+            }
+
+            var tmp = title.GetComponent<TextMeshProUGUI>() ?? title.gameObject.AddComponent<TextMeshProUGUI>();
+            tmp.text = label;
+            HudTextStyle.ApplyReadable(tmp, 16f, new Color(1f, 0.95f, 0.74f), true);
+            tmp.raycastTarget = false;
+            JapaneseFontProvider.Apply(tmp);
+
+            var le = title.GetComponent<LayoutElement>() ?? title.gameObject.AddComponent<LayoutElement>();
+            le.preferredHeight = 22f;
+        }
+
+        private static void EnsureLegendRow(Transform panel, string name, SquareType type, string label, string effect)
+        {
+            var row = panel.Find(name);
+            if (row == null)
+            {
+                var rowGo = new GameObject(name, typeof(RectTransform));
+                rowGo.transform.SetParent(panel, false);
+                row = rowGo.transform;
+            }
+
+            var h = row.GetComponent<HorizontalLayoutGroup>() ?? row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.spacing = 8f;
+            h.childAlignment = TextAnchor.MiddleLeft;
+            h.childControlWidth = false;
+            h.childControlHeight = true;
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = false;
+
+            var le = row.GetComponent<LayoutElement>() ?? row.gameObject.AddComponent<LayoutElement>();
+            le.preferredHeight = 24f;
+
+            var swatch = row.Find("Swatch");
+            if (swatch == null)
+            {
+                var go = new GameObject("Swatch", typeof(RectTransform), typeof(Image));
+                go.transform.SetParent(row, false);
+                swatch = go.transform;
+            }
+
+            var swatchRt = swatch.GetComponent<RectTransform>();
+            swatchRt.sizeDelta = new Vector2(18f, 18f);
+            var img = swatch.GetComponent<Image>() ?? swatch.gameObject.AddComponent<Image>();
+            img.color = EventTagColors.GetSquareTypePanelColor(type);
+            img.raycastTarget = false;
+            var swatchLe = swatch.GetComponent<LayoutElement>() ?? swatch.gameObject.AddComponent<LayoutElement>();
+            swatchLe.preferredWidth = 18f;
+            swatchLe.preferredHeight = 18f;
+
+            var text = row.Find("Text");
+            if (text == null)
+            {
+                var go = new GameObject("Text", typeof(RectTransform));
+                go.transform.SetParent(row, false);
+                text = go.transform;
+            }
+
+            var tmp = text.GetComponent<TextMeshProUGUI>() ?? text.gameObject.AddComponent<TextMeshProUGUI>();
+            tmp.text = $"{label}: {effect}";
+            HudTextStyle.ApplyReadable(tmp, 13f, new Color(0.9f, 0.93f, 1f), false);
+            tmp.raycastTarget = false;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            JapaneseFontProvider.Apply(tmp);
+
+            var textLe = text.GetComponent<LayoutElement>() ?? text.gameObject.AddComponent<LayoutElement>();
+            textLe.flexibleWidth = 1f;
+            textLe.preferredWidth = 206f;
+        }
+
+        private static void EnsureTagLegendRow(Transform panel, string name, string tag, string label)
+        {
+            var row = panel.Find(name);
+            if (row == null)
+            {
+                var rowGo = new GameObject(name, typeof(RectTransform));
+                rowGo.transform.SetParent(panel, false);
+                row = rowGo.transform;
+            }
+
+            var h = row.GetComponent<HorizontalLayoutGroup>() ?? row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.spacing = 8f;
+            h.childAlignment = TextAnchor.MiddleLeft;
+            h.childControlWidth = false;
+            h.childControlHeight = true;
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = false;
+
+            var le = row.GetComponent<LayoutElement>() ?? row.gameObject.AddComponent<LayoutElement>();
+            le.preferredHeight = 24f;
+
+            var swatch = row.Find("Swatch");
+            if (swatch == null)
+            {
+                var go = new GameObject("Swatch", typeof(RectTransform), typeof(Image));
+                go.transform.SetParent(row, false);
+                swatch = go.transform;
+            }
+
+            var swatchRt = swatch.GetComponent<RectTransform>();
+            swatchRt.sizeDelta = new Vector2(18f, 18f);
+            var img = swatch.GetComponent<Image>() ?? swatch.gameObject.AddComponent<Image>();
+            img.color = EventTagColors.GetPanelColor(new[] { tag });
+            img.raycastTarget = false;
+            var swatchLe = swatch.GetComponent<LayoutElement>() ?? swatch.gameObject.AddComponent<LayoutElement>();
+            swatchLe.preferredWidth = 18f;
+            swatchLe.preferredHeight = 18f;
+
+            var text = row.Find("Text");
+            if (text == null)
+            {
+                var go = new GameObject("Text", typeof(RectTransform));
+                go.transform.SetParent(row, false);
+                text = go.transform;
+            }
+
+            var tmp = text.GetComponent<TextMeshProUGUI>() ?? text.gameObject.AddComponent<TextMeshProUGUI>();
+            tmp.text = label;
+            HudTextStyle.ApplyReadable(tmp, 13f, new Color(0.9f, 0.93f, 1f), false);
+            tmp.raycastTarget = false;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            JapaneseFontProvider.Apply(tmp);
+
+            var textLe = text.GetComponent<LayoutElement>() ?? text.gameObject.AddComponent<LayoutElement>();
+            textLe.flexibleWidth = 1f;
+            textLe.preferredWidth = 206f;
         }
 
         private static Transform EnsurePanel(Transform canvas, string name, Color bgColor)

@@ -4,6 +4,7 @@ using TMPro;
 using Sugoroku.Data;
 using Sugoroku.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 namespace Sugoroku.Board
 {
@@ -112,6 +113,8 @@ namespace Sugoroku.Board
 
         private void Update()
         {
+            if (EventModalUI.HasVisibleModal) return;
+            if (IsPointerOverUi()) return;
             if (!TryGetClickWorldPoint(out var world)) return;
             if (hitCollider == null) hitCollider = GetComponent<BoxCollider2D>();
             if (hitCollider == null || !hitCollider.OverlapPoint(world)) return;
@@ -192,6 +195,27 @@ namespace Sugoroku.Board
             var p = screen.Value;
             world = cam.ScreenToWorldPoint(new Vector3(p.x, p.y, -cam.transform.position.z));
             return true;
+        }
+
+        private static bool IsPointerOverUi()
+        {
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null) return false;
+
+            if (Mouse.current != null &&
+                Mouse.current.leftButton.wasPressedThisFrame &&
+                eventSystem.IsPointerOverGameObject())
+                return true;
+
+            if (Touchscreen.current != null)
+            {
+                var touch = Touchscreen.current.primaryTouch;
+                if (touch.press.wasPressedThisFrame &&
+                    eventSystem.IsPointerOverGameObject(touch.touchId.ReadValue()))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

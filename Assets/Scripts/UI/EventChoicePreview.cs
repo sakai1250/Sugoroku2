@@ -17,13 +17,28 @@ namespace Sugoroku.UI
 
         public static string FormatRich(EventChoice c)
         {
+            return FormatRich(c, null);
+        }
+
+        public static string FormatRich(EventChoice c, PlayerData player)
+        {
             var parts = new List<string>();
-            if (c.MoneyChange != 0)
-                parts.Add(Delta("所持金", c.MoneyChange, "万", PosMoney, NegMoney));
-            if (c.MentalChange != 0)
-                parts.Add(Delta("メンタル", c.MentalChange, "", PosMental, NegMental));
-            if (c.IfScoreChange != 0)
-                parts.Add(Delta("IF", c.IfScoreChange, "", PosIf, NegIf));
+            int moneyChange = c.MoneyChange;
+            int mentalChange = c.MentalChange;
+            int ifChange = c.IfScoreChange;
+            if (player != null)
+            {
+                moneyChange = PlayerStatRules.ClampMoney(player.Money + c.MoneyChange) - player.Money;
+                mentalChange = PlayerStatRules.ClampMental(player.Mental + c.MentalChange, player.MaxMental) - player.Mental;
+                ifChange = PlayerStatRules.ClampIfScore(player.IfScore + c.IfScoreChange) - player.IfScore;
+            }
+
+            if (moneyChange != 0)
+                parts.Add(Delta("所持金", moneyChange, "万", PosMoney, NegMoney));
+            if (mentalChange != 0)
+                parts.Add(Delta("メンタル", mentalChange, "", PosMental, NegMental));
+            if (ifChange != 0)
+                parts.Add(Delta("IF", ifChange, "", PosIf, NegIf));
             if (c.VirtueChange != 0)
                 parts.Add(Delta("徳", c.VirtueChange, "", PosVirtue, NegVirtue));
 
