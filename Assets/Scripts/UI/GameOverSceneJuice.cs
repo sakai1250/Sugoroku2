@@ -82,7 +82,7 @@ namespace Sugoroku.UI
             subRt.anchoredPosition = new Vector2(0f, 24f);
             subRt.sizeDelta = new Vector2(360f, 40f);
 
-            float dur = 0.45f;
+            float dur = GameConfig.AnimationDuration(0.45f);
             float elapsed = 0f;
             while (elapsed < dur)
             {
@@ -98,7 +98,7 @@ namespace Sugoroku.UI
             for (int i = 0; i < 3; i++)
             {
                 rt.anchoredPosition += new Vector2(Random.Range(-6f, 6f), Random.Range(-4f, 4f));
-                yield return new WaitForSeconds(0.04f);
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(0.04f));
             }
             rt.anchoredPosition = new Vector2(0f, 80f);
         }
@@ -149,10 +149,12 @@ namespace Sugoroku.UI
             stampRt.sizeDelta = new Vector2(400f, 60f);
 
             float pulse = 0f;
-            while (pulse < 4f)
+            float pulseDuration = GameConfig.AnimationDuration(4f);
+            while (pulse < pulseDuration)
             {
                 pulse += Time.deltaTime;
-                float a = 0.65f + Mathf.Sin(pulse * 3f) * 0.15f;
+                float phase = pulse / GameConfig.AnimationDurationScale;
+                float a = 0.65f + Mathf.Sin(phase * 3f) * 0.15f;
                 screen.GetComponent<Image>().color = new Color(0.12f * a, 0.14f * a, 0.28f, 1f);
                 yield return null;
             }
@@ -193,10 +195,11 @@ namespace Sugoroku.UI
 
             boardRt.localScale = Vector3.one * 0.85f;
             float elapsed = 0f;
-            while (elapsed < 0.35f)
+            float duration = GameConfig.AnimationDuration(0.35f);
+            while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                boardRt.localScale = Vector3.one * Mathf.Lerp(0.85f, 1f, elapsed / 0.35f);
+                boardRt.localScale = Vector3.one * Mathf.Lerp(0.85f, 1f, elapsed / duration);
                 yield return null;
             }
         }

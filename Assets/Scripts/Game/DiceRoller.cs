@@ -125,7 +125,7 @@ namespace Sugoroku.Game
             {
                 int display = UnityEngine.Random.Range(GameConfig.MinDice, GameConfig.MaxDice + 1);
                 onFace?.Invoke(display);
-                yield return new WaitForSeconds(DiceJuice.TickInterval);
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(DiceJuice.TickInterval));
             }
             onFace?.Invoke(result);
         }

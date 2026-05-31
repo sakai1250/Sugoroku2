@@ -1153,7 +1153,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u591A\u8DA3\u5473\u7CFB (Hobbyist)"
+  m_text: "\u591A\u8DA3\u5473\u7CFB"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a2d154f534d214c368395fd2a2d92cd0, type: 2}
   m_sharedMaterial: {fileID: 621126455474625091, guid: a2d154f534d214c368395fd2a2d92cd0, type: 2}

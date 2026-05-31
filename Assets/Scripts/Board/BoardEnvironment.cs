@@ -10,7 +10,7 @@ namespace Sugoroku.Board
     {
         [SerializeField] private SpriteRenderer _backgroundArt;
         [SerializeField] private float          _backgroundPadding = 1.4f;
-        [SerializeField] private Color          _dimmedBackgroundColor = new(0.25f, 0.25f, 0.3f, 0.28f);
+        [SerializeField] private Color          _dimmedBackgroundColor = new(0.72f, 0.76f, 0.84f, 0.42f);
 
         public void AlignBackgroundToRoute(WaypointRoute route, bool dimBackground = true)
         {

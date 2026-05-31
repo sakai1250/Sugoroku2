@@ -42,6 +42,7 @@ namespace Sugoroku.UI
 
             var canvas = GetComponentInParent<Canvas>();
             if (canvas != null) KenneyUiStyler.StyleCanvas(canvas);
+            ApplyScreenChrome();
             ShowPanel(_titlePanel);
         }
 
@@ -216,6 +217,35 @@ namespace Sugoroku.UI
             if (_titlePanel        != null) _titlePanel.SetActive(_titlePanel        == target);
             if (_settingsPanel     != null) _settingsPanel.SetActive(_settingsPanel  == target);
             if (_achievementsPanel != null) _achievementsPanel.SetActive(_achievementsPanel == target);
+        }
+
+        private void ApplyScreenChrome()
+        {
+            ApplyPanelChrome(_titlePanel?.transform, new Color(0.10f, 0.12f, 0.18f, 0.96f),
+                new Color(0.86f, 0.68f, 0.28f, 0.88f));
+            ApplyPanelChrome(_settingsPanel?.transform, new Color(0.12f, 0.14f, 0.20f, 0.98f),
+                new Color(0.50f, 0.66f, 0.88f, 0.78f));
+            ApplyPanelChrome(_achievementsPanel?.transform, new Color(0.12f, 0.14f, 0.20f, 0.98f),
+                new Color(0.56f, 0.78f, 0.58f, 0.78f));
+
+            foreach (var tmp in GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                if (tmp.GetComponentInParent<Button>() != null) continue;
+                var isTitle = tmp.fontSize >= 32f;
+                GameUiChrome.ApplyReadable(tmp,
+                    isTitle ? new Color(1f, 0.94f, 0.70f, 1f) : GameUiChrome.MutedText,
+                    isTitle ? FontStyles.Bold : FontStyles.Normal);
+            }
+
+            foreach (var slider in GetComponentsInChildren<Slider>(true))
+                KenneyUiStyler.StyleSlider(slider);
+        }
+
+        private static void ApplyPanelChrome(Transform panel, Color surface, Color accent)
+        {
+            if (panel == null) return;
+            GameUiChrome.ApplySurface(panel, surface);
+            GameUiChrome.ApplyAccentRail(panel, accent, 6f);
         }
 
         private GameObject FindChild(string childName)

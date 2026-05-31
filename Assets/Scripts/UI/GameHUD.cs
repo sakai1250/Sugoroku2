@@ -81,7 +81,8 @@ namespace Sugoroku.UI
             if (_playerNameText != null)
                 HudTextStyle.ApplyReadable(_playerNameText, HudTextStyle.PlayerNameSize, new Color(1f, 0.95f, 0.7f), true);
             if (_turnStateText != null)
-                HudTextStyle.ApplyReadable(_turnStateText, HudTextStyle.InfoFontSize + 2f, new Color(0.55f, 1f, 0.75f), true);
+                HudTextStyle.ApplyReadable(_turnStateText, HudTextStyle.InfoFontSize + HudTextStyle.Scale(3f),
+                    new Color(0.55f, 1f, 0.75f), true);
             if (_goalDistanceText != null)
                 HudTextStyle.ApplyInfo(_goalDistanceText, new Color(0.88f, 0.92f, 1f));
             if (_tuitionDistanceText != null)
@@ -91,14 +92,14 @@ namespace Sugoroku.UI
             if (_ignoreEventsText != null)
                 HudTextStyle.ApplyInfo(_ignoreEventsText, new Color(0.7f, 0.85f, 1f));
             if (_diceResultText != null)
-                HudTextStyle.ApplyReadable(_diceResultText, 24f, Color.white, true);
+                HudTextStyle.ApplyReadable(_diceResultText, HudTextStyle.Scale(16f), Color.white, true);
             if (_logText != null)
             {
                 HudTextStyle.ApplyLog(_logText);
                 _logText.alignment = TextAlignmentOptions.BottomLeft;
             }
             if (_skillButtonText != null)
-                HudTextStyle.ApplyReadable(_skillButtonText, 20f, Color.white, true);
+                HudTextStyle.ApplyReadable(_skillButtonText, HudTextStyle.Scale(17f), Color.white, true);
         }
 
         private void SetupStatFlash()
@@ -236,20 +237,35 @@ namespace Sugoroku.UI
 
             if (_turnStateText != null)
             {
-                _turnStateText.text = state switch
-                {
-                    TurnState.TurnStart  => "▶ ターン開始",
-                    TurnState.WaitAction => "▶ 行動待ち（ダイスを振る）",
-                    TurnState.Moving     => "▶ 移動中",
-                    TurnState.MassCheck  => "▶ マス確認",
-                    TurnState.Event      => "▶ イベント（選択してください）",
-                    TurnState.Apply      => "▶ 適用中",
-                    TurnState.TurnEnd    => "▶ ターン終了",
-                    _ => ""
-                };
-                JapaneseFontProvider.Apply(_turnStateText);
+                _turnStateText.text = FormatStateLabel(state);
+                HudTextStyle.ApplyReadable(_turnStateText,
+                    HudTextStyle.InfoFontSize + HudTextStyle.Scale(3f),
+                    GetStateColor(state), true);
             }
         }
+
+        private static string FormatStateLabel(TurnState state) => state switch
+        {
+            TurnState.TurnStart  => "★ ターン開始!",
+            TurnState.WaitAction => "★ ダイス待ち!",
+            TurnState.Moving     => ">> 移動中!",
+            TurnState.MassCheck  => "◇ マス確認!",
+            TurnState.Event      => "★ イベント!",
+            TurnState.Apply      => "OK 効果発動!",
+            TurnState.TurnEnd    => "♪ ターン終了!",
+            _ => ""
+        };
+
+        private static Color GetStateColor(TurnState state) => state switch
+        {
+            TurnState.WaitAction => new Color(1f, 0.92f, 0.42f, 1f),
+            TurnState.Moving     => new Color(0.50f, 0.94f, 1f, 1f),
+            TurnState.MassCheck  => new Color(0.72f, 1f, 0.62f, 1f),
+            TurnState.Event      => new Color(1f, 0.66f, 0.88f, 1f),
+            TurnState.Apply      => new Color(0.66f, 1f, 0.70f, 1f),
+            TurnState.TurnEnd    => new Color(0.76f, 0.82f, 1f, 1f),
+            _                    => new Color(1f, 0.95f, 0.70f, 1f)
+        };
 
         private void RefreshActionButtons(TurnState? stateOverride = null)
         {
@@ -258,7 +274,7 @@ namespace Sugoroku.UI
             bool rolling = DiceRoller.Instance != null && DiceRoller.Instance.IsRolling;
             bool canAct = state == TurnState.WaitAction && player != null && !player.IsCpu && !rolling;
             if (_rollButton  != null) _rollButton.interactable  = canAct;
-            if (_skillButton != null) _skillButton.interactable = canAct;
+            if (_skillButton != null) _skillButton.interactable = canAct && !player.SkillUsedThisTurn;
         }
 
         private void SetupDiceHudAnimator()
@@ -336,7 +352,7 @@ namespace Sugoroku.UI
             if (_tuitionDistanceText != null) _tuitionDistanceText.text = $"学費△{tuition}";
             if (_skipTurnsText != null) _skipTurnsText.text = player.SkipTurns > 0 ? $"休み×{player.SkipTurns}" : "";
             if (_ignoreEventsText != null) _ignoreEventsText.text = player.IgnoreNextEvents > 0 ? $"回避{player.IgnoreNextEvents}" : "";
-            if (_skillButtonText != null) _skillButtonText.text = $"ワザ\n{player.Character.SkillName()}";
+            if (_skillButtonText != null) _skillButtonText.text = $"ワザ: {player.Character.SkillName()}";
         }
 
         private void UpdateMentalSliderFill(PlayerData player)

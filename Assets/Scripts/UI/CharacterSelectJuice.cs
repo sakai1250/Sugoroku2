@@ -80,7 +80,8 @@ namespace Sugoroku.UI
             if (card == null) yield break;
 
             Vector2 basePos = card.anchoredPosition;
-            float half = jumpDuration * 0.45f;
+            float duration = GameConfig.AnimationDuration(jumpDuration);
+            float half = duration * 0.45f;
             float elapsed = 0f;
 
             while (elapsed < half)
@@ -93,10 +94,10 @@ namespace Sugoroku.UI
             }
 
             elapsed = 0f;
-            while (elapsed < jumpDuration - half)
+            while (elapsed < duration - half)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / (jumpDuration - half);
+                float t = elapsed / (duration - half);
                 float y = (1f - Mathf.Sin(t * Mathf.PI * 0.5f)) * jumpHeight;
                 card.anchoredPosition = basePos + Vector2.up * y;
                 yield return null;
@@ -116,10 +117,11 @@ namespace Sugoroku.UI
                 {
                     _fadeOverlay.gameObject.SetActive(true);
                     float elapsed = 0f;
-                    while (elapsed < confirmFade)
+                    float fadeDuration = GameConfig.AnimationDuration(confirmFade);
+                    while (elapsed < fadeDuration)
                     {
                         elapsed += Time.unscaledDeltaTime;
-                        float a = Mathf.Lerp(0f, 0.72f, elapsed / confirmFade);
+                        float a = Mathf.Lerp(0f, 0.72f, elapsed / fadeDuration);
                         _fadeOverlay.color = new Color(0f, 0f, 0.02f, a);
                         yield return null;
                     }
@@ -132,7 +134,8 @@ namespace Sugoroku.UI
                 }
 
                 float hold = 0f;
-                while (hold < confirmHold)
+                float holdDuration = GameConfig.AnimationDuration(confirmHold);
+                while (hold < holdDuration)
                 {
                     hold += Time.unscaledDeltaTime;
                     yield return null;
@@ -166,14 +169,14 @@ namespace Sugoroku.UI
             Color c2 = new Color(1f, 0.25f, 0.75f, 0.65f);
             Color c3 = new Color(0.3f, 0.95f, 1f, 0.5f);
 
-            yield return AnimateRipple(localCenter, c1, 0f, 420f, 0.35f);
-            yield return AnimateRipple(localCenter, c2, 0f, 520f, 0.35f);
-            yield return AnimateRipple(localCenter, c3, 0f, 620f, 0.35f);
+            yield return AnimateRipple(localCenter, c1, 0f, 420f, GameConfig.AnimationDuration(0.35f));
+            yield return AnimateRipple(localCenter, c2, 0f, 520f, GameConfig.AnimationDuration(0.35f));
+            yield return AnimateRipple(localCenter, c3, 0f, 620f, GameConfig.AnimationDuration(0.35f));
         }
 
         private IEnumerator AnimateRipple(Vector2 localCenter, Color color, float delay, float maxSize, float duration)
         {
-            if (delay > 0f) yield return new WaitForSeconds(delay);
+            if (delay > 0f) yield return new WaitForSeconds(GameConfig.AnimationDuration(delay));
 
             var go = new GameObject("NeonRipple", typeof(RectTransform));
             go.transform.SetParent(_rippleParent, false);

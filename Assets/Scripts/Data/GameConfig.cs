@@ -35,11 +35,15 @@ namespace Sugoroku.Data
         public const int RichSkillCost        = 10;
 
         // アニメーション時間
+        public const float AnimationSpeed = 0.8f;
+        public const float AnimationDurationScale = 1f / AnimationSpeed;
         public const float DiceRollDuration   = 1.0f;
         public const float PieceMoveDuration  = 0.25f;
         public const float FloatingTextDuration = 0.5f;
         public const float HudStatFlashDuration = 0.5f;
         public const float CameraDiceLookaheadBlend = 0.42f;
         public const float CameraEventZoomScale = 0.72f;
+
+        public static float AnimationDuration(float seconds) => seconds * AnimationDurationScale;
     }
 }

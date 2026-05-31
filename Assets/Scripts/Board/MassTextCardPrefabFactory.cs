@@ -44,26 +44,53 @@ namespace Sugoroku.Board
 
             var borderGo = CreateUiImage(canvasRt, "CardBorder", new Vector2(0, 4));
             borderGo.GetComponent<RectTransform>().sizeDelta = new Vector2(256, 91);
-            borderGo.color = new Color(0.35f, 0.38f, 0.48f, 1f);
+            borderGo.color = new Color(0.58f, 0.62f, 0.72f, 1f);
 
             var panelGo = CreateUiImage(canvasRt, "CardPanel", Vector2.zero);
             panelGo.GetComponent<RectTransform>().sizeDelta = new Vector2(248, 83);
-            panelGo.color = new Color(0.22f, 0.24f, 0.30f, 0.94f);
+            panelGo.color = new Color(0.42f, 0.46f, 0.56f, 0.94f);
+
+            var accentStrip = CreateUiImage(panelGo.transform, "AccentStrip", Vector2.zero);
+            SetRect(accentStrip, new Vector2(0f, 0f), new Vector2(0f, 1f),
+                new Vector2(0f, 0.5f), new Vector2(11f, 0f), new Vector2(5.5f, 0f));
+            accentStrip.color = new Color(0.58f, 0.62f, 0.72f, 1f);
+
+            var headerBand = CreateUiImage(panelGo.transform, "HeaderBand", Vector2.zero);
+            SetRect(headerBand, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, 25f), new Vector2(0f, -12.5f));
+            headerBand.color = new Color(0.30f, 0.33f, 0.40f, 0.44f);
+
+            var cornerMarker = CreateUiImage(panelGo.transform, "CornerMarker", Vector2.zero);
+            SetRect(cornerMarker, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(1f, 1f), new Vector2(28f, 18f), new Vector2(-9f, -8f));
+            cornerMarker.color = new Color(0.70f, 0.74f, 0.82f, 0.95f);
+
+            var markerLabel = CreateTmp(panelGo.transform, "MarkerLabel", 10, TextAlignmentOptions.Center);
+            markerLabel.fontStyle = FontStyles.Bold;
+            markerLabel.color = new Color(0.16f, 0.18f, 0.22f, 1f);
+            markerLabel.raycastTarget = false;
+            SetRect(markerLabel, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(1f, 1f), new Vector2(28f, 18f), new Vector2(-9f, -8f));
+
+            var titleRule = CreateUiImage(panelGo.transform, "TitleRule", Vector2.zero);
+            SetRect(titleRule, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(-24f, 3f), new Vector2(8f, 8f));
+            titleRule.color = new Color(0.72f, 0.76f, 0.84f, 0.92f);
 
             var tagGo = CreateTmp(panelGo.transform, "TagLabel", 13, TextAlignmentOptions.TopLeft);
             var tagRt = tagGo.GetComponent<RectTransform>();
             tagRt.anchorMin = new Vector2(0, 1);
             tagRt.anchorMax = new Vector2(1, 1);
             tagRt.pivot     = new Vector2(0.5f, 1f);
-            tagRt.anchoredPosition = new Vector2(0, -6);
-            tagRt.sizeDelta = new Vector2(-16, 22);
+            tagRt.anchoredPosition = new Vector2(18, -5);
+            tagRt.sizeDelta = new Vector2(-54, 22);
 
             var titleGo = CreateTmp(panelGo.transform, "TitleLabel", 17, TextAlignmentOptions.TopLeft);
             var titleRt = titleGo.GetComponent<RectTransform>();
             titleRt.anchorMin = new Vector2(0, 0);
             titleRt.anchorMax = new Vector2(1, 1);
-            titleRt.offsetMin = new Vector2(8, 6);
-            titleRt.offsetMax = new Vector2(-8, -26);
+            titleRt.offsetMin = new Vector2(18, 9);
+            titleRt.offsetMax = new Vector2(-12, -29);
             titleGo.textWrappingMode = TextWrappingModes.Normal;
             titleGo.overflowMode = TextOverflowModes.Ellipsis;
         }
@@ -88,6 +115,28 @@ namespace Sugoroku.Board
                 rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             }
             return img;
+        }
+
+        private static void SetRect(Image img, Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
+        {
+            var rt = img.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.pivot = pivot;
+            rt.sizeDelta = sizeDelta;
+            rt.anchoredPosition = anchoredPosition;
+        }
+
+        private static void SetRect(TextMeshProUGUI tmp, Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
+        {
+            var rt = tmp.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.pivot = pivot;
+            rt.sizeDelta = sizeDelta;
+            rt.anchoredPosition = anchoredPosition;
         }
 
         private static TextMeshProUGUI CreateTmp(Transform parent, string name, float size, TextAlignmentOptions align)

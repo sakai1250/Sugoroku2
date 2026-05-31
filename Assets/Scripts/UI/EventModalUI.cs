@@ -442,13 +442,15 @@ namespace Sugoroku.UI
             img.raycastTarget = true;
 
             var btn = go.AddComponent<Button>();
+            btn.interactable = interactable;
             btn.targetGraphic = img;
             var colors = btn.colors;
             colors.disabledColor = new Color(0.55f, 0.55f, 0.55f, EventModalLayout.DisabledAlpha);
             btn.colors = colors;
+            GameUiChrome.ApplyChoiceButton(btn, interactable);
 
             var rt = go.GetComponent<RectTransform>();
-            float height = interactable ? 76f : 84f;
+            float height = interactable ? 100f : 110f;
             rt.sizeDelta = new Vector2(680f, height);
             var le = go.AddComponent<LayoutElement>();
             le.preferredHeight = height;
@@ -483,6 +485,7 @@ namespace Sugoroku.UI
             var labelTmp = labelGo.AddComponent<TextMeshProUGUI>();
             labelTmp.text = c.Label;
             labelTmp.fontSize = EventModalLayout.ChoiceFontSize;
+            labelTmp.fontStyle = FontStyles.Bold;
             labelTmp.alignment = TextAlignmentOptions.Left;
             labelTmp.color = interactable ? Color.white : new Color(1f, 1f, 1f, 0.65f);
             labelTmp.raycastTarget = false;
@@ -494,6 +497,7 @@ namespace Sugoroku.UI
             previewTmp.text = EventChoicePreview.FormatRich(c, player);
             previewTmp.fontSize = EventModalLayout.PreviewFontSize;
             previewTmp.alignment = TextAlignmentOptions.Left;
+            previewTmp.color = interactable ? GameUiChrome.MutedText : new Color(0.70f, 0.72f, 0.76f, 0.70f);
             previewTmp.richText = true;
             previewTmp.raycastTarget = false;
             JapaneseFontProvider.Apply(previewTmp);

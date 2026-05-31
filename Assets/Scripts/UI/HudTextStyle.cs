@@ -6,12 +6,15 @@ namespace Sugoroku.UI
     /// <summary>HUD 用の読みやすい TMP スタイル（大きめ・太字・アウトライン）。</summary>
     public static class HudTextStyle
     {
-        public const float ResourceFontSize  = 24f;
-        public const float PlayerNameSize    = 28f;
-        public const float InfoFontSize      = 20f;
-        public const float LogFontSize       = 18f;
-        public const float OutlineWidth      = 0.22f;
-        public static readonly Color32 OutlineColor = new(0, 0, 0, 200);
+        public const float TextScale = 1.4f;
+        public const float ResourceFontSize  = 19f * TextScale;
+        public const float PlayerNameSize    = 22f * TextScale;
+        public const float InfoFontSize      = 16f * TextScale;
+        public const float LogFontSize       = 13f * TextScale;
+        public const float OutlineWidth      = 0.14f;
+        public static readonly Color32 OutlineColor = new(0, 0, 0, 165);
+
+        public static float Scale(float size) => size * TextScale;
 
         public static void ApplyReadable(TextMeshProUGUI tmp, float fontSize, Color color, bool bold = true)
         {
@@ -20,9 +23,25 @@ namespace Sugoroku.UI
             tmp.fontSize = fontSize;
             tmp.fontStyle = bold ? FontStyles.Bold : FontStyles.Normal;
             tmp.color = color;
-            tmp.outlineWidth = OutlineWidth;
-            tmp.outlineColor = OutlineColor;
+            ApplyOutlineSafe(tmp, OutlineWidth, OutlineColor);
             tmp.raycastTarget = false;
+        }
+
+        public static void ApplyOutlineSafe(TextMeshProUGUI tmp, float width, Color color)
+        {
+            if (tmp == null) return;
+            JapaneseFontProvider.Apply(tmp);
+            if (tmp.font == null || tmp.font.material == null) return;
+
+            try
+            {
+                tmp.outlineWidth = width;
+                tmp.outlineColor = color;
+            }
+            catch (System.NullReferenceException)
+            {
+                // TMP のフォントマテリアル初期化前に呼ばれる場合があるため、アウトラインだけ諦める。
+            }
         }
 
         public static void ApplyResource(TextMeshProUGUI tmp, Color color) =>

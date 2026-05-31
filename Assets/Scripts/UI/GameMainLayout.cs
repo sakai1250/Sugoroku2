@@ -10,8 +10,12 @@ namespace Sugoroku.UI
     [DefaultExecutionOrder(-50)]
     public class GameMainLayout : MonoBehaviour
     {
-        [SerializeField] private Vector2 actionPanelPadding = new(24f, 24f);
-        [SerializeField] private Vector2 actionButtonSize   = new(240f, 56f);
+        [SerializeField] private Vector2 actionPanelPadding = new(20f, 20f);
+        [SerializeField] private Vector2 actionButtonSize   = new(246f, 60f);
+
+        private const float LegendRowHeight = 18f;
+        private const float LegendFontSize = 11f;
+        private const float LegendSwatchSize = 13f;
 
         private void Awake() => ApplyLayout();
 
@@ -23,10 +27,10 @@ namespace Sugoroku.UI
             UiCanvasUtility.NormalizeCanvasRoot(canvas);
             ResourceHudVisuals.SetupTopResourceBar(canvas.transform);
             LayoutPlayerInfoPanel(canvas.transform);
+            LayoutLogPanel(canvas.transform);
+            HideSquareLegend(canvas.transform);
             LayoutActionArea(canvas.transform);
             LayoutMenuButton(canvas.transform);
-            LayoutLogPanel(canvas.transform);
-            LayoutSquareLegend(canvas.transform);
             KenneyUiStyler.StyleCanvas(canvas);
             EnsurePresentationDimmer(canvas);
             EnsureFontBootstrap(canvas);
@@ -49,13 +53,14 @@ namespace Sugoroku.UI
         private static void LayoutPlayerInfoPanel(Transform canvas)
         {
             var panel = EnsurePanel(canvas, "PlayerInfoPanel",
-                new Color(0.04f, 0.06f, 0.11f, 0.88f));
+                new Color(0.10f, 0.12f, 0.17f, 0.80f));
+            GameUiChrome.ApplyAccentRail(panel, new Color(0.86f, 0.68f, 0.28f, 0.82f), 4f);
             var panelRt = panel.GetComponent<RectTransform>();
             panelRt.anchorMin = Vector2.zero;
             panelRt.anchorMax = new Vector2(0f, 1f);
             panelRt.pivot     = new Vector2(0f, 1f);
             panelRt.offsetMin = Vector2.zero;
-            panelRt.offsetMax = new Vector2(360f, -ResourceHudVisuals.TopBarHeight);
+            panelRt.offsetMax = new Vector2(348f, -ResourceHudVisuals.TopBarHeight);
 
             var hud = canvas.Find("GameHUD");
             if (hud != null)
@@ -79,14 +84,14 @@ namespace Sugoroku.UI
                 if (t != null) t.SetParent(panel.transform, false);
             }
 
-            float y = -16f;
-            y = PlaceInfoText(panel.transform, "PlayerNameText",  y, 34f, HudTextStyle.PlayerNameSize, true);
-            y = PlaceInfoText(panel.transform, "TurnStateText",   y, 28f, HudTextStyle.InfoFontSize + 2f, true);
-            y = PlaceInfoText(panel.transform, "MentalSlider",    y, 22f, 0f, false, new Vector2(320f, 20f));
-            y = PlaceInfoText(panel.transform, "GoalDistanceText", y, 26f, HudTextStyle.InfoFontSize, false);
-            y = PlaceInfoText(panel.transform, "TuitionDistanceText", y, 26f, HudTextStyle.InfoFontSize, false);
-            y = PlaceInfoText(panel.transform, "SkipTurnsText",   y, 24f, HudTextStyle.InfoFontSize, false);
-            PlaceInfoText(panel.transform, "IgnoreEventsText", y, 24f, HudTextStyle.InfoFontSize, false);
+            float y = -14f;
+            y = PlaceInfoText(panel.transform, "PlayerNameText",  y, 40f, HudTextStyle.PlayerNameSize, true);
+            y = PlaceInfoText(panel.transform, "TurnStateText",   y, 34f, HudTextStyle.InfoFontSize + HudTextStyle.Scale(1f), true);
+            y = PlaceInfoText(panel.transform, "MentalSlider",    y, 22f, 0f, false, new Vector2(314f, 18f));
+            y = PlaceInfoText(panel.transform, "GoalDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
+            y = PlaceInfoText(panel.transform, "TuitionDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
+            y = PlaceInfoText(panel.transform, "SkipTurnsText",   y, 28f, HudTextStyle.InfoFontSize, false);
+            PlaceInfoText(panel.transform, "IgnoreEventsText", y, 28f, HudTextStyle.InfoFontSize, false);
 
             StyleInfoTexts(panel.transform);
         }
@@ -100,8 +105,8 @@ namespace Sugoroku.UI
             var rt = t.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot     = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(16f, y);
-            rt.sizeDelta = sizeOverride ?? new Vector2(320f, height);
+            rt.anchoredPosition = new Vector2(14f, y);
+            rt.sizeDelta = sizeOverride ?? new Vector2(314f, height);
 
             if (fontSize > 0f)
             {
@@ -124,7 +129,7 @@ namespace Sugoroku.UI
 
             var turn = panel.Find("TurnStateText")?.GetComponent<TextMeshProUGUI>();
             if (turn != null)
-                HudTextStyle.ApplyReadable(turn, HudTextStyle.InfoFontSize + 2f, new Color(0.55f, 1f, 0.75f), true);
+                HudTextStyle.ApplyReadable(turn, HudTextStyle.InfoFontSize + HudTextStyle.Scale(2f), new Color(0.55f, 1f, 0.75f), true);
 
             foreach (var n in new[] { "GoalDistanceText", "TuitionDistanceText", "SkipTurnsText", "IgnoreEventsText" })
             {
@@ -139,10 +144,11 @@ namespace Sugoroku.UI
             var log = FindDeep(canvas, "LogText");
             if (log == null) return;
 
-            var panel = EnsurePanel(canvas, "LogPanel", new Color(0.04f, 0.05f, 0.1f, 0.85f));
+            var panel = EnsurePanel(canvas, "LogPanel", new Color(0.10f, 0.12f, 0.17f, 0.66f));
+            GameUiChrome.ApplyAccentRail(panel, new Color(0.50f, 0.66f, 0.88f, 0.58f), 3f);
             var panelRt = panel.GetComponent<RectTransform>();
             panelRt.anchorMin = new Vector2(0f, 0f);
-            panelRt.anchorMax = new Vector2(0.42f, 0.28f);
+            panelRt.anchorMax = new Vector2(0.30f, 0.16f);
             panelRt.offsetMin = new Vector2(12f, 12f);
             panelRt.offsetMax = new Vector2(-8f, -8f);
 
@@ -150,8 +156,8 @@ namespace Sugoroku.UI
             var logRt = log.GetComponent<RectTransform>();
             logRt.anchorMin = Vector2.zero;
             logRt.anchorMax = Vector2.one;
-            logRt.offsetMin = new Vector2(12f, 10f);
-            logRt.offsetMax = new Vector2(-12f, -10f);
+            logRt.offsetMin = new Vector2(10f, 8f);
+            logRt.offsetMax = new Vector2(-10f, -8f);
 
             var tmp = log.GetComponent<TextMeshProUGUI>();
             if (tmp != null)
@@ -161,19 +167,28 @@ namespace Sugoroku.UI
             }
         }
 
+        private static void HideSquareLegend(Transform canvas)
+        {
+            var panel = canvas.Find("SquareLegendPanel");
+            if (panel != null)
+                panel.gameObject.SetActive(false);
+        }
+
         private static void LayoutSquareLegend(Transform canvas)
         {
-            var panel = EnsurePanel(canvas, "SquareLegendPanel", new Color(0.035f, 0.045f, 0.08f, 0.88f));
+            var panel = EnsurePanel(canvas, "SquareLegendPanel", new Color(0.12f, 0.14f, 0.20f, 0.88f));
+            panel.gameObject.SetActive(true);
+            GameUiChrome.ApplyAccentRail(panel, new Color(0.56f, 0.78f, 0.58f, 0.78f), 4f);
             var rt = panel.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
             rt.pivot = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-20f, -ResourceHudVisuals.TopBarHeight - 68f);
-            rt.sizeDelta = new Vector2(268f, 460f);
+            rt.anchoredPosition = new Vector2(-18f, -ResourceHudVisuals.TopBarHeight - 56f);
+            rt.sizeDelta = new Vector2(246f, 372f);
 
             var v = panel.GetComponent<VerticalLayoutGroup>();
             if (v == null) v = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            v.padding = new RectOffset(12, 12, 10, 10);
-            v.spacing = 6f;
+            v.padding = new RectOffset(10, 10, 8, 8);
+            v.spacing = 3f;
             v.childAlignment = TextAnchor.UpperLeft;
             v.childControlWidth = true;
             v.childControlHeight = false;
@@ -182,7 +197,8 @@ namespace Sugoroku.UI
 
             var fitter = panel.GetComponent<ContentSizeFitter>();
             if (fitter == null) fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.enabled = false;
+            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             EnsureLegendTitle(panel, "LegendTitle", "マス凡例");
@@ -215,12 +231,12 @@ namespace Sugoroku.UI
 
             var tmp = title.GetComponent<TextMeshProUGUI>() ?? title.gameObject.AddComponent<TextMeshProUGUI>();
             tmp.text = label;
-            HudTextStyle.ApplyReadable(tmp, 16f, new Color(1f, 0.95f, 0.74f), true);
+            HudTextStyle.ApplyReadable(tmp, HudTextStyle.Scale(16f), new Color(1f, 0.95f, 0.74f), true);
             tmp.raycastTarget = false;
             JapaneseFontProvider.Apply(tmp);
 
             var le = title.GetComponent<LayoutElement>() ?? title.gameObject.AddComponent<LayoutElement>();
-            le.preferredHeight = 22f;
+            le.preferredHeight = LegendRowHeight;
         }
 
         private static void EnsureLegendRow(Transform panel, string name, SquareType type, string label, string effect)
@@ -242,7 +258,7 @@ namespace Sugoroku.UI
             h.childForceExpandHeight = false;
 
             var le = row.GetComponent<LayoutElement>() ?? row.gameObject.AddComponent<LayoutElement>();
-            le.preferredHeight = 24f;
+            le.preferredHeight = LegendRowHeight;
 
             var swatch = row.Find("Swatch");
             if (swatch == null)
@@ -253,13 +269,13 @@ namespace Sugoroku.UI
             }
 
             var swatchRt = swatch.GetComponent<RectTransform>();
-            swatchRt.sizeDelta = new Vector2(18f, 18f);
+            swatchRt.sizeDelta = new Vector2(LegendSwatchSize, LegendSwatchSize);
             var img = swatch.GetComponent<Image>() ?? swatch.gameObject.AddComponent<Image>();
             img.color = EventTagColors.GetSquareTypePanelColor(type);
             img.raycastTarget = false;
             var swatchLe = swatch.GetComponent<LayoutElement>() ?? swatch.gameObject.AddComponent<LayoutElement>();
-            swatchLe.preferredWidth = 18f;
-            swatchLe.preferredHeight = 18f;
+            swatchLe.preferredWidth = LegendSwatchSize;
+            swatchLe.preferredHeight = LegendSwatchSize;
 
             var text = row.Find("Text");
             if (text == null)
@@ -271,14 +287,14 @@ namespace Sugoroku.UI
 
             var tmp = text.GetComponent<TextMeshProUGUI>() ?? text.gameObject.AddComponent<TextMeshProUGUI>();
             tmp.text = $"{label}: {effect}";
-            HudTextStyle.ApplyReadable(tmp, 13f, new Color(0.9f, 0.93f, 1f), false);
+            HudTextStyle.ApplyReadable(tmp, LegendFontSize, new Color(0.9f, 0.93f, 1f), false);
             tmp.raycastTarget = false;
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
             JapaneseFontProvider.Apply(tmp);
 
             var textLe = text.GetComponent<LayoutElement>() ?? text.gameObject.AddComponent<LayoutElement>();
             textLe.flexibleWidth = 1f;
-            textLe.preferredWidth = 206f;
+            textLe.preferredWidth = 194f;
         }
 
         private static void EnsureTagLegendRow(Transform panel, string name, string tag, string label)
@@ -300,7 +316,7 @@ namespace Sugoroku.UI
             h.childForceExpandHeight = false;
 
             var le = row.GetComponent<LayoutElement>() ?? row.gameObject.AddComponent<LayoutElement>();
-            le.preferredHeight = 24f;
+            le.preferredHeight = LegendRowHeight;
 
             var swatch = row.Find("Swatch");
             if (swatch == null)
@@ -311,13 +327,13 @@ namespace Sugoroku.UI
             }
 
             var swatchRt = swatch.GetComponent<RectTransform>();
-            swatchRt.sizeDelta = new Vector2(18f, 18f);
+            swatchRt.sizeDelta = new Vector2(LegendSwatchSize, LegendSwatchSize);
             var img = swatch.GetComponent<Image>() ?? swatch.gameObject.AddComponent<Image>();
             img.color = EventTagColors.GetPanelColor(new[] { tag });
             img.raycastTarget = false;
             var swatchLe = swatch.GetComponent<LayoutElement>() ?? swatch.gameObject.AddComponent<LayoutElement>();
-            swatchLe.preferredWidth = 18f;
-            swatchLe.preferredHeight = 18f;
+            swatchLe.preferredWidth = LegendSwatchSize;
+            swatchLe.preferredHeight = LegendSwatchSize;
 
             var text = row.Find("Text");
             if (text == null)
@@ -329,14 +345,14 @@ namespace Sugoroku.UI
 
             var tmp = text.GetComponent<TextMeshProUGUI>() ?? text.gameObject.AddComponent<TextMeshProUGUI>();
             tmp.text = label;
-            HudTextStyle.ApplyReadable(tmp, 13f, new Color(0.9f, 0.93f, 1f), false);
+            HudTextStyle.ApplyReadable(tmp, LegendFontSize, new Color(0.9f, 0.93f, 1f), false);
             tmp.raycastTarget = false;
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
             JapaneseFontProvider.Apply(tmp);
 
             var textLe = text.GetComponent<LayoutElement>() ?? text.gameObject.AddComponent<LayoutElement>();
             textLe.flexibleWidth = 1f;
-            textLe.preferredWidth = 206f;
+            textLe.preferredWidth = 194f;
         }
 
         private static Transform EnsurePanel(Transform canvas, string name, Color bgColor)
@@ -352,15 +368,12 @@ namespace Sugoroku.UI
             var img = panel.GetComponent<Image>() ?? panel.gameObject.AddComponent<Image>();
             img.color = bgColor;
             img.raycastTarget = false;
+            GameUiChrome.ApplySurface(panel, bgColor);
             return panel;
         }
 
         private void LayoutActionArea(Transform canvas)
         {
-            var roll  = canvas.Find("RollButton");
-            var skill = canvas.Find("SkillButton");
-            if (roll == null && skill == null) return;
-
             Transform panel = canvas.Find("ActionPanel");
             if (panel == null)
             {
@@ -369,48 +382,96 @@ namespace Sugoroku.UI
                 panel = panelGo.transform;
             }
 
+            var roll  = FindDeep(canvas, "RollButton");
+            var skill = FindDeep(canvas, "SkillButton");
+            var dice  = FindDeep(canvas, "DiceResult");
+            if (roll == null && skill == null && dice == null) return;
+
             var panelRt = panel.GetComponent<RectTransform>();
             panelRt.anchorMin = panelRt.anchorMax = new Vector2(1f, 0f);
             panelRt.pivot     = new Vector2(1f, 0f);
             panelRt.anchoredPosition = -actionPanelPadding;
-            panelRt.sizeDelta = new Vector2(280f, 200f);
+            panelRt.sizeDelta = new Vector2(264f, 204f);
+            GameUiChrome.ApplySurface(panel, new Color(0.10f, 0.12f, 0.18f, 0.88f));
+            GameUiChrome.ApplyAccentRail(panel, new Color(0.86f, 0.68f, 0.28f, 0.82f), 4f);
 
             var v = panel.GetComponent<VerticalLayoutGroup>();
-            if (v == null) v = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-            v.spacing = 12f;
-            v.childAlignment = TextAnchor.LowerRight;
-            v.childControlWidth  = false;
-            v.childControlHeight = false;
-            v.childForceExpandWidth  = false;
-            v.childForceExpandHeight = false;
+            if (v != null) v.enabled = false;
+            var fitter = panel.GetComponent<ContentSizeFitter>();
+            if (fitter != null) fitter.enabled = false;
 
             if (roll != null)
             {
                 roll.SetParent(panel, false);
+                roll.SetAsLastSibling();
+                LayoutActionChild(roll, new Vector2(-8f, -52f), actionButtonSize);
                 SetupActionButton(roll, "ダイスを振る", true);
             }
             if (skill != null)
             {
                 skill.SetParent(panel, false);
+                skill.SetAsLastSibling();
+                LayoutActionChild(skill, new Vector2(-8f, -120f), actionButtonSize);
                 SetupActionButton(skill, "ワザ", false);
             }
 
-            var dice = canvas.Find("DiceResult");
             if (dice != null)
             {
                 dice.SetParent(panel, false);
-                var diceRt = dice.GetComponent<RectTransform>();
-                diceRt.anchorMin = new Vector2(0f, 1f);
-                diceRt.anchorMax = new Vector2(1f, 1f);
-                diceRt.pivot     = new Vector2(0.5f, 1f);
-                diceRt.anchoredPosition = new Vector2(0f, -4f);
-                diceRt.sizeDelta = new Vector2(0f, 44f);
+                dice.SetAsFirstSibling();
+                LayoutActionChild(dice, new Vector2(-8f, -10f), new Vector2(214f, 32f));
                 var le = dice.GetComponent<LayoutElement>() ?? dice.gameObject.AddComponent<LayoutElement>();
-                le.preferredHeight = 44f;
-                le.flexibleWidth   = 1f;
+                le.ignoreLayout = true;
                 var tmp = dice.GetComponent<TextMeshProUGUI>();
                 if (tmp != null)
-                    HudTextStyle.ApplyReadable(tmp, 24f, Color.white, true);
+                {
+                    tmp.alignment = TextAlignmentOptions.MidlineRight;
+                    HudTextStyle.ApplyReadable(tmp, HudTextStyle.Scale(16f), Color.white, true);
+                    tmp.margin = new Vector4(44f, 0f, 4f, 0f);
+                }
+
+                LayoutDiceIcon(dice);
+            }
+
+            panel.SetAsLastSibling();
+        }
+
+        private static void LayoutActionChild(Transform child, Vector2 anchoredPosition, Vector2 size)
+        {
+            if (child == null) return;
+            var rt = child.GetComponent<RectTransform>();
+            if (rt == null) return;
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(1f, 1f);
+            rt.anchoredPosition = anchoredPosition;
+            rt.sizeDelta = size;
+
+            var le = child.GetComponent<LayoutElement>() ?? child.gameObject.AddComponent<LayoutElement>();
+            le.ignoreLayout = true;
+            le.preferredWidth = size.x;
+            le.preferredHeight = size.y;
+        }
+
+        private static void LayoutDiceIcon(Transform dice)
+        {
+            if (dice == null) return;
+            var icon = FindDeep(dice, "DiceIcon");
+            if (icon == null) return;
+
+            icon.SetParent(dice, false);
+            var rt = icon.GetComponent<RectTransform>();
+            if (rt == null) return;
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(4f, 0f);
+            rt.sizeDelta = new Vector2(32f, 32f);
+            icon.SetAsFirstSibling();
+
+            var img = icon.GetComponent<Image>();
+            if (img != null)
+            {
+                img.raycastTarget = false;
+                img.preserveAspect = true;
             }
         }
 
@@ -428,7 +489,12 @@ namespace Sugoroku.UI
             if (labelT != null)
             {
                 labelT.text = label;
-                HudTextStyle.ApplyReadable(labelT, 22f, Color.white, true);
+                HudTextStyle.ApplyReadable(labelT, HudTextStyle.Scale(17f), Color.white, true);
+                if (primary)
+                {
+                    labelT.color = GameUiChrome.PrimaryText;
+                    HudTextStyle.ApplyOutlineSafe(labelT, 0f, Color.clear);
+                }
             }
         }
 
@@ -441,6 +507,7 @@ namespace Sugoroku.UI
             rt.pivot     = new Vector2(1f, 1f);
             rt.anchoredPosition = new Vector2(-20f, -ResourceHudVisuals.TopBarHeight - 12f);
             rt.sizeDelta = new Vector2(120f, 44f);
+            menu.SetAsLastSibling();
         }
 
         private static Transform FindDeep(Transform root, string name)

@@ -60,7 +60,7 @@ namespace Sugoroku.Board
         public void Shake(float intensity, float duration)
         {
             if (_shakeRoutine != null) StopCoroutine(_shakeRoutine);
-            _shakeRoutine = StartCoroutine(ShakeCoroutine(intensity, duration));
+            _shakeRoutine = StartCoroutine(ShakeCoroutine(intensity, GameConfig.AnimationDuration(duration)));
         }
 
         private IEnumerator ShakeCoroutine(float intensity, float duration)
@@ -72,8 +72,9 @@ namespace Sugoroku.Board
             {
                 elapsed += Time.deltaTime;
                 float t = 1f - elapsed / duration;
-                float x = (Mathf.PerlinNoise(elapsed * 40f, 0f) - 0.5f) * 2f * intensity * t;
-                float y = (Mathf.PerlinNoise(0f, elapsed * 40f) - 0.5f) * 2f * intensity * t;
+                float phase = elapsed / GameConfig.AnimationDurationScale;
+                float x = (Mathf.PerlinNoise(phase * 40f, 0f) - 0.5f) * 2f * intensity * t;
+                float y = (Mathf.PerlinNoise(0f, phase * 40f) - 0.5f) * 2f * intensity * t;
                 transform.position = origin + new Vector3(x, y, 0f);
                 yield return null;
             }
@@ -209,7 +210,7 @@ namespace Sugoroku.Board
             float startOrtho = _camera.orthographicSize;
             Vector3 startPos = transform.position;
             float elapsed = 0f;
-            const float dur = 0.35f;
+            float dur = GameConfig.AnimationDuration(0.35f);
 
             while (elapsed < dur)
             {

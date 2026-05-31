@@ -97,7 +97,7 @@ namespace Sugoroku.UI
                         go.transform.SetParent(_rankingParent, false);
                         var tmp = go.AddComponent<TextMeshProUGUI>();
                         tmp.text = line;
-                        tmp.fontSize = 14;
+                        tmp.fontSize = HudTextStyle.Scale(14f);
                     }
                 }
             }

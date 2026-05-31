@@ -9,7 +9,7 @@ namespace Sugoroku.UI
     /// <summary>screen.md §3.2 — 4大リソース HUD の表記とアイコン色。</summary>
     public static class ResourceHudVisuals
     {
-        public const float TopBarHeight = 100f;
+        public const float TopBarHeight = 90f;
 
         public static readonly Color MoneyTextColor  = new(1f, 0.92f, 0.45f);
         public static readonly Color IfTextColor     = new(0.55f, 0.85f, 1f);
@@ -43,8 +43,9 @@ namespace Sugoroku.UI
             }
 
             var bg = bar.GetComponent<Image>() ?? bar.gameObject.AddComponent<Image>();
-            bg.color = new Color(0.03f, 0.05f, 0.12f, 0.96f);
+            bg.color = new Color(0.14f, 0.18f, 0.26f, 0.92f);
             bg.raycastTarget = false;
+            GameUiChrome.ApplySurface(bar, new Color(0.12f, 0.15f, 0.21f, 0.94f));
 
             var rt = bar.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0f, 1f);
@@ -71,8 +72,8 @@ namespace Sugoroku.UI
 
             var h = bar.GetComponent<HorizontalLayoutGroup>();
             if (h == null) h = bar.gameObject.AddComponent<HorizontalLayoutGroup>();
-            h.spacing = 12f;
-            h.padding = new RectOffset(20, 20, 10, 10);
+            h.spacing = 8f;
+            h.padding = new RectOffset(12, 12, 6, 6);
             h.childAlignment = TextAnchor.MiddleCenter;
             h.childControlWidth = h.childControlHeight = true;
             h.childForceExpandWidth = true;
@@ -154,16 +155,28 @@ namespace Sugoroku.UI
                 var cellGo = new GameObject(cellName, typeof(RectTransform));
                 cellGo.transform.SetParent(bar, false);
                 cell = cellGo.transform;
-                var row = cellGo.AddComponent<HorizontalLayoutGroup>();
-                row.spacing = 8f;
-                row.childAlignment = TextAnchor.MiddleCenter;
-                row.childControlWidth = row.childControlHeight = true;
-                row.childForceExpandWidth = false;
-                row.childForceExpandHeight = true;
-                var le = cellGo.AddComponent<LayoutElement>();
-                le.flexibleWidth = 1f;
-                le.minHeight = 40f;
             }
+
+            var row = cell.GetComponent<HorizontalLayoutGroup>() ?? cell.gameObject.AddComponent<HorizontalLayoutGroup>();
+            row.spacing = 6f;
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.childControlWidth = row.childControlHeight = true;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = true;
+            var le = cell.GetComponent<LayoutElement>() ?? cell.gameObject.AddComponent<LayoutElement>();
+            le.flexibleWidth = 1f;
+            le.minHeight = 42f;
+            le.preferredHeight = 56f;
+
+            Color accent = iconKind switch
+            {
+                KenneyAssets.ResourceIcon.Money => MoneyIconTint,
+                KenneyAssets.ResourceIcon.IfScore => IfIconTint,
+                KenneyAssets.ResourceIcon.Mental => new Color(0.52f, 0.88f, 0.56f),
+                KenneyAssets.ResourceIcon.Virtue => VirtueIconTint,
+                _ => Color.white
+            };
+            GameUiChrome.ApplyStatCell(cell, accent);
 
             if (text.parent != cell)
                 text.SetParent(cell, false);
@@ -178,15 +191,15 @@ namespace Sugoroku.UI
             {
                 tmp.alignment = TextAlignmentOptions.Left;
                 var textRt = text.GetComponent<RectTransform>();
-                textRt.sizeDelta = new Vector2(0f, 40f);
+                textRt.sizeDelta = new Vector2(0f, 42f);
                 var textLe = text.GetComponent<LayoutElement>();
                 if (textLe == null) textLe = text.gameObject.AddComponent<LayoutElement>();
                 textLe.flexibleWidth = 1f;
-                textLe.minHeight = 36f;
+                textLe.minHeight = 40f;
             }
 
             var iconRt = cell.Find(iconName)?.GetComponent<RectTransform>();
-            if (iconRt != null) iconRt.sizeDelta = new Vector2(40f, 40f);
+            if (iconRt != null) iconRt.sizeDelta = new Vector2(32f, 32f);
         }
 
         public static Color GetMentalIconColor(PlayerData player)

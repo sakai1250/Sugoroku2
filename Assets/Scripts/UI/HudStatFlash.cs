@@ -104,7 +104,7 @@ namespace Sugoroku.UI
             var baseScale = rt.localScale;
             var basePos   = rt.anchoredPosition;
 
-            const float flashIn = 0.1f;
+            float flashIn = GameConfig.AnimationDuration(0.1f);
             float elapsed = 0f;
             while (elapsed < flashIn)
             {
@@ -117,7 +117,7 @@ namespace Sugoroku.UI
 
             tmp.color = glow;
             elapsed = 0f;
-            float pulseDur = flashDuration - flashIn;
+            float pulseDur = GameConfig.AnimationDuration(flashDuration) - flashIn;
             while (elapsed < pulseDur)
             {
                 elapsed += Time.deltaTime;
@@ -156,10 +156,11 @@ namespace Sugoroku.UI
             var basePos   = rt != null ? rt.anchoredPosition : Vector2.zero;
 
             float elapsed = 0f;
-            while (elapsed < flashDuration)
+            float scaledDuration = GameConfig.AnimationDuration(flashDuration);
+            while (elapsed < scaledDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / flashDuration;
+                float t = elapsed / scaledDuration;
                 float pulse = Mathf.Sin(t * Mathf.PI);
                 img.color = Color.Lerp(baseCol, glow, pulse);
 
@@ -191,10 +192,11 @@ namespace Sugoroku.UI
             var baseCol = img.color;
             var glow    = positive ? IncreaseGlow : DecreaseGlow;
             float elapsed = 0f;
-            while (elapsed < flashDuration)
+            float scaledDuration = GameConfig.AnimationDuration(flashDuration);
+            while (elapsed < scaledDuration)
             {
                 elapsed += Time.deltaTime;
-                float pulse = Mathf.Sin((elapsed / flashDuration) * Mathf.PI);
+                float pulse = Mathf.Sin((elapsed / scaledDuration) * Mathf.PI);
                 img.color = Color.Lerp(baseCol, glow, pulse);
                 yield return null;
             }

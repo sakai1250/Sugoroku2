@@ -105,18 +105,29 @@ namespace Sugoroku.Game
 
             float elapsed = 0f;
             Vector3 start = piece.transform.position;
-            float dur = GameConfig.PieceMoveDuration;
+            Vector3 baseScale = piece.transform.localScale;
+            float dur = GameConfig.AnimationDuration(GameConfig.PieceMoveDuration);
 
             while (elapsed < dur)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / dur;
-                float arc = Mathf.Sin(t * Mathf.PI) * 0.5f;
-                piece.transform.position = Vector3.Lerp(start, target, t) + Vector3.up * arc;
+                float t = Mathf.Clamp01(elapsed / dur);
+                float eased = Mathf.SmoothStep(0f, 1f, t);
+                float arc = Mathf.Sin(eased * Mathf.PI) * 0.5f;
+                float stretch = Mathf.Sin(eased * Mathf.PI);
+                piece.transform.position = Vector3.Lerp(start, target, eased) + Vector3.up * arc;
+                piece.transform.localScale = new Vector3(
+                    baseScale.x * (1f - 0.08f * stretch),
+                    baseScale.y * (1f + 0.10f * stretch),
+                    baseScale.z);
                 BoardCameraController.Instance?.FollowPosition(piece.transform.position);
                 yield return null;
             }
             piece.transform.position = target;
+            piece.transform.localScale = new Vector3(baseScale.x * 1.08f, baseScale.y * 0.90f, baseScale.z);
+            BoardEffectPresenter.Instance?.PlayStepLanding(player, target);
+            yield return new WaitForSeconds(GameConfig.AnimationDuration(0.04f));
+            piece.transform.localScale = baseScale;
         }
 
         private IEnumerator MassCheckCoroutine(PlayerData player)

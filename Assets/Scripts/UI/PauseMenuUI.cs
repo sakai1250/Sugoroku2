@@ -25,6 +25,7 @@ namespace Sugoroku.UI
             _scoreBreakdownText ??= transform.Find("ScoreBreakdownText")?.GetComponent<TextMeshProUGUI>();
             _resumeButton ??= transform.Find("ResumeButton")?.GetComponent<Button>();
             _titleButton ??= transform.Find("TitleButton")?.GetComponent<Button>();
+            ApplyChrome();
             if (_panel != null) _panel.SetActive(false);
             _resumeButton?.onClick.AddListener(Close);
             _titleButton?.onClick.AddListener(GoToTitle);
@@ -75,6 +76,22 @@ namespace Sugoroku.UI
             Time.timeScale = 1f;
             if (GameManager.Instance != null) Destroy(GameManager.Instance.gameObject);
             SceneManager.LoadScene("TitleScene");
+        }
+
+        private void ApplyChrome()
+        {
+            if (_panel != null)
+            {
+                GameUiChrome.ApplySurface(_panel.transform, new Color(0.12f, 0.14f, 0.20f, 0.98f));
+                GameUiChrome.ApplyAccentRail(_panel.transform, new Color(0.86f, 0.68f, 0.28f, 0.88f), 6f);
+            }
+
+            if (_statusTitleText != null)
+                GameUiChrome.ApplyReadable(_statusTitleText, new Color(1f, 0.94f, 0.70f, 1f), FontStyles.Bold);
+            if (_scoreBreakdownText != null)
+                GameUiChrome.ApplyReadable(_scoreBreakdownText, GameUiChrome.MutedText);
+            if (_resumeButton != null) GameUiChrome.ApplyButton(_resumeButton, primary: true);
+            if (_titleButton != null) GameUiChrome.ApplyButton(_titleButton, primary: false);
         }
     }
 }

@@ -109,7 +109,7 @@ namespace Sugoroku.Editor
             portraitRt.anchoredPosition = new Vector2(380, 60);
             portraitRt.sizeDelta = new Vector2(200, 200);
 
-            CreateTMP(root.transform, "ClassNameText", "多趣味系 (Hobbyist)", 28, new Vector2(380, 200));
+            CreateTMP(root.transform, "ClassNameText", "多趣味系", 28, new Vector2(380, 200));
             CreateTMP(root.transform, "TraitNameText", "固有特性: 一旦逃避", 20, new Vector2(380, 140));
             var traitDesc = CreateTMP(root.transform, "TraitDescText", "特性説明", 16, new Vector2(380, 60));
             traitDesc.alignment = TextAlignmentOptions.Left;
@@ -130,7 +130,7 @@ namespace Sugoroku.Editor
         private static void CreateGameWorldScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            SetupCamera(new Color(0.1f, 0.15f, 0.1f), 10f, addBoardCam: true);
+            SetupCamera(new Color(0.62f, 0.72f, 0.64f), 10f, addBoardCam: true);
 
             var boardGo = new GameObject("Board");
             boardGo.AddComponent<BoardManager>();
@@ -159,7 +159,7 @@ namespace Sugoroku.Editor
             var barGo = new GameObject("ResourceBar");
             barGo.transform.SetParent(canvasGo.transform, false);
             var barImg = barGo.AddComponent<Image>();
-            barImg.color = new Color(0.05f, 0.06f, 0.12f, 0.92f);
+            barImg.color = new Color(0.14f, 0.18f, 0.26f, 0.92f);
             var barRt = barGo.GetComponent<RectTransform>();
             barRt.anchorMin = new Vector2(0, 1);
             barRt.anchorMax = new Vector2(1, 1);

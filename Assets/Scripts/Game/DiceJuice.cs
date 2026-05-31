@@ -57,7 +57,7 @@ namespace Sugoroku.Game
                     flash       = Mathf.Lerp(1f, 1.35f, Mathf.Sin(t * Mathf.PI * 4f) * (1f - eased))
                 });
 
-                float wait = Mathf.Lerp(TickInterval * 1.2f, TickInterval * 0.55f, eased);
+                float wait = GameConfig.AnimationDuration(Mathf.Lerp(TickInterval * 1.2f, TickInterval * 0.55f, eased));
                 yield return new WaitForSeconds(wait);
             }
 
@@ -65,10 +65,11 @@ namespace Sugoroku.Game
             onFaceShown?.Invoke(finalValue);
 
             float elapsed = 0f;
-            while (elapsed < SettleDuration)
+            float settleDuration = GameConfig.AnimationDuration(SettleDuration);
+            while (elapsed < settleDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / SettleDuration;
+                float t = elapsed / settleDuration;
                 float bounce = Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2.5f)) * (1f - t) * 0.2f;
                 float punch = 1f + (1f - t) * (1f - t) * 0.18f;
 
@@ -133,10 +134,11 @@ namespace Sugoroku.Game
             if (target == null) yield break;
             var baseScale = target.localScale;
             float elapsed = 0f;
-            while (elapsed < duration)
+            float scaledDuration = GameConfig.AnimationDuration(duration);
+            while (elapsed < scaledDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / duration;
+                float t = elapsed / scaledDuration;
                 float s = Mathf.Lerp(peak, 1f, EaseOutBack(t));
                 target.localScale = baseScale * s;
                 yield return null;

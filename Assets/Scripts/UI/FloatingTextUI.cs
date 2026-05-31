@@ -62,11 +62,10 @@ namespace Sugoroku.UI
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text      = text;
             tmp.color     = color;
-            tmp.fontSize  = 22;
+            tmp.fontSize  = HudTextStyle.Scale(22f);
             tmp.fontStyle = FontStyles.Bold;
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.outlineWidth = 0.18f;
-            tmp.outlineColor = new Color(0f, 0f, 0f, 0.8f);
+            HudTextStyle.ApplyOutlineSafe(tmp, 0.18f, new Color(0f, 0f, 0f, 0.8f));
 
             var rt = go.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(300f, 44f);
@@ -82,7 +81,7 @@ namespace Sugoroku.UI
                 rt.anchoredPosition = localPos;
             }
 
-            float dur = GameConfig.FloatingTextDuration;
+            float dur = GameConfig.AnimationDuration(GameConfig.FloatingTextDuration);
             Vector2 startPos = rt.anchoredPosition;
             const float rise = 55f;
 

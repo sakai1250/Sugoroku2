@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Sugoroku.Board;
 using Sugoroku.Visual;
 
 namespace Sugoroku.UI
@@ -14,7 +15,7 @@ namespace Sugoroku.UI
             if (canvas == null) return;
 
             foreach (var btn in canvas.GetComponentsInChildren<Button>(includeInactive))
-                StyleButton(btn);
+                StyleButton(btn, IsPrimaryButton(btn));
 
             foreach (var slider in canvas.GetComponentsInChildren<Slider>(includeInactive))
                 StyleSlider(slider);
@@ -26,45 +27,55 @@ namespace Sugoroku.UI
         {
             if (button == null) return;
 
-            var img = button.GetComponent<Image>();
-            if (img == null) return;
-
-            var sprite = KenneyAssets.LoadSprite(isPrimary
-                ? KenneyAssets.UiPack.ButtonDepth
-                : KenneyAssets.UiPack.ButtonFlat);
-
-            if (sprite != null)
-            {
-                img.sprite = sprite;
-                img.type = Image.Type.Simple;
-                img.color = Color.white;
-            }
+            GameUiChrome.ApplyButton(button, isPrimary);
 
             if (button.GetComponent<Sugoroku.Audio.UiSoundPlayer>() == null)
                 button.gameObject.AddComponent<Sugoroku.Audio.UiSoundPlayer>();
+        }
+
+        private static bool IsPrimaryButton(Button button)
+        {
+            if (button == null) return false;
+            string n = button.name;
+            return n.Contains("Start") ||
+                   n.Contains("Roll") ||
+                   n.Contains("Confirm") ||
+                   n.Contains("Resume");
         }
 
         public static void StyleSlider(Slider slider)
         {
             if (slider == null) return;
 
-            var track = KenneyAssets.LoadSprite(KenneyAssets.UiPack.SliderTrack);
-            var fill  = KenneyAssets.LoadSprite(KenneyAssets.UiPack.SliderFill);
+            var square = BoardVisualUtility.GetSquareSprite();
 
-            if (slider.fillRect != null && fill != null)
+            var bgImg = slider.transform.Find("Background")?.GetComponent<Image>();
+            if (bgImg != null)
+            {
+                bgImg.sprite = square;
+                bgImg.type = Image.Type.Sliced;
+                bgImg.color = new Color(0.09f, 0.11f, 0.16f, 0.92f);
+            }
+
+            if (slider.fillRect != null)
             {
                 var fillImg = slider.fillRect.GetComponent<Image>();
                 if (fillImg != null)
                 {
-                    fillImg.sprite = fill;
-                    fillImg.color = new Color(0.35f, 0.75f, 0.45f);
+                    fillImg.sprite = square;
+                    fillImg.type = Image.Type.Sliced;
+                    fillImg.color = new Color(0.56f, 0.82f, 0.56f);
                 }
             }
 
-            if (slider.targetGraphic is Image bg && track != null)
+            var handleImg = slider.handleRect != null
+                ? slider.handleRect.GetComponent<Image>()
+                : slider.targetGraphic as Image;
+            if (handleImg != null)
             {
-                bg.sprite = track;
-                bg.color = new Color(0.35f, 0.35f, 0.4f);
+                handleImg.sprite = square;
+                handleImg.type = Image.Type.Sliced;
+                handleImg.color = new Color(0.92f, 0.84f, 0.60f, 1f);
             }
         }
 
@@ -87,33 +98,24 @@ namespace Sugoroku.UI
 
             if (iconTransform == null)
             {
-                var diceRt = diceText as RectTransform;
-                var parent = diceRt != null ? diceRt.parent : canvasRoot;
-
                 var go = new GameObject("DiceIcon", typeof(RectTransform), typeof(Image));
-                go.transform.SetParent(parent, false);
-
-                var rt = go.GetComponent<RectTransform>();
-                if (diceRt != null)
-                {
-                    rt.anchorMin = diceRt.anchorMin;
-                    rt.anchorMax = diceRt.anchorMax;
-                    rt.pivot     = new Vector2(1f, 0.5f);
-                    rt.anchoredPosition = diceRt.anchoredPosition + new Vector2(-110f, 0f);
-                    rt.sizeDelta = new Vector2(72f, 72f);
-                }
-                else
-                {
-                    rt.sizeDelta = new Vector2(72f, 72f);
-                }
-
+                go.transform.SetParent(diceText, false);
                 img = go.GetComponent<Image>();
             }
             else
             {
+                iconTransform.SetParent(diceText, false);
                 img = iconTransform.GetComponent<Image>();
                 if (img == null) img = iconTransform.gameObject.AddComponent<Image>();
             }
+
+            var iconRt = img.rectTransform;
+            iconRt.anchorMin = iconRt.anchorMax = new Vector2(0f, 0.5f);
+            iconRt.pivot = new Vector2(0f, 0.5f);
+            iconRt.anchoredPosition = new Vector2(4f, 0f);
+            iconRt.sizeDelta = new Vector2(32f, 32f);
+            iconRt.SetAsFirstSibling();
+            img.raycastTarget = false;
 
             ApplyDiceIconSprite(img, 6);
             return img;

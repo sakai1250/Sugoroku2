@@ -9,11 +9,11 @@ namespace Sugoroku.UI
     /// <summary>screen.md §4.1 — イベントモーダルのレイアウト。</summary>
     public static class EventModalLayout
     {
-        public const float BodyFontSize    = 14f;
-        public const float TitleFontSize   = 26f;
-        public const float TagFontSize     = 12f;
-        public const float ChoiceFontSize  = 16f;
-        public const float PreviewFontSize = 12f;
+        public const float BodyFontSize    = 14f * HudTextStyle.TextScale;
+        public const float TitleFontSize   = 26f * HudTextStyle.TextScale;
+        public const float TagFontSize     = 12f * HudTextStyle.TextScale;
+        public const float ChoiceFontSize  = 16f * HudTextStyle.TextScale;
+        public const float PreviewFontSize = 12f * HudTextStyle.TextScale;
         public const float DisabledAlpha   = 0.4f;
 
         public static void Apply(Transform modalRoot, EventMaster ev)
@@ -24,6 +24,7 @@ namespace Sugoroku.UI
             if (canvas != null)
                 modalRoot.SetAsLastSibling();
 
+            GameUiChrome.ApplySurface(modalRoot, new Color(0.12f, 0.14f, 0.20f, 0.98f));
             EnsureHeader(modalRoot, ev);
             ApplyDescriptionStyle(modalRoot);
             EnsureChoiceList(modalRoot);
@@ -99,6 +100,7 @@ namespace Sugoroku.UI
                 go.transform.SetParent(badgeArea, false);
                 var img = go.AddComponent<Image>();
                 img.color = EventTagColors.GetPanelColor(new[] { tag });
+                GameUiChrome.ApplySurface(go.transform, EventTagColors.GetPanelColor(new[] { tag }), accent: false);
                 var rt = go.GetComponent<RectTransform>();
                 rt.sizeDelta = new Vector2(90f, 26f);
 
@@ -123,6 +125,7 @@ namespace Sugoroku.UI
             if (desc == null) return;
             desc.fontSize = BodyFontSize;
             desc.alignment = TextAlignmentOptions.TopLeft;
+            desc.color = GameUiChrome.MutedText;
             desc.textWrappingMode = TextWrappingModes.Normal;
             desc.raycastTarget = false;
             var rt = desc.rectTransform;

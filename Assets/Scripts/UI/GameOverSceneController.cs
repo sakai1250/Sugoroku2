@@ -22,6 +22,7 @@ namespace Sugoroku.UI
             _titleButton ??= FindBtn("TitleButton");
             _juice       ??= GetComponent<GameOverSceneJuice>();
             if (_juice == null) _juice = gameObject.AddComponent<GameOverSceneJuice>();
+            ApplyChrome();
             if (_titleButton != null) _titleButton.onClick.AddListener(() => SceneManager.LoadScene("TitleScene"));
             ApplyReason(GameSession.LastGameOverReason);
         }
@@ -68,5 +69,17 @@ namespace Sugoroku.UI
 
         private TextMeshProUGUI FindTmp(string n) => transform.Find(n)?.GetComponent<TextMeshProUGUI>();
         private Button FindBtn(string n) => transform.Find(n)?.GetComponent<Button>();
+
+        private void ApplyChrome()
+        {
+            GameUiChrome.ApplySurface(transform, new Color(0.08f, 0.08f, 0.10f, 0.98f));
+            GameUiChrome.ApplyAccentRail(transform, new Color(0.86f, 0.24f, 0.20f, 0.90f), 6f);
+            if (_titleText != null)
+                GameUiChrome.ApplyReadable(_titleText, new Color(1f, 0.78f, 0.70f, 1f), FontStyles.Bold);
+            if (_bodyText != null)
+                GameUiChrome.ApplyReadable(_bodyText, new Color(0.86f, 0.86f, 0.90f, 1f));
+            if (_titleButton != null)
+                GameUiChrome.ApplyButton(_titleButton, primary: false);
+        }
     }
 }

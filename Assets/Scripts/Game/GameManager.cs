@@ -84,6 +84,7 @@ namespace Sugoroku.Game
 
             _pieces = new GameObject[total];
             SpawnPieces();
+            BoardEffectPresenter.EnsureSceneInstance();
 
             var boardCam = Object.FindFirstObjectByType<Board.BoardCameraController>();
             if (boardCam != null)

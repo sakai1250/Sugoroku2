@@ -74,12 +74,14 @@ namespace Sugoroku.UI
             var rt = root.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot     = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = new Vector2(0f, -(ResourceHudVisuals.TopBarHeight + 8f));
-            rt.sizeDelta = new Vector2(1100f, 64f);
+            rt.anchoredPosition = new Vector2(0f, -(ResourceHudVisuals.TopBarHeight + 6f));
+            rt.sizeDelta = new Vector2(980f, 62f);
 
             var bg = root.AddComponent<Image>();
-            bg.color = new Color(0.08f, 0.12f, 0.22f, 0.95f);
+            bg.color = GameUiChrome.Surface;
             bg.raycastTarget = false;
+            GameUiChrome.ApplySurface(root.transform, new Color(0.11f, 0.14f, 0.19f, 0.88f));
+            GameUiChrome.ApplyAccentRail(root.transform, new Color(0.86f, 0.68f, 0.28f, 0.82f), 4f);
 
             _group = root.AddComponent<CanvasGroup>();
 
@@ -88,13 +90,14 @@ namespace Sugoroku.UI
             var textRt = textGo.GetComponent<RectTransform>();
             textRt.anchorMin = Vector2.zero;
             textRt.anchorMax = Vector2.one;
-            textRt.offsetMin = new Vector2(16f, 6f);
-            textRt.offsetMax = new Vector2(-16f, -6f);
+            textRt.offsetMin = new Vector2(14f, 4f);
+            textRt.offsetMax = new Vector2(-14f, -4f);
 
             _label = textGo.AddComponent<TextMeshProUGUI>();
             _label.alignment = TextAlignmentOptions.Center;
             _label.textWrappingMode = TextWrappingModes.Normal;
-            HudTextStyle.ApplyReadable(_label, 26f, new Color(1f, 0.98f, 0.82f), true);
+            HudTextStyle.ApplyReadable(_label, HudTextStyle.Scale(20f), new Color(1f, 0.96f, 0.78f), true);
+            HudTextStyle.ApplyOutlineSafe(_label, 0.08f, HudTextStyle.OutlineColor);
             SetMessage("ゲーム準備中…");
         }
 
@@ -104,22 +107,23 @@ namespace Sugoroku.UI
             Instance.SetMessage(message);
         }
 
-        private void SetMessage(string message)
+        private void SetMessage(string message, Color? color = null)
         {
             if (_label != null) _label.text = message ?? "";
+            if (_label != null && color.HasValue) _label.color = color.Value;
             if (_group != null) _group.alpha = string.IsNullOrEmpty(message) ? 0f : 1f;
         }
 
         private void OnTurnStarted(PlayerData player)
         {
             if (player == null) return;
-            SetMessage($"{PlayerIdentity.FormatHudLabel(player)} のターン");
+            SetMessage($"★ {PlayerIdentity.FormatHudLabel(player)} のターン!", new Color(1f, 0.95f, 0.70f, 1f));
         }
 
         private void OnSquareEffect(PlayerData player, string msg)
         {
             if (!string.IsNullOrEmpty(msg))
-                SetMessage(msg);
+                SetMessage(msg, new Color(0.72f, 1f, 0.76f, 1f));
         }
 
         private void OnEventTriggered(EventMaster ev, PlayerData player)
@@ -127,8 +131,8 @@ namespace Sugoroku.UI
             if (ev == null) return;
             string who = player != null ? PlayerIdentity.FormatHudLabel(player) : "";
             SetMessage(string.IsNullOrEmpty(who)
-                ? $"イベント: {ev.Title} — 選択肢を選んでください"
-                : $"{who} — イベント「{ev.Title}」— 選択肢を選んでください");
+                ? $"★ イベント: {ev.Title}"
+                : $"★ {who}  イベント「{ev.Title}」", new Color(1f, 0.72f, 0.90f, 1f));
         }
 
         private void OnTurnState(TurnState state) => RefreshForState(state);
@@ -150,25 +154,25 @@ namespace Sugoroku.UI
             switch (state)
             {
                 case TurnState.WaitAction when !player.IsCpu && !rolling:
-                    SetMessage($"{name} — 右下の「ダイスを振る」を押してください");
+                    SetMessage($"★ {name}  ダイスを振ろう!", new Color(1f, 0.92f, 0.42f, 1f));
                     break;
                 case TurnState.WaitAction when player.IsCpu:
-                    SetMessage($"{name}（CPU）が考えています…");
+                    SetMessage($"★ {name} CPUが考え中...", new Color(1f, 0.88f, 0.58f, 1f));
                     break;
                 case TurnState.Moving:
-                    SetMessage($"{name} — 移動中…");
+                    SetMessage($">> {name}  移動中!", new Color(0.50f, 0.94f, 1f, 1f));
                     break;
                 case TurnState.MassCheck:
-                    SetMessage($"{name} — マス効果を確認中…");
+                    SetMessage($"◇ {name}  マス確認!", new Color(0.72f, 1f, 0.62f, 1f));
                     break;
                 case TurnState.Event:
                     // イベント本文は OnEventTriggered で上書き
                     if (_label == null || string.IsNullOrEmpty(_label.text) ||
                         !_label.text.Contains("イベント"))
-                        SetMessage($"{name} — イベント処理中…");
+                        SetMessage($"★ {name}  イベント!", new Color(1f, 0.72f, 0.90f, 1f));
                     break;
                 case TurnState.TurnStart:
-                    SetMessage($"{name} のターン開始");
+                    SetMessage($"★ {name} のターン開始!", new Color(1f, 0.95f, 0.70f, 1f));
                     break;
             }
         }

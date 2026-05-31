@@ -12,7 +12,7 @@ namespace Sugoroku.UI
 
         [SerializeField] private Image _overlay;
         [SerializeField] private float _fadeDuration = 0.25f;
-        [SerializeField] private float _eventAlpha   = 0.55f;
+        [SerializeField] private float _eventAlpha   = 0.40f;
 
         private Coroutine _fadeRoutine;
         private bool      _subscribed;
@@ -79,10 +79,11 @@ namespace Sugoroku.UI
             EnsureOverlay();
             float start = _overlay.color.a;
             float elapsed = 0f;
-            while (elapsed < _fadeDuration)
+            float duration = GameConfig.AnimationDuration(_fadeDuration);
+            while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                float t = JuiceMath.EaseOutQuad(elapsed / _fadeDuration);
+                float t = JuiceMath.EaseOutQuad(elapsed / duration);
                 SetAlpha(Mathf.Lerp(start, targetAlpha, t));
                 yield return null;
             }
