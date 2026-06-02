@@ -24,6 +24,11 @@ namespace Sugoroku.Board
         [SerializeField] private float _waitOrthoScaleRatio = 0.98f;
         [SerializeField] private float _waitViewBoardBlend = 0.45f;
 
+        [Header("疑似3D")]
+        [SerializeField] private bool  _useFauxDepthBanking = true;
+        [SerializeField] private float _maxBankDegrees = 1.35f;
+        [SerializeField] private float _bankSmooth = 8f;
+
         private Vector3 _framedPosition;
         private Vector3 _boardCenter;
         private float   _boardOrthoSize;
@@ -31,6 +36,8 @@ namespace Sugoroku.Board
         private Vector3 _followTarget;
         private Coroutine _shakeRoutine;
         private Coroutine _zoomRoutine;
+        private Quaternion _baseRotation;
+        private Vector3 _lastCameraPosition;
 
         private void Awake()
         {
@@ -40,6 +47,8 @@ namespace Sugoroku.Board
             if (_camera == null) _camera = GetComponent<Camera>();
             if (_boardManager == null) _boardManager = FindFirstObjectByType<BoardManager>();
             _framedPosition = transform.position;
+            _baseRotation = transform.rotation;
+            _lastCameraPosition = transform.position;
         }
 
         private void OnDestroy()
@@ -97,10 +106,16 @@ namespace Sugoroku.Board
 
         private void LateUpdate()
         {
-            if (!_isFollowing || _camera == null) return;
-            var pos = transform.position;
-            transform.position = Vector3.Lerp(pos, _followTarget, _followSmooth * Time.deltaTime);
-            _framedPosition = transform.position;
+            if (_camera == null) return;
+
+            if (_isFollowing)
+            {
+                var pos = transform.position;
+                transform.position = Vector3.Lerp(pos, _followTarget, _followSmooth * Time.deltaTime);
+                _framedPosition = transform.position;
+            }
+
+            ApplyFauxDepthBank();
         }
 
         public void FollowPosition(Vector3 worldPos)
@@ -259,6 +274,27 @@ namespace Sugoroku.Board
             _boardOrthoSize = _camera.orthographicSize;
             _boardCenter    = bounds.center;
             _framedPosition  = _camera.transform.position;
+            _lastCameraPosition = _camera.transform.position;
+        }
+
+        private void ApplyFauxDepthBank()
+        {
+            if (!_useFauxDepthBanking)
+            {
+                transform.rotation = _baseRotation;
+                _lastCameraPosition = transform.position;
+                return;
+            }
+
+            float dt = Mathf.Max(Time.deltaTime, 0.0001f);
+            var velocity = (transform.position - _lastCameraPosition) / dt;
+            float targetBank = _isFollowing
+                ? Mathf.Clamp(-velocity.x * 0.18f, -_maxBankDegrees, _maxBankDegrees)
+                : 0f;
+
+            var targetRotation = _baseRotation * Quaternion.Euler(0f, 0f, targetBank);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _bankSmooth * dt);
+            _lastCameraPosition = transform.position;
         }
     }
 }

@@ -27,8 +27,8 @@ namespace Sugoroku.Board
         [Header("ルート表示")]
         [SerializeField] private bool  _buildRouteConnectors = true;
         [SerializeField] private float _connectorWidth       = 0.28f;
-        [SerializeField] private Color _connectorColor       = new(0.86f, 0.88f, 0.78f, 0.92f);
-        [SerializeField] private Color _connectorEdgeColor   = new(0.36f, 0.42f, 0.46f, 0.72f);
+        [SerializeField] private Color _connectorColor       = new(0.30f, 0.72f, 0.24f, 0.94f);
+        [SerializeField] private Color _connectorEdgeColor   = new(0.38f, 0.22f, 0.12f, 0.84f);
 
         [Header("プレハブ")]
         [SerializeField] private Waypoint _waypointPrefab;
@@ -73,6 +73,10 @@ namespace Sugoroku.Board
             ApplyOverlapAvoidanceToRoute(route);
             if (_buildRouteConnectors)
                 BuildRouteConnectors(route.transform, route);
+
+            var depth = GetComponent<BoardDepthPresentation>();
+            if (depth == null) depth = gameObject.AddComponent<BoardDepthPresentation>();
+            depth.Rebuild(route);
         }
 
         public void GenerateLayeredBoard()
@@ -96,6 +100,10 @@ namespace Sugoroku.Board
             var env = GetComponent<BoardEnvironment>();
             if (env == null) env = gameObject.AddComponent<BoardEnvironment>();
             env.AlignBackgroundToRoute(route, _dimBackgroundArt);
+
+            var depth = GetComponent<BoardDepthPresentation>();
+            if (depth == null) depth = gameObject.AddComponent<BoardDepthPresentation>();
+            depth.Rebuild(route);
 
             if (_boardManager != null)
                 _boardManager.SetRoute(route);
@@ -307,7 +315,7 @@ namespace Sugoroku.Board
             go.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = BoardVisualUtility.GetSquareSprite();
+            sr.sprite = BoardVisualUtility.GetPixelSolidSprite();
             sr.color = color;
             var spriteSize = sr.sprite != null ? sr.sprite.bounds.size : Vector3.one;
             go.transform.localScale = new Vector3(

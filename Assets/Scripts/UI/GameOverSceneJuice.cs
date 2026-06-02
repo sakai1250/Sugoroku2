@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Sugoroku.Board;
 using Sugoroku.Data;
 
 namespace Sugoroku.UI
@@ -41,6 +42,7 @@ namespace Sugoroku.UI
         private IEnumerator PlayRoutine(GameOverOutcome outcome)
         {
             ClearStage();
+            StartCoroutine(StageShockwave(outcome.AccentColor));
             switch (outcome.VisualStyle)
             {
                 case GameOverVisualStyle.BankruptcyNotice:
@@ -68,7 +70,7 @@ namespace Sugoroku.UI
             var rt = doc.GetComponent<RectTransform>();
             rt.anchoredPosition = new Vector2(0f, 80f);
             rt.localScale = Vector3.one * 2.8f;
-            rt.localRotation = Quaternion.Euler(0f, 0f, 8f);
+            rt.localRotation = Quaternion.Euler(20f, -12f, 8f);
 
             var title = CreateLabel(doc.transform, "強制退学\n通知書", 36, Color.white, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Center;
@@ -90,7 +92,10 @@ namespace Sugoroku.UI
                 float t = elapsed / dur;
                 float eased = 1f - Mathf.Pow(1f - t, 3f);
                 rt.localScale = Vector3.one * Mathf.Lerp(2.8f, 1f, eased);
-                rt.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(8f, -2f, eased));
+                rt.localRotation = Quaternion.Euler(
+                    Mathf.Lerp(20f, 0f, eased),
+                    Mathf.Lerp(-12f, 0f, eased),
+                    Mathf.Lerp(8f, -2f, eased));
                 rt.anchoredPosition = Vector2.Lerp(new Vector2(0f, 200f), new Vector2(0f, 80f), eased);
                 yield return null;
             }
@@ -112,6 +117,7 @@ namespace Sugoroku.UI
             var phone = CreatePanel(room.transform, "Phone", new Vector2(200f, 360f), new Color(0.08f, 0.08f, 0.1f));
             var phoneRt = phone.GetComponent<RectTransform>();
             phoneRt.anchoredPosition = new Vector2(0f, -20f);
+            phoneRt.localRotation = Quaternion.Euler(-6f, 8f, -2f);
 
             var screen = CreatePanel(phone.transform, "Screen", new Vector2(176f, 300f), new Color(0.12f, 0.14f, 0.22f));
             Stretch(screen.GetComponent<RectTransform>(), 8f);
@@ -156,6 +162,10 @@ namespace Sugoroku.UI
                 float phase = pulse / GameConfig.AnimationDurationScale;
                 float a = 0.65f + Mathf.Sin(phase * 3f) * 0.15f;
                 screen.GetComponent<Image>().color = new Color(0.12f * a, 0.14f * a, 0.28f, 1f);
+                phoneRt.localRotation = Quaternion.Euler(
+                    -6f + Mathf.Sin(phase * 1.3f) * 1.2f,
+                    8f + Mathf.Cos(phase * 1.1f) * 1.6f,
+                    -2f + Mathf.Sin(phase * 0.9f) * 0.8f);
                 yield return null;
             }
         }
@@ -165,6 +175,7 @@ namespace Sugoroku.UI
             var board = CreatePanel(_stage, "Bulletin", new Vector2(480f, 360f), new Color(0.92f, 0.88f, 0.75f));
             var boardRt = board.GetComponent<RectTransform>();
             boardRt.anchoredPosition = new Vector2(0f, 80f);
+            boardRt.localRotation = Quaternion.Euler(8f, -6f, 1.5f);
 
             var header = CreateLabel(board.transform, "除籍対象者一覧", 28, new Color(0.25f, 0.15f, 0.1f), FontStyles.Bold);
             header.alignment = TextAlignmentOptions.Center;
@@ -199,9 +210,47 @@ namespace Sugoroku.UI
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                boardRt.localScale = Vector3.one * Mathf.Lerp(0.85f, 1f, elapsed / duration);
+                float t = elapsed / duration;
+                boardRt.localScale = Vector3.one * Mathf.Lerp(0.85f, 1f, t);
+                boardRt.localRotation = Quaternion.Euler(
+                    Mathf.Lerp(16f, 8f, t),
+                    Mathf.Lerp(-14f, -6f, t),
+                    Mathf.Lerp(5f, 1.5f, t));
                 yield return null;
             }
+        }
+
+        private IEnumerator StageShockwave(Color accent)
+        {
+            if (_stage == null) yield break;
+
+            var go = new GameObject("GameOverDepthShockwave", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_stage, false);
+            go.transform.SetAsFirstSibling();
+            var img = go.GetComponent<Image>();
+            img.sprite = BoardVisualUtility.GetSoftOvalShadowSprite();
+            img.raycastTarget = false;
+            img.color = new Color(accent.r, accent.g, accent.b, 0.26f);
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(0f, -116f);
+            rt.sizeDelta = new Vector2(120f, 34f);
+
+            float elapsed = 0f;
+            float duration = GameConfig.AnimationDuration(0.58f);
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float eased = 1f - Mathf.Pow(1f - t, 3f);
+                rt.sizeDelta = Vector2.Lerp(new Vector2(120f, 34f), new Vector2(720f, 160f), eased);
+                img.color = new Color(accent.r, accent.g, accent.b, (1f - t) * 0.26f);
+                yield return null;
+            }
+
+            Destroy(go);
         }
 
         private static GameObject CreatePanel(Transform parent, string name, Vector2 size, Color color)
@@ -209,10 +258,44 @@ namespace Sugoroku.UI
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var img = go.AddComponent<Image>();
+            img.sprite = BoardVisualUtility.GetPixelCardSprite();
+            img.type = Image.Type.Sliced;
             img.color = color;
+            img.raycastTarget = false;
             var rt = go.GetComponent<RectTransform>();
             rt.sizeDelta = size;
+            AddPanelDepth(go.transform, size, color);
             return go;
+        }
+
+        private static void AddPanelDepth(Transform panel, Vector2 size, Color color)
+        {
+            CreateDepthImage(panel, "PanelDepthShadow", size + new Vector2(18f, 18f),
+                new Vector2(10f, -10f), new Color(0f, 0f, 0f, 0.34f), BoardVisualUtility.GetPixelCardSprite());
+            CreateDepthImage(panel, "PanelBottomExtrude", new Vector2(size.x - 18f, 12f),
+                new Vector2(6f, -size.y * 0.5f - 4f), Color.Lerp(Color.black, color, 0.28f),
+                BoardVisualUtility.GetPixelSolidSprite());
+            CreateDepthImage(panel, "PanelRightExtrude", new Vector2(12f, size.y - 18f),
+                new Vector2(size.x * 0.5f + 5f, -5f), Color.Lerp(Color.black, color, 0.22f),
+                BoardVisualUtility.GetPixelSolidSprite());
+        }
+
+        private static void CreateDepthImage(Transform parent, string name, Vector2 size, Vector2 pos,
+            Color color, Sprite sprite)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            go.transform.SetAsFirstSibling();
+            var img = go.GetComponent<Image>();
+            img.sprite = sprite;
+            img.type = Image.Type.Sliced;
+            img.color = color;
+            img.raycastTarget = false;
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = size;
+            rt.anchoredPosition = pos;
         }
 
         private static TextMeshProUGUI CreateLabel(Transform parent, string text, float size, Color color,
@@ -227,6 +310,7 @@ namespace Sugoroku.UI
             tmp.fontStyle = style;
             JapaneseFontProvider.Apply(tmp);
             tmp.color = color;
+            HudTextStyle.ApplyOutlineSafe(tmp, style == FontStyles.Bold ? 0.10f : 0.06f, new Color(0f, 0f, 0f, 0.64f));
             tmp.raycastTarget = false;
             return tmp;
         }

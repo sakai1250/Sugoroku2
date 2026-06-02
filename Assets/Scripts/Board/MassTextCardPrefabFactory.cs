@@ -77,6 +77,21 @@ namespace Sugoroku.Board
                 new Vector2(0.5f, 0f), new Vector2(-24f, 3f), new Vector2(8f, 8f));
             titleRule.color = new Color(0.72f, 0.76f, 0.84f, 0.92f);
 
+            var pixelGroundLip = CreateUiImage(panelGo.transform, "PixelGroundLip", Vector2.zero);
+            SetRect(pixelGroundLip, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(-26f, 6f), new Vector2(8f, 4f));
+            pixelGroundLip.color = new Color(0.24f, 0.78f, 0.22f, 0.96f);
+
+            var dirtChipLeft = CreateUiImage(panelGo.transform, "DirtChipLeft", Vector2.zero);
+            SetRect(dirtChipLeft, new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0.5f, 0.5f), new Vector2(18f, 4f), new Vector2(40f, 14f));
+            dirtChipLeft.color = new Color(0.30f, 0.16f, 0.08f, 0.62f);
+
+            var dirtChipRight = CreateUiImage(panelGo.transform, "DirtChipRight", Vector2.zero);
+            SetRect(dirtChipRight, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0.5f), new Vector2(22f, 4f), new Vector2(-54f, 14f));
+            dirtChipRight.color = new Color(0.24f, 0.12f, 0.06f, 0.58f);
+
             var tagGo = CreateTmp(panelGo.transform, "TagLabel", 13, TextAlignmentOptions.TopLeft);
             var tagRt = tagGo.GetComponent<RectTransform>();
             tagRt.anchorMin = new Vector2(0, 1);
@@ -100,7 +115,9 @@ namespace Sugoroku.Board
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var img = go.AddComponent<Image>();
-            img.sprite = BoardVisualUtility.GetSquareSprite();
+            img.sprite = name is "CardBorder" or "CardPanel" or "CornerMarker"
+                ? BoardVisualUtility.GetPixelCardSprite()
+                : BoardVisualUtility.GetPixelSolidSprite();
             img.type   = Image.Type.Sliced;
             var rt = go.GetComponent<RectTransform>();
             rt.sizeDelta = sizeDelta == Vector2.zero ? Vector2.zero : sizeDelta;

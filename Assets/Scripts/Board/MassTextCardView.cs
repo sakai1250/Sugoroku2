@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -24,16 +25,74 @@ namespace Sugoroku.Board
         [SerializeField] private Image           border;
         [SerializeField] private Image           accentStrip;
         [SerializeField] private Image           headerBand;
+        [SerializeField] private Image           depthShadow;
+        [SerializeField] private Image           bottomExtrude;
+        [SerializeField] private Image           rightExtrude;
+        [SerializeField] private Image           outerGlow;
+        [SerializeField] private Image           hoverWash;
+        [SerializeField] private Image           shineSweep;
         [SerializeField] private Image           cornerMarker;
         [SerializeField] private Image           titleRule;
+        [SerializeField] private Image           pixelGroundLip;
+        [SerializeField] private Image           dirtChipLeft;
+        [SerializeField] private Image           dirtChipRight;
+        [SerializeField] private Image           sparkleTop;
+        [SerializeField] private Image           sparkleMid;
+        [SerializeField] private Image           sparkleLow;
         [SerializeField] private TextMeshProUGUI tagText;
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI markerText;
         [SerializeField] private BoxCollider2D   hitCollider;
 
+        [Header("Pixel Style")]
+        [SerializeField] private bool pixelBlockStyle = true;
+
+        [Header("Motion")]
+        [SerializeField] private bool  animateCard        = true;
+        [SerializeField] private float hoverScale         = 1.055f;
+        [SerializeField] private float hoverBlendSeconds  = 0.12f;
+        [SerializeField] private float idleFloatAmplitude = 0.018f;
+        [SerializeField] private float idleFloatSpeed     = 1.45f;
+        [SerializeField] private float clickPunchScale    = 0.045f;
+        [SerializeField] private float clickPunchSeconds  = 0.22f;
+        [SerializeField] private float shineCycleSpeed    = 0.12f;
+        [SerializeField] private float sparkleSpeed       = 0.72f;
+        [SerializeField] private float maxTiltDegrees     = 7.5f;
+        [SerializeField] private float hoverLiftPixels    = 4.5f;
+
         public string EventId => eventId;
 
-        private void Awake() => CacheReferences();
+        private Canvas  _cardCanvas;
+        private Transform _motionRoot;
+        private Vector3 _motionRootBaseScale = Vector3.one;
+        private Vector3 _motionRootBaseLocalPosition = Vector3.zero;
+        private Quaternion _motionRootBaseLocalRotation = Quaternion.identity;
+        private bool    _motionBaselineCaptured;
+        private bool    _isHovered;
+        private Vector2 _hoverLocalNormalized;
+        private float   _hoverAmount;
+        private float   _clickPunch;
+        private float   _motionSeed;
+        private float   _shineSeed;
+        private Color   _panelColor  = new(0.42f, 0.46f, 0.56f, 0.94f);
+        private Color   _accentColor = new(0.58f, 0.62f, 0.72f, 1f);
+
+        private void Awake()
+        {
+            int id = Mathf.Abs(GetInstanceID() % 1024);
+            _motionSeed = id * 0.173f;
+            _shineSeed  = Mathf.Repeat(id * 0.037f, 1f);
+            CacheReferences();
+            CaptureMotionBaseline();
+        }
+
+        private void OnDisable()
+        {
+            _isHovered = false;
+            _hoverAmount = 0f;
+            _clickPunch = 0f;
+            ResetMotionTransform();
+        }
 
         public void Configure(SquareType type, string boundEventId, string titleFallback)
         {
@@ -131,12 +190,11 @@ namespace Sugoroku.Board
 
         private void Update()
         {
-            if (EventModalUI.HasVisibleModal) return;
-            if (IsPointerOverUi()) return;
-            if (!TryGetClickWorldPoint(out var world)) return;
-            if (hitCollider == null) hitCollider = GetComponent<BoxCollider2D>();
-            if (hitCollider == null || !hitCollider.OverlapPoint(world)) return;
+            UpdatePointerState(out bool clickedThisFrame);
+            AnimateCard();
 
+            if (!clickedThisFrame || !_isHovered) return;
+            PlayClickFeedback();
             ShowDetail();
         }
 
@@ -164,11 +222,20 @@ namespace Sugoroku.Board
             var canvas = GetComponentInChildren<Canvas>(true);
             if (canvas == null) return;
 
+            _cardCanvas = canvas;
+            if (_motionRoot != canvas.transform)
+            {
+                _motionRoot = canvas.transform;
+                _motionBaselineCaptured = false;
+            }
+            CaptureMotionBaseline();
+
             background ??= canvas.transform.Find("CardPanel")?.GetComponent<Image>();
             border     ??= canvas.transform.Find("CardBorder")?.GetComponent<Image>();
             tagText    ??= canvas.transform.Find("TagLabel")?.GetComponent<TextMeshProUGUI>();
             titleText  ??= canvas.transform.Find("TitleLabel")?.GetComponent<TextMeshProUGUI>();
             CacheDecorationReferences();
+            ApplyPixelSprites();
         }
 
         private void CacheDecorationReferences()
@@ -176,16 +243,45 @@ namespace Sugoroku.Board
             if (background == null) return;
 
             var panel = background.transform;
+            var canvasRoot = _cardCanvas != null ? _cardCanvas.transform : background.transform.parent;
+            if (canvasRoot != null)
+            {
+                depthShadow ??= canvasRoot.Find("CardDepthShadow")?.GetComponent<Image>();
+                bottomExtrude ??= canvasRoot.Find("CardBottomExtrude")?.GetComponent<Image>();
+                rightExtrude ??= canvasRoot.Find("CardRightExtrude")?.GetComponent<Image>();
+                outerGlow ??= canvasRoot.Find("CardGlow")?.GetComponent<Image>();
+                depthShadow ??= CreateDecorationImage(canvasRoot, "CardDepthShadow");
+                bottomExtrude ??= CreateDecorationImage(canvasRoot, "CardBottomExtrude");
+                rightExtrude ??= CreateDecorationImage(canvasRoot, "CardRightExtrude");
+                outerGlow ??= CreateDecorationImage(canvasRoot, "CardGlow");
+            }
+
             accentStrip  ??= panel.Find("AccentStrip")?.GetComponent<Image>();
             headerBand   ??= panel.Find("HeaderBand")?.GetComponent<Image>();
+            hoverWash    ??= panel.Find("HoverWash")?.GetComponent<Image>();
+            shineSweep   ??= panel.Find("ShineSweep")?.GetComponent<Image>();
             cornerMarker ??= panel.Find("CornerMarker")?.GetComponent<Image>();
             titleRule    ??= panel.Find("TitleRule")?.GetComponent<Image>();
+            pixelGroundLip ??= panel.Find("PixelGroundLip")?.GetComponent<Image>();
+            dirtChipLeft ??= panel.Find("DirtChipLeft")?.GetComponent<Image>();
+            dirtChipRight ??= panel.Find("DirtChipRight")?.GetComponent<Image>();
+            sparkleTop   ??= panel.Find("SparkleTop")?.GetComponent<Image>();
+            sparkleMid   ??= panel.Find("SparkleMid")?.GetComponent<Image>();
+            sparkleLow   ??= panel.Find("SparkleLow")?.GetComponent<Image>();
             markerText   ??= panel.Find("MarkerLabel")?.GetComponent<TextMeshProUGUI>();
 
             accentStrip  ??= CreateDecorationImage(panel, "AccentStrip");
             headerBand   ??= CreateDecorationImage(panel, "HeaderBand");
+            hoverWash    ??= CreateDecorationImage(panel, "HoverWash");
+            shineSweep   ??= CreateDecorationImage(panel, "ShineSweep");
             cornerMarker ??= CreateDecorationImage(panel, "CornerMarker");
             titleRule    ??= CreateDecorationImage(panel, "TitleRule");
+            pixelGroundLip ??= CreateDecorationImage(panel, "PixelGroundLip");
+            dirtChipLeft ??= CreateDecorationImage(panel, "DirtChipLeft");
+            dirtChipRight ??= CreateDecorationImage(panel, "DirtChipRight");
+            sparkleTop   ??= CreateDotDecorationImage(panel, "SparkleTop");
+            sparkleMid   ??= CreateDotDecorationImage(panel, "SparkleMid");
+            sparkleLow   ??= CreateDotDecorationImage(panel, "SparkleLow");
             markerText   ??= CreateDecorationText(panel, "MarkerLabel");
 
             LayoutDecoration();
@@ -194,22 +290,67 @@ namespace Sugoroku.Board
 
         private void LayoutDecoration()
         {
+            SetRect(depthShadow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(266f, 96f), new Vector2(9f, -9f));
+            SetRect(bottomExtrude, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(246f, 11f), new Vector2(5f, -43f));
+            SetRect(rightExtrude, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(11f, 78f), new Vector2(128f, -3f));
+            SetRect(outerGlow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(270f, 102f), new Vector2(0f, 4f));
             SetRect(accentStrip, new Vector2(0f, 0f), new Vector2(0f, 1f),
                 new Vector2(0f, 0.5f), new Vector2(11f, 0f), new Vector2(5.5f, 0f));
             SetRect(headerBand, new Vector2(0f, 1f), new Vector2(1f, 1f),
                 new Vector2(0.5f, 1f), new Vector2(0f, 25f), new Vector2(0f, -12.5f));
+            SetRect(hoverWash, new Vector2(0f, 0f), new Vector2(1f, 1f),
+                new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            SetRect(shineSweep, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(28f, 124f), new Vector2(-145f, -3f));
             SetRect(cornerMarker, new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(28f, 18f), new Vector2(-9f, -8f));
             SetRect(markerText, new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(1f, 1f), new Vector2(28f, 18f), new Vector2(-9f, -8f));
             SetRect(titleRule, new Vector2(0f, 0f), new Vector2(1f, 0f),
                 new Vector2(0.5f, 0f), new Vector2(-24f, 3f), new Vector2(8f, 8f));
+            SetRect(pixelGroundLip, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(-26f, 6f), new Vector2(8f, 4f));
+            SetRect(dirtChipLeft, new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0.5f, 0.5f), new Vector2(18f, 4f), new Vector2(40f, 14f));
+            SetRect(dirtChipRight, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0.5f), new Vector2(22f, 4f), new Vector2(-54f, 14f));
+            SetRect(sparkleTop, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                new Vector2(0.5f, 0.5f), new Vector2(8f, 8f), new Vector2(-42f, -32f));
+            SetRect(sparkleMid, new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0.5f, 0.5f), new Vector2(6f, 6f), new Vector2(36f, 21f));
+            SetRect(sparkleLow, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0.5f), new Vector2(5f, 5f), new Vector2(-24f, 18f));
 
+            if (depthShadow != null)
+                depthShadow.transform.SetAsFirstSibling();
+            if (outerGlow != null)
+                outerGlow.transform.SetSiblingIndex(depthShadow != null ? 1 : 0);
+            if (bottomExtrude != null)
+                bottomExtrude.transform.SetSiblingIndex(outerGlow != null ? outerGlow.transform.GetSiblingIndex() + 1 : 1);
+            if (rightExtrude != null)
+                rightExtrude.transform.SetSiblingIndex(bottomExtrude != null ? bottomExtrude.transform.GetSiblingIndex() + 1 : 1);
             accentStrip.transform.SetAsFirstSibling();
             headerBand.transform.SetSiblingIndex(1);
-            cornerMarker.transform.SetSiblingIndex(2);
-            markerText.transform.SetSiblingIndex(3);
-            titleRule.transform.SetSiblingIndex(4);
+            hoverWash.transform.SetSiblingIndex(2);
+            shineSweep.transform.SetSiblingIndex(3);
+            cornerMarker.transform.SetSiblingIndex(4);
+            titleRule.transform.SetSiblingIndex(5);
+            pixelGroundLip.transform.SetSiblingIndex(6);
+            dirtChipLeft.transform.SetSiblingIndex(7);
+            dirtChipRight.transform.SetSiblingIndex(8);
+            sparkleTop.transform.SetSiblingIndex(9);
+            sparkleMid.transform.SetSiblingIndex(10);
+            sparkleLow.transform.SetSiblingIndex(11);
+            tagText?.transform.SetAsLastSibling();
+            titleText?.transform.SetAsLastSibling();
+            markerText?.transform.SetAsLastSibling();
+
+            if (shineSweep != null)
+                shineSweep.transform.localEulerAngles = new Vector3(0f, 0f, -15f);
         }
 
         private void LayoutText()
@@ -222,6 +363,10 @@ namespace Sugoroku.Board
                 rt.pivot = new Vector2(0.5f, 1f);
                 rt.anchoredPosition = new Vector2(18f, -5f);
                 rt.sizeDelta = new Vector2(-54f, 22f);
+                tagText.enableAutoSizing = true;
+                tagText.fontSizeMin = 9f;
+                tagText.fontSizeMax = 13f;
+                HudTextStyle.ApplyOutlineSafe(tagText, 0.08f, new Color(0f, 0f, 0f, 0.62f));
             }
 
             if (titleText != null)
@@ -231,17 +376,317 @@ namespace Sugoroku.Board
                 rt.anchorMax = new Vector2(1f, 1f);
                 rt.offsetMin = new Vector2(18f, 9f);
                 rt.offsetMax = new Vector2(-12f, -29f);
+                titleText.enableAutoSizing = true;
+                titleText.fontSizeMin = 11f;
+                titleText.fontSizeMax = 17f;
+                HudTextStyle.ApplyOutlineSafe(titleText, 0.10f, new Color(0f, 0f, 0f, 0.68f));
+            }
+
+            if (markerText != null)
+            {
+                markerText.enableAutoSizing = true;
+                markerText.fontSizeMin = 7f;
+                markerText.fontSizeMax = 10f;
+                HudTextStyle.ApplyOutlineSafe(markerText, 0.04f, new Color(1f, 1f, 1f, 0.30f));
             }
         }
 
         private void ApplyCardDecoration(Color panel, Color accent)
         {
             CacheDecorationReferences();
+            if (pixelBlockStyle)
+            {
+                panel = PixelPanelColor(panel);
+                accent = PixelAccentColor(accent);
+                if (background != null) background.color = panel;
+                if (border != null) border.color = Shade(accent, 0.16f);
+            }
+
+            _panelColor = panel;
+            _accentColor = accent;
+
+            if (depthShadow != null) depthShadow.color = new Color(0f, 0f, 0f, pixelBlockStyle ? 0.28f : 0.20f);
+            if (bottomExtrude != null) bottomExtrude.color = WithAlpha(Shade(panel, 0.42f), 0.96f);
+            if (rightExtrude != null) rightExtrude.color = WithAlpha(Shade(panel, 0.50f), 0.94f);
             if (accentStrip != null) accentStrip.color = accent;
-            if (headerBand != null) headerBand.color = WithAlpha(Shade(panel, 0.24f), 0.44f);
-            if (cornerMarker != null) cornerMarker.color = WithAlpha(Tint(accent, 0.22f), 0.95f);
+            if (headerBand != null)
+                headerBand.color = pixelBlockStyle
+                    ? WithAlpha(Tint(accent, 0.18f), 0.78f)
+                    : WithAlpha(Shade(panel, 0.24f), 0.44f);
+            if (outerGlow != null) outerGlow.color = WithAlpha(Tint(accent, 0.22f), 0.11f);
+            if (hoverWash != null) hoverWash.color = WithAlpha(Tint(accent, 0.48f), 0.035f);
+            if (shineSweep != null) shineSweep.color = WithAlpha(pixelBlockStyle ? new Color(1f, 0.94f, 0.52f) : Color.white, 0.055f);
+            if (cornerMarker != null)
+                cornerMarker.color = pixelBlockStyle
+                    ? new Color(1f, 0.78f, 0.24f, 0.96f)
+                    : WithAlpha(Tint(accent, 0.22f), 0.95f);
             if (titleRule != null) titleRule.color = WithAlpha(Tint(accent, 0.36f), 0.92f);
+            if (pixelGroundLip != null)
+                pixelGroundLip.color = pixelBlockStyle
+                    ? WithAlpha(PixelGrassColor(accent), 0.96f)
+                    : WithAlpha(Tint(accent, 0.28f), 0.32f);
+            if (dirtChipLeft != null) dirtChipLeft.color = WithAlpha(Shade(panel, 0.34f), pixelBlockStyle ? 0.62f : 0.18f);
+            if (dirtChipRight != null) dirtChipRight.color = WithAlpha(Shade(panel, 0.40f), pixelBlockStyle ? 0.58f : 0.16f);
+            if (sparkleTop != null) sparkleTop.color = WithAlpha(Tint(accent, 0.44f), 0.14f);
+            if (sparkleMid != null) sparkleMid.color = WithAlpha(Tint(accent, 0.55f), 0.12f);
+            if (sparkleLow != null) sparkleLow.color = WithAlpha(Tint(accent, 0.36f), 0.10f);
             if (markerText != null) markerText.color = WithAlpha(Shade(accent, 0.58f), 1f);
+        }
+
+        private void ApplyPixelSprites()
+        {
+            if (!pixelBlockStyle) return;
+
+            ApplySlicedSprite(background, BoardVisualUtility.GetPixelCardSprite());
+            ApplySlicedSprite(border, BoardVisualUtility.GetPixelCardSprite());
+            ApplySlicedSprite(depthShadow, BoardVisualUtility.GetPixelCardSprite());
+            ApplySolidSprite(bottomExtrude);
+            ApplySolidSprite(rightExtrude);
+            ApplySlicedSprite(outerGlow, BoardVisualUtility.GetPixelCardSprite());
+            ApplySlicedSprite(hoverWash, BoardVisualUtility.GetPixelCardSprite());
+            ApplySolidSprite(accentStrip);
+            ApplySolidSprite(headerBand);
+            ApplySolidSprite(shineSweep);
+            ApplySlicedSprite(cornerMarker, BoardVisualUtility.GetPixelCardSprite());
+            ApplySolidSprite(titleRule);
+            ApplySolidSprite(pixelGroundLip);
+            ApplySolidSprite(dirtChipLeft);
+            ApplySolidSprite(dirtChipRight);
+            ApplySparkleSprite(sparkleTop);
+            ApplySparkleSprite(sparkleMid);
+            ApplySparkleSprite(sparkleLow);
+        }
+
+        private static void ApplySlicedSprite(Image img, Sprite sprite)
+        {
+            if (img == null || sprite == null) return;
+            img.sprite = sprite;
+            img.type = Image.Type.Sliced;
+            img.raycastTarget = false;
+        }
+
+        private static void ApplySolidSprite(Image img)
+        {
+            if (img == null) return;
+            img.sprite = BoardVisualUtility.GetPixelSolidSprite();
+            img.type = Image.Type.Sliced;
+            img.raycastTarget = false;
+        }
+
+        private static void ApplySparkleSprite(Image img)
+        {
+            if (img == null) return;
+            img.sprite = BoardVisualUtility.GetPixelSparkleSprite();
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+            img.raycastTarget = false;
+        }
+
+        private void UpdatePointerState(out bool clickedThisFrame)
+        {
+            clickedThisFrame = false;
+
+            if (EventModalUI.HasVisibleModal)
+            {
+                _isHovered = false;
+                return;
+            }
+
+            if (hitCollider == null) hitCollider = GetComponent<BoxCollider2D>();
+            if (hitCollider == null || !TryGetPointerWorldPoint(out var world, out bool pointerPressed))
+            {
+                _isHovered = false;
+                return;
+            }
+
+            bool overCard = hitCollider.OverlapPoint(world);
+            bool overBlockingUi = pointerPressed ? IsPointerPressOverUi() : IsPointerOverAnyUi();
+            _isHovered = overCard && !overBlockingUi;
+            _hoverLocalNormalized = _isHovered ? GetNormalizedPointerInCard(world) : Vector2.zero;
+            clickedThisFrame = _isHovered && pointerPressed;
+        }
+
+        private void AnimateCard()
+        {
+            if (!animateCard)
+                return;
+
+            CaptureMotionBaseline();
+
+            float dt = Time.deltaTime;
+            float hoverTarget = _isHovered ? 1f : 0f;
+            _hoverAmount = Mathf.MoveTowards(
+                _hoverAmount,
+                hoverTarget,
+                dt / Mathf.Max(0.01f, hoverBlendSeconds));
+            _clickPunch = Mathf.MoveTowards(
+                _clickPunch,
+                0f,
+                dt / Mathf.Max(0.01f, clickPunchSeconds));
+
+            float time = Time.time + _motionSeed;
+            float idle = Mathf.Sin(time * idleFloatSpeed) * idleFloatAmplitude;
+            float lift = _hoverAmount * hoverLiftPixels *
+                Mathf.Max(Mathf.Max(_motionRootBaseScale.x, _motionRootBaseScale.y), 0.001f);
+            float scale = 1f + _hoverAmount * (hoverScale - 1f);
+            scale += Mathf.Sin(_clickPunch * Mathf.PI) * clickPunchScale;
+
+            if (_motionRoot != null && _motionBaselineCaptured)
+            {
+                _motionRoot.localScale = _motionRootBaseScale * scale;
+                _motionRoot.localPosition = _motionRootBaseLocalPosition +
+                    Vector3.up * (idle * Mathf.Lerp(0.45f, 1.0f, _hoverAmount) + lift);
+                float tiltX = -_hoverLocalNormalized.y * maxTiltDegrees * _hoverAmount;
+                float tiltY = _hoverLocalNormalized.x * maxTiltDegrees * _hoverAmount;
+                float roll = Mathf.Sin(_clickPunch * Mathf.PI) * 1.6f;
+                _motionRoot.localRotation = _motionRootBaseLocalRotation *
+                    Quaternion.Euler(tiltX, tiltY, roll);
+            }
+
+            AnimateDecoration(time);
+        }
+
+        private void AnimateDecoration(float time)
+        {
+            float breathe = 0.5f + 0.5f * Mathf.Sin(time * 1.8f);
+            float hoverGlow = _hoverAmount * _hoverAmount;
+
+            if (depthShadow != null)
+            {
+                var rt = depthShadow.GetComponent<RectTransform>();
+                rt.anchoredPosition = new Vector2(9f + _hoverAmount * 5f, -9f - _hoverAmount * 4f);
+                depthShadow.color = new Color(0f, 0f, 0f, 0.22f + hoverGlow * 0.15f);
+            }
+
+            if (bottomExtrude != null)
+                bottomExtrude.color = WithAlpha(Shade(_panelColor, 0.42f), 0.86f + _hoverAmount * 0.12f);
+            if (rightExtrude != null)
+                rightExtrude.color = WithAlpha(Shade(_panelColor, 0.50f), 0.80f + _hoverAmount * 0.14f);
+
+            if (outerGlow != null)
+                outerGlow.color = WithAlpha(Tint(_accentColor, 0.22f),
+                    0.08f + hoverGlow * 0.18f + breathe * 0.035f);
+
+            if (hoverWash != null)
+                hoverWash.color = WithAlpha(Tint(_accentColor, 0.52f),
+                    0.025f + _hoverAmount * 0.085f + breathe * 0.012f);
+
+            if (accentStrip != null)
+                accentStrip.color = Color.Lerp(_accentColor, Tint(_accentColor, 0.30f),
+                    0.12f * breathe + 0.24f * _hoverAmount);
+
+            if (titleRule != null)
+                titleRule.color = WithAlpha(Tint(_accentColor, 0.36f), 0.78f + 0.18f * _hoverAmount);
+
+            if (pixelGroundLip != null)
+                pixelGroundLip.color = WithAlpha(PixelGrassColor(_accentColor), 0.88f + 0.08f * _hoverAmount);
+
+            if (headerBand != null)
+                headerBand.color = WithAlpha(Shade(_panelColor, 0.24f), 0.42f + 0.10f * _hoverAmount);
+
+            AnimateShine(time);
+            AnimateSparkle(sparkleTop, time, 0.00f, 0.12f);
+            AnimateSparkle(sparkleMid, time, 0.38f, 0.10f);
+            AnimateSparkle(sparkleLow, time, 0.67f, 0.09f);
+        }
+
+        private void AnimateShine(float time)
+        {
+            if (shineSweep == null) return;
+
+            float t = Mathf.Repeat(time * shineCycleSpeed + _shineSeed, 1f);
+            var rt = shineSweep.GetComponent<RectTransform>();
+            rt.anchoredPosition = new Vector2(Mathf.Lerp(-152f, 152f, t), -3f);
+
+            float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.05f, 0.20f, t));
+            float fadeOut = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.74f, 0.95f, t));
+            float alpha = Mathf.Min(fadeIn, fadeOut) * (0.045f + _hoverAmount * 0.07f);
+            shineSweep.color = WithAlpha(Tint(_accentColor, 0.72f), alpha);
+        }
+
+        private void AnimateSparkle(Image img, float time, float phase, float baseAlpha)
+        {
+            if (img == null) return;
+
+            float wave = 0.5f + 0.5f * Mathf.Sin((time * sparkleSpeed + phase) * Mathf.PI * 2f);
+            float pulse = wave * wave;
+            img.color = WithAlpha(Tint(_accentColor, 0.50f),
+                baseAlpha + pulse * (0.10f + 0.10f * _hoverAmount));
+            img.transform.localScale = Vector3.one * (0.74f + pulse * 0.38f + _hoverAmount * 0.14f);
+        }
+
+        private void PlayClickFeedback()
+        {
+            _clickPunch = 1f;
+            if (isActiveAndEnabled)
+                StartCoroutine(TapBurst());
+        }
+
+        private IEnumerator TapBurst()
+        {
+            if (_cardCanvas == null) yield break;
+
+            var go = new GameObject("CardTapBurst", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_cardCanvas.transform, false);
+
+            var img = go.GetComponent<Image>();
+            img.sprite = pixelBlockStyle ? BoardVisualUtility.GetPixelCardSprite() : BoardVisualUtility.GetSquareSprite();
+            img.type = Image.Type.Sliced;
+            img.raycastTarget = false;
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(0f, 4f);
+            rt.sizeDelta = new Vector2(250f, 86f);
+
+            int burstIndex = outerGlow != null ? outerGlow.transform.GetSiblingIndex() + 1 : 0;
+            go.transform.SetSiblingIndex(burstIndex);
+
+            float elapsed = 0f;
+            float duration = GameConfig.AnimationDuration(0.24f);
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float eased = JuiceMath.EaseOutQuad(t);
+                rt.sizeDelta = Vector2.Lerp(new Vector2(250f, 86f), new Vector2(292f, 112f), eased);
+                img.color = WithAlpha(Tint(_accentColor, 0.38f), (1f - t) * 0.24f);
+                yield return null;
+            }
+
+            Destroy(go);
+        }
+
+        private void CaptureMotionBaseline()
+        {
+            if (_motionRoot == null || _motionBaselineCaptured) return;
+            _motionRootBaseScale = _motionRoot.localScale;
+            _motionRootBaseLocalPosition = _motionRoot.localPosition;
+            _motionRootBaseLocalRotation = _motionRoot.localRotation;
+            _motionBaselineCaptured = true;
+        }
+
+        private void ResetMotionTransform()
+        {
+            if (_motionRoot == null || !_motionBaselineCaptured) return;
+            _motionRoot.localScale = _motionRootBaseScale;
+            _motionRoot.localPosition = _motionRootBaseLocalPosition;
+            _motionRoot.localRotation = _motionRootBaseLocalRotation;
+        }
+
+        private Vector2 GetNormalizedPointerInCard(Vector3 world)
+        {
+            if (hitCollider == null) return Vector2.zero;
+
+            var local = transform.InverseTransformPoint(world);
+            Vector2 centered = new Vector2(local.x, local.y) - hitCollider.offset;
+            Vector2 half = hitCollider.size * 0.5f;
+            if (half.x <= 0.001f || half.y <= 0.001f) return Vector2.zero;
+
+            return new Vector2(
+                Mathf.Clamp(centered.x / half.x, -1f, 1f),
+                Mathf.Clamp(centered.y / half.y, -1f, 1f));
         }
 
         private static Image CreateDecorationImage(Transform parent, string name)
@@ -249,8 +694,20 @@ namespace Sugoroku.Board
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
             var img = go.GetComponent<Image>();
-            img.sprite = BoardVisualUtility.GetSquareSprite();
+            img.sprite = BoardVisualUtility.GetPixelSolidSprite();
             img.type = Image.Type.Sliced;
+            img.raycastTarget = false;
+            return img;
+        }
+
+        private static Image CreateDotDecorationImage(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var img = go.GetComponent<Image>();
+            img.sprite = BoardVisualUtility.GetPixelSparkleSprite();
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
             img.raycastTarget = false;
             return img;
         }
@@ -263,6 +720,9 @@ namespace Sugoroku.Board
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontSize = 10f;
             tmp.fontStyle = FontStyles.Bold;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = 7f;
+            tmp.fontSizeMax = 10f;
             tmp.raycastTarget = false;
             TitleMenuController.ApplyJapaneseFont(tmp);
             return tmp;
@@ -295,6 +755,33 @@ namespace Sugoroku.Board
         private static Color Tint(Color c, float amount) => Color.Lerp(c, Color.white, amount);
         private static Color Shade(Color c, float amount) => Color.Lerp(c, Color.black, amount);
         private static Color WithAlpha(Color c, float a) => new(c.r, c.g, c.b, a);
+        private static Color PixelPanelColor(Color c)
+        {
+            var brick = new Color(0.70f, 0.40f, 0.19f, 0.98f);
+            var tintedBrick = Color.Lerp(brick, Tint(c, 0.18f), 0.42f);
+            tintedBrick.a = 0.98f;
+            return tintedBrick;
+        }
+
+        private static Color PixelAccentColor(Color c)
+        {
+            var grass = new Color(0.24f, 0.78f, 0.22f, 1f);
+            var warmHighlight = new Color(1f, 0.78f, 0.22f, 1f);
+            var typed = Tint(c, 0.10f);
+            var accent = Color.Lerp(grass, typed, 0.48f);
+            accent = Color.Lerp(accent, warmHighlight, 0.12f);
+            accent.a = 1f;
+            return accent;
+        }
+
+        private static Color PixelGrassColor(Color c)
+        {
+            var baseGrass = new Color(0.22f, 0.78f, 0.18f, 1f);
+            var typeTint = Tint(c, 0.24f);
+            var grass = Color.Lerp(baseGrass, typeTint, 0.34f);
+            grass.a = 1f;
+            return grass;
+        }
 
         private void EnsureCanvasRenders()
         {
@@ -318,19 +805,31 @@ namespace Sugoroku.Board
             return false;
         }
 
-        private static bool TryGetClickWorldPoint(out Vector3 world)
+        private static bool TryGetPointerWorldPoint(out Vector3 world, out bool pressedThisFrame)
         {
             world = Vector3.zero;
+            pressedThisFrame = false;
             var cam = Camera.main;
             if (cam == null) return false;
 
             Vector2? screen = null;
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            {
                 screen = Mouse.current.position.ReadValue();
+                pressedThisFrame = true;
+            }
+            else if (Mouse.current != null)
+            {
+                screen = Mouse.current.position.ReadValue();
+            }
             else if (Touchscreen.current != null)
             {
                 var t = Touchscreen.current.primaryTouch;
-                if (t.press.wasPressedThisFrame) screen = t.position.ReadValue();
+                if (t.press.wasPressedThisFrame || t.press.isPressed)
+                {
+                    screen = t.position.ReadValue();
+                    pressedThisFrame = t.press.wasPressedThisFrame;
+                }
             }
 
             if (screen == null) return false;
@@ -339,7 +838,7 @@ namespace Sugoroku.Board
             return true;
         }
 
-        private static bool IsPointerOverUi()
+        private static bool IsPointerPressOverUi()
         {
             var eventSystem = EventSystem.current;
             if (eventSystem == null) return false;
@@ -353,6 +852,25 @@ namespace Sugoroku.Board
             {
                 var touch = Touchscreen.current.primaryTouch;
                 if (touch.press.wasPressedThisFrame &&
+                    eventSystem.IsPointerOverGameObject(touch.touchId.ReadValue()))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsPointerOverAnyUi()
+        {
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null) return false;
+
+            if (Mouse.current != null && eventSystem.IsPointerOverGameObject())
+                return true;
+
+            if (Touchscreen.current != null)
+            {
+                var touch = Touchscreen.current.primaryTouch;
+                if (touch.press.isPressed &&
                     eventSystem.IsPointerOverGameObject(touch.touchId.ReadValue()))
                     return true;
             }

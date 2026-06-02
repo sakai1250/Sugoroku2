@@ -65,6 +65,21 @@ namespace Sugoroku.UI
                 .ThenByDescending(p => p.CalculateScore())
                 .ToArray();
 
+            GraduationOutcome? hero = null;
+            foreach (var p in players)
+            {
+                if (p.Status != PlayerStatus.Graduated) continue;
+                if (hero == null || !p.IsCpu)
+                    hero = GraduationOutcomeResolver.Resolve(PlayerSnapshot.From(p));
+                if (!p.IsCpu) break;
+            }
+
+            if (_panel != null)
+            {
+                GameUiChrome.ApplySurface(_panel.transform, new Color(0.08f, 0.12f, 0.18f, 0.98f));
+                EndSceneVisuals.ApplyGraduation(_panel.transform, hero);
+            }
+
             if (_rankingParent != null)
             {
                 foreach (Transform child in _rankingParent) Destroy(child.gameObject);
@@ -90,6 +105,9 @@ namespace Sugoroku.UI
                     {
                         var entry = Instantiate(_rankingEntryPrefab, _rankingParent);
                         entry.text = line;
+                        GameUiChrome.ApplyReadable(entry, p.Status == PlayerStatus.Graduated
+                            ? new Color(0.92f, 0.96f, 1f, 1f)
+                            : new Color(0.70f, 0.72f, 0.78f, 1f));
                     }
                     else
                     {
@@ -98,6 +116,9 @@ namespace Sugoroku.UI
                         var tmp = go.AddComponent<TextMeshProUGUI>();
                         tmp.text = line;
                         tmp.fontSize = HudTextStyle.Scale(14f);
+                        GameUiChrome.ApplyReadable(tmp, p.Status == PlayerStatus.Graduated
+                            ? new Color(0.92f, 0.96f, 1f, 1f)
+                            : new Color(0.70f, 0.72f, 0.78f, 1f));
                     }
                 }
             }

@@ -82,6 +82,8 @@ namespace Sugoroku.Board
             var color = player != null ? player.PieceTint : Color.white;
             StartCoroutine(RingPulse(pos, color, 0.45f, 1.65f,
                 GameConfig.AnimationDuration(_turnRingDuration), BoardSortingLayers.WaypointBaseOrder + 120));
+            StartCoroutine(DepthShockwave(pos, color, 0.70f, 2.15f,
+                GameConfig.AnimationDuration(_turnRingDuration), BoardSortingLayers.WaypointBaseOrder + 88));
             StartCoroutine(SparkBurst(pos, color, 8, 0.42f, GameConfig.AnimationDuration(0.34f)));
             FloatingTextUI.Instance?.Show(player != null && player.IsCpu ? "CPUターン" : "ターン開始",
                 pos + Vector3.up * 1.05f, color);
@@ -95,6 +97,8 @@ namespace Sugoroku.Board
             var color = GetSquareColor(BoardManager.Instance?.GetSquareType(boardPosition) ?? SquareType.Normal);
             StartCoroutine(RingPulse(pos, color, 0.55f, 2.0f,
                 GameConfig.AnimationDuration(_squarePulseDuration), BoardSortingLayers.WaypointBaseOrder + 95));
+            StartCoroutine(DepthShockwave(pos, color, 0.82f, 2.45f,
+                GameConfig.AnimationDuration(_squarePulseDuration), BoardSortingLayers.WaypointBaseOrder + 86));
         }
 
         private void HandleSquareEffect(PlayerData player, string message)
@@ -107,6 +111,8 @@ namespace Sugoroku.Board
             var pos = BoardManager.Instance.GetPosition(player.BoardPosition);
 
             StartCoroutine(SquarePulse(pos, color, ignored));
+            StartCoroutine(DepthShockwave(pos, color, ignored ? 0.72f : 0.95f, ignored ? 1.75f : 2.80f,
+                GameConfig.AnimationDuration(ignored ? 0.32f : 0.46f), BoardSortingLayers.WaypointBaseOrder + 86));
             StartCoroutine(SparkBurst(pos, color, ignored ? 6 : 12, ignored ? 0.36f : 0.62f,
                 GameConfig.AnimationDuration(0.42f)));
             FloatingTextUI.Instance?.Show(ignored ? "回避" : SquareEffectLabels.Get(type),
@@ -119,6 +125,8 @@ namespace Sugoroku.Board
             var color = player != null ? player.PieceTint : Color.white;
             StartCoroutine(RingPulse(worldPos, color, 0.24f, 0.95f,
                 GameConfig.AnimationDuration(_stepRingDuration), BoardSortingLayers.WaypointBaseOrder + 100));
+            StartCoroutine(DepthShockwave(worldPos, color, 0.34f, 1.10f,
+                GameConfig.AnimationDuration(_stepRingDuration), BoardSortingLayers.WaypointBaseOrder + 86));
             StartCoroutine(SparkBurst(worldPos, color, 5, 0.26f, GameConfig.AnimationDuration(0.22f)));
         }
 
@@ -135,6 +143,31 @@ namespace Sugoroku.Board
                 sr.color = WithAlpha(color, (1f - t) * 0.42f);
                 yield return null;
             }
+            Destroy(sr.gameObject);
+        }
+
+        private IEnumerator DepthShockwave(Vector3 pos, Color color, float startWidth, float endWidth,
+            float duration, int order)
+        {
+            var sr = CreateEffectSprite("Effect_DepthShockwave",
+                pos + new Vector3(0.12f, -0.12f, 0f),
+                BoardVisualUtility.GetSoftOvalShadowSprite(),
+                color,
+                order);
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float eased = JuiceMath.EaseOutQuad(t);
+                float w = Mathf.Lerp(startWidth, endWidth, eased);
+                float h = Mathf.Lerp(startWidth * 0.22f, endWidth * 0.34f, eased);
+                SetWorldSize(sr.transform, w, h);
+                sr.color = WithAlpha(Color.Lerp(Color.black, color, 0.45f), (1f - t) * 0.28f);
+                yield return null;
+            }
+
             Destroy(sr.gameObject);
         }
 
