@@ -12,6 +12,7 @@ namespace Sugoroku.Board
         private static Sprite   _pixelSolidSprite;
         private static Sprite   _pixelCardSprite;
         private static Sprite   _pixelSparkleSprite;
+        private static Sprite   _pixelCoinSprite;
         private static Sprite   _pixelPlatformBackdropSprite;
         private static Sprite   _softOvalShadowSprite;
         private static Sprite   _pixelCloudDepthSprite;
@@ -152,6 +153,44 @@ namespace Sugoroku.Board
             tex.Apply();
             _pixelSparkleSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 9f);
             return _pixelSparkleSprite;
+        }
+
+        public static Sprite GetPixelCoinSprite()
+        {
+            if (_pixelCoinSprite != null) return _pixelCoinSprite;
+
+            const int size = 13;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            var clear = new Color(1f, 1f, 1f, 0f);
+            var center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                var p = new Vector2(x, y) - center;
+                float d = p.magnitude;
+                if (d > 5.6f)
+                {
+                    tex.SetPixel(x, y, clear);
+                    continue;
+                }
+
+                bool rim = d > 4.25f;
+                bool highlight = x <= 5 && y >= 7 && d < 4.8f;
+                bool shadow = x >= 7 && y <= 4;
+                float shade = rim ? 0.62f : 0.92f;
+                if (highlight) shade = 1f;
+                if (shadow) shade *= 0.72f;
+                tex.SetPixel(x, y, new Color(shade, shade, shade, 1f));
+            }
+
+            tex.Apply();
+            _pixelCoinSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 13f);
+            return _pixelCoinSprite;
         }
 
         public static Sprite GetPixelPlatformBackdropSprite()

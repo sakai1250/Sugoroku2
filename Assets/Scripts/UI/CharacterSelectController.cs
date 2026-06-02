@@ -532,6 +532,18 @@ namespace Sugoroku.UI
                 SetRect(portraitImage.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(0.5f, 0.5f), new Vector2(98f, 98f), new Vector2(0f, 39f));
 
+                var roleRibbon = EnsureCardImage(go.transform, "RoleRibbon", BoardVisualUtility.GetPixelCardSprite(),
+                    new Color(type.AccentColor().r * 0.36f, type.AccentColor().g * 0.36f, type.AccentColor().b * 0.36f, 0.84f),
+                    Image.Type.Sliced);
+                SetRect(roleRibbon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                    new Vector2(0.5f, 0.5f), new Vector2(96f, 19f), new Vector2(0f, 80f));
+                var roleRibbonLabel = EnsureCardLabel(roleRibbon.transform, "Label");
+                roleRibbonLabel.text = RoleTag(type);
+                roleRibbonLabel.fontSize = HudTextStyle.Scale(8f);
+                roleRibbonLabel.fontSizeMin = 6f;
+                roleRibbonLabel.fontSizeMax = HudTextStyle.Scale(8f);
+                StretchRect(roleRibbonLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(5f, 0f), new Vector2(-5f, 0f));
+
                 var chip = EnsureCardImage(go.transform, "TraitChip", BoardVisualUtility.GetPixelCardSprite(),
                     new Color(type.AccentColor().r * 0.34f, type.AccentColor().g * 0.34f, type.AccentColor().b * 0.34f, 0.92f),
                     Image.Type.Sliced);
@@ -699,6 +711,10 @@ namespace Sugoroku.UI
                 var trait = cardTransform.Find("TraitChip/TraitText")?.GetComponent<TextMeshProUGUI>();
                 if (trait != null)
                     trait.text = types[i].TraitName();
+
+                var roleRibbonLabel = cardTransform.Find("RoleRibbon/Label")?.GetComponent<TextMeshProUGUI>();
+                if (roleRibbonLabel != null)
+                    roleRibbonLabel.text = RoleTag(types[i]);
 
                 StyleCharacterCardShell(cardTransform, types[i].AccentColor(), sel);
                 cardTransform.localScale = sel ? Vector3.one * 1.10f : Vector3.one * 0.98f;
@@ -1449,6 +1465,22 @@ namespace Sugoroku.UI
                     ? new Color(0.05f, 0.08f, 0.14f, 0.98f)
                     : new Color(0.08f, 0.10f, 0.15f, 0.92f);
             }
+
+            var roleRibbon = card.Find("RoleRibbon")?.GetComponent<Image>();
+            if (roleRibbon != null)
+            {
+                roleRibbon.sprite = BoardVisualUtility.GetPixelCardSprite();
+                roleRibbon.type = Image.Type.Sliced;
+                roleRibbon.color = selected
+                    ? new Color(accent.r * 0.62f, accent.g * 0.62f, accent.b * 0.62f, 0.96f)
+                    : new Color(accent.r * 0.30f, accent.g * 0.30f, accent.b * 0.30f, 0.76f);
+                roleRibbon.rectTransform.sizeDelta = selected ? new Vector2(104f, 21f) : new Vector2(92f, 18f);
+            }
+
+            var roleRibbonLabel = card.Find("RoleRibbon/Label")?.GetComponent<TextMeshProUGUI>();
+            if (roleRibbonLabel != null)
+                GameUiChrome.ApplyReadable(roleRibbonLabel,
+                    selected ? Color.white : new Color(0.86f, 0.90f, 0.96f, 0.92f), FontStyles.Bold);
 
             var chip = card.Find("TraitChip")?.GetComponent<Image>();
             if (chip != null)

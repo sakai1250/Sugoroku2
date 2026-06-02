@@ -36,6 +36,12 @@ namespace Sugoroku.Board
         [SerializeField] private Image           pixelGroundLip;
         [SerializeField] private Image           dirtChipLeft;
         [SerializeField] private Image           dirtChipRight;
+        [SerializeField] private Image           terrainBlockLeft;
+        [SerializeField] private Image           terrainBlockMid;
+        [SerializeField] private Image           terrainBlockRight;
+        [SerializeField] private Image           coinPipTop;
+        [SerializeField] private Image           coinPipMid;
+        [SerializeField] private Image           coinPipLow;
         [SerializeField] private Image           sparkleTop;
         [SerializeField] private Image           sparkleMid;
         [SerializeField] private Image           sparkleLow;
@@ -265,6 +271,12 @@ namespace Sugoroku.Board
             pixelGroundLip ??= panel.Find("PixelGroundLip")?.GetComponent<Image>();
             dirtChipLeft ??= panel.Find("DirtChipLeft")?.GetComponent<Image>();
             dirtChipRight ??= panel.Find("DirtChipRight")?.GetComponent<Image>();
+            terrainBlockLeft ??= panel.Find("TerrainBlockLeft")?.GetComponent<Image>();
+            terrainBlockMid ??= panel.Find("TerrainBlockMid")?.GetComponent<Image>();
+            terrainBlockRight ??= panel.Find("TerrainBlockRight")?.GetComponent<Image>();
+            coinPipTop ??= panel.Find("CoinPipTop")?.GetComponent<Image>();
+            coinPipMid ??= panel.Find("CoinPipMid")?.GetComponent<Image>();
+            coinPipLow ??= panel.Find("CoinPipLow")?.GetComponent<Image>();
             sparkleTop   ??= panel.Find("SparkleTop")?.GetComponent<Image>();
             sparkleMid   ??= panel.Find("SparkleMid")?.GetComponent<Image>();
             sparkleLow   ??= panel.Find("SparkleLow")?.GetComponent<Image>();
@@ -279,6 +291,12 @@ namespace Sugoroku.Board
             pixelGroundLip ??= CreateDecorationImage(panel, "PixelGroundLip");
             dirtChipLeft ??= CreateDecorationImage(panel, "DirtChipLeft");
             dirtChipRight ??= CreateDecorationImage(panel, "DirtChipRight");
+            terrainBlockLeft ??= CreateDecorationImage(panel, "TerrainBlockLeft");
+            terrainBlockMid ??= CreateDecorationImage(panel, "TerrainBlockMid");
+            terrainBlockRight ??= CreateDecorationImage(panel, "TerrainBlockRight");
+            coinPipTop ??= CreateCoinDecorationImage(panel, "CoinPipTop");
+            coinPipMid ??= CreateCoinDecorationImage(panel, "CoinPipMid");
+            coinPipLow ??= CreateCoinDecorationImage(panel, "CoinPipLow");
             sparkleTop   ??= CreateDotDecorationImage(panel, "SparkleTop");
             sparkleMid   ??= CreateDotDecorationImage(panel, "SparkleMid");
             sparkleLow   ??= CreateDotDecorationImage(panel, "SparkleLow");
@@ -318,6 +336,18 @@ namespace Sugoroku.Board
                 new Vector2(0.5f, 0.5f), new Vector2(18f, 4f), new Vector2(40f, 14f));
             SetRect(dirtChipRight, new Vector2(1f, 0f), new Vector2(1f, 0f),
                 new Vector2(0.5f, 0.5f), new Vector2(22f, 4f), new Vector2(-54f, 14f));
+            SetRect(terrainBlockLeft, new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(18f, 10f), new Vector2(30f, 4f));
+            SetRect(terrainBlockMid, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(24f, 8f), new Vector2(-8f, 4f));
+            SetRect(terrainBlockRight, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(18f, 10f), new Vector2(-38f, 4f));
+            SetRect(coinPipTop, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(9f, 9f), new Vector2(5.5f, 24f));
+            SetRect(coinPipMid, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(9f, 9f), new Vector2(5.5f, 0f));
+            SetRect(coinPipLow, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(9f, 9f), new Vector2(5.5f, -24f));
             SetRect(sparkleTop, new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(0.5f, 0.5f), new Vector2(8f, 8f), new Vector2(-42f, -32f));
             SetRect(sparkleMid, new Vector2(0f, 0f), new Vector2(0f, 0f),
@@ -342,9 +372,15 @@ namespace Sugoroku.Board
             pixelGroundLip.transform.SetSiblingIndex(6);
             dirtChipLeft.transform.SetSiblingIndex(7);
             dirtChipRight.transform.SetSiblingIndex(8);
-            sparkleTop.transform.SetSiblingIndex(9);
-            sparkleMid.transform.SetSiblingIndex(10);
-            sparkleLow.transform.SetSiblingIndex(11);
+            terrainBlockLeft.transform.SetSiblingIndex(9);
+            terrainBlockMid.transform.SetSiblingIndex(10);
+            terrainBlockRight.transform.SetSiblingIndex(11);
+            coinPipTop.transform.SetSiblingIndex(12);
+            coinPipMid.transform.SetSiblingIndex(13);
+            coinPipLow.transform.SetSiblingIndex(14);
+            sparkleTop.transform.SetSiblingIndex(15);
+            sparkleMid.transform.SetSiblingIndex(16);
+            sparkleLow.transform.SetSiblingIndex(17);
             tagText?.transform.SetAsLastSibling();
             titleText?.transform.SetAsLastSibling();
             markerText?.transform.SetAsLastSibling();
@@ -427,6 +463,8 @@ namespace Sugoroku.Board
                     : WithAlpha(Tint(accent, 0.28f), 0.32f);
             if (dirtChipLeft != null) dirtChipLeft.color = WithAlpha(Shade(panel, 0.34f), pixelBlockStyle ? 0.62f : 0.18f);
             if (dirtChipRight != null) dirtChipRight.color = WithAlpha(Shade(panel, 0.40f), pixelBlockStyle ? 0.58f : 0.16f);
+            ApplyTerrainBlockColors(panel, accent, 0f);
+            ApplyCoinPipColors(accent, 0f);
             if (sparkleTop != null) sparkleTop.color = WithAlpha(Tint(accent, 0.44f), 0.14f);
             if (sparkleMid != null) sparkleMid.color = WithAlpha(Tint(accent, 0.55f), 0.12f);
             if (sparkleLow != null) sparkleLow.color = WithAlpha(Tint(accent, 0.36f), 0.10f);
@@ -452,6 +490,12 @@ namespace Sugoroku.Board
             ApplySolidSprite(pixelGroundLip);
             ApplySolidSprite(dirtChipLeft);
             ApplySolidSprite(dirtChipRight);
+            ApplySolidSprite(terrainBlockLeft);
+            ApplySolidSprite(terrainBlockMid);
+            ApplySolidSprite(terrainBlockRight);
+            ApplyCoinSprite(coinPipTop);
+            ApplyCoinSprite(coinPipMid);
+            ApplyCoinSprite(coinPipLow);
             ApplySparkleSprite(sparkleTop);
             ApplySparkleSprite(sparkleMid);
             ApplySparkleSprite(sparkleLow);
@@ -477,6 +521,15 @@ namespace Sugoroku.Board
         {
             if (img == null) return;
             img.sprite = BoardVisualUtility.GetPixelSparkleSprite();
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+            img.raycastTarget = false;
+        }
+
+        private static void ApplyCoinSprite(Image img)
+        {
+            if (img == null) return;
+            img.sprite = BoardVisualUtility.GetPixelCoinSprite();
             img.type = Image.Type.Simple;
             img.preserveAspect = true;
             img.raycastTarget = false;
@@ -581,6 +634,9 @@ namespace Sugoroku.Board
             if (pixelGroundLip != null)
                 pixelGroundLip.color = WithAlpha(PixelGrassColor(_accentColor), 0.88f + 0.08f * _hoverAmount);
 
+            AnimateTerrainBlocks(breathe);
+            AnimateCoinPips(time);
+
             if (headerBand != null)
                 headerBand.color = WithAlpha(Shade(_panelColor, 0.24f), 0.42f + 0.10f * _hoverAmount);
 
@@ -613,6 +669,23 @@ namespace Sugoroku.Board
             img.color = WithAlpha(Tint(_accentColor, 0.50f),
                 baseAlpha + pulse * (0.10f + 0.10f * _hoverAmount));
             img.transform.localScale = Vector3.one * (0.74f + pulse * 0.38f + _hoverAmount * 0.14f);
+        }
+
+        private void AnimateTerrainBlocks(float breathe)
+        {
+            float emphasis = Mathf.Clamp01(_hoverAmount + breathe * 0.22f);
+            ApplyTerrainBlockColors(_panelColor, _accentColor, emphasis);
+            SetTerrainBlockY(terrainBlockLeft, 4f + _hoverAmount * 1.6f + breathe * 0.6f);
+            SetTerrainBlockY(terrainBlockMid, 4f + _hoverAmount * 1.1f + (1f - breathe) * 0.4f);
+            SetTerrainBlockY(terrainBlockRight, 4f + _hoverAmount * 1.8f + breathe * 0.5f);
+        }
+
+        private void AnimateCoinPips(float time)
+        {
+            AnimateCoinPip(coinPipTop, time, 0.00f);
+            AnimateCoinPip(coinPipMid, time, 0.27f);
+            AnimateCoinPip(coinPipLow, time, 0.54f);
+            ApplyCoinPipColors(_accentColor, _hoverAmount);
         }
 
         private void PlayClickFeedback()
@@ -712,6 +785,18 @@ namespace Sugoroku.Board
             return img;
         }
 
+        private static Image CreateCoinDecorationImage(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var img = go.GetComponent<Image>();
+            img.sprite = BoardVisualUtility.GetPixelCoinSprite();
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+            img.raycastTarget = false;
+            return img;
+        }
+
         private static TextMeshProUGUI CreateDecorationText(Transform parent, string name)
         {
             var go = new GameObject(name, typeof(RectTransform));
@@ -752,6 +837,49 @@ namespace Sugoroku.Board
             rt.anchoredPosition = anchoredPosition;
         }
 
+        private void ApplyTerrainBlockColors(Color panel, Color accent, float emphasis)
+        {
+            var grass = PixelGrassColor(accent);
+            if (terrainBlockLeft != null)
+                terrainBlockLeft.color = WithAlpha(Tint(grass, 0.06f + emphasis * 0.16f), 0.58f + emphasis * 0.22f);
+            if (terrainBlockMid != null)
+                terrainBlockMid.color = WithAlpha(Tint(grass, 0.14f + emphasis * 0.18f), 0.62f + emphasis * 0.24f);
+            if (terrainBlockRight != null)
+                terrainBlockRight.color = WithAlpha(Color.Lerp(Shade(panel, 0.24f), grass, 0.62f + emphasis * 0.20f),
+                    0.56f + emphasis * 0.24f);
+        }
+
+        private void ApplyCoinPipColors(Color accent, float emphasis)
+        {
+            var coin = PixelCoinColor(accent);
+            SetCoinColor(coinPipTop, coin, 0.50f + emphasis * 0.24f);
+            SetCoinColor(coinPipMid, Tint(coin, 0.08f), 0.58f + emphasis * 0.26f);
+            SetCoinColor(coinPipLow, Shade(coin, 0.06f), 0.48f + emphasis * 0.22f);
+        }
+
+        private void AnimateCoinPip(Image img, float time, float phase)
+        {
+            if (img == null) return;
+            float wave = 0.5f + 0.5f * Mathf.Sin((time * (1.1f + _hoverAmount * 1.6f) + phase) * Mathf.PI * 2f);
+            float spin = Mathf.Lerp(1f, Mathf.Lerp(0.48f, 1.18f, wave), _hoverAmount);
+            img.transform.localScale = new Vector3(spin, 1f + _hoverAmount * 0.08f, 1f);
+        }
+
+        private static void SetCoinColor(Image img, Color color, float alpha)
+        {
+            if (img == null) return;
+            img.color = WithAlpha(color, alpha);
+        }
+
+        private static void SetTerrainBlockY(Image img, float y)
+        {
+            if (img == null) return;
+            var rt = img.GetComponent<RectTransform>();
+            var pos = rt.anchoredPosition;
+            pos.y = y;
+            rt.anchoredPosition = pos;
+        }
+
         private static Color Tint(Color c, float amount) => Color.Lerp(c, Color.white, amount);
         private static Color Shade(Color c, float amount) => Color.Lerp(c, Color.black, amount);
         private static Color WithAlpha(Color c, float a) => new(c.r, c.g, c.b, a);
@@ -781,6 +909,15 @@ namespace Sugoroku.Board
             var grass = Color.Lerp(baseGrass, typeTint, 0.34f);
             grass.a = 1f;
             return grass;
+        }
+
+        private static Color PixelCoinColor(Color c)
+        {
+            var coin = new Color(1f, 0.74f, 0.20f, 1f);
+            var typed = Tint(c, 0.22f);
+            var mixed = Color.Lerp(coin, typed, 0.22f);
+            mixed.a = 1f;
+            return mixed;
         }
 
         private void EnsureCanvasRenders()

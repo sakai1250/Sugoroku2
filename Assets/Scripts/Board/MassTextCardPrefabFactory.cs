@@ -92,6 +92,25 @@ namespace Sugoroku.Board
                 new Vector2(0.5f, 0.5f), new Vector2(22f, 4f), new Vector2(-54f, 14f));
             dirtChipRight.color = new Color(0.24f, 0.12f, 0.06f, 0.58f);
 
+            var terrainBlockLeft = CreateUiImage(panelGo.transform, "TerrainBlockLeft", Vector2.zero);
+            SetRect(terrainBlockLeft, new Vector2(0f, 0f), new Vector2(0f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(18f, 10f), new Vector2(30f, 4f));
+            terrainBlockLeft.color = new Color(0.25f, 0.76f, 0.20f, 0.70f);
+
+            var terrainBlockMid = CreateUiImage(panelGo.transform, "TerrainBlockMid", Vector2.zero);
+            SetRect(terrainBlockMid, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(24f, 8f), new Vector2(-8f, 4f));
+            terrainBlockMid.color = new Color(0.36f, 0.86f, 0.24f, 0.74f);
+
+            var terrainBlockRight = CreateUiImage(panelGo.transform, "TerrainBlockRight", Vector2.zero);
+            SetRect(terrainBlockRight, new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(18f, 10f), new Vector2(-38f, 4f));
+            terrainBlockRight.color = new Color(0.22f, 0.68f, 0.18f, 0.70f);
+
+            CreateCoinPip(panelGo.transform, "CoinPipTop", new Vector2(5.5f, 24f), 0.66f);
+            CreateCoinPip(panelGo.transform, "CoinPipMid", new Vector2(5.5f, 0f), 0.72f);
+            CreateCoinPip(panelGo.transform, "CoinPipLow", new Vector2(5.5f, -24f), 0.62f);
+
             var tagGo = CreateTmp(panelGo.transform, "TagLabel", 13, TextAlignmentOptions.TopLeft);
             var tagRt = tagGo.GetComponent<RectTransform>();
             tagRt.anchorMin = new Vector2(0, 1);
@@ -131,6 +150,18 @@ namespace Sugoroku.Board
             {
                 rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             }
+            return img;
+        }
+
+        private static Image CreateCoinPip(Transform parent, string name, Vector2 anchoredPosition, float alpha)
+        {
+            var img = CreateUiImage(parent, name, Vector2.zero);
+            img.sprite = BoardVisualUtility.GetPixelCoinSprite();
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+            img.color = new Color(1f, 0.74f, 0.20f, alpha);
+            SetRect(img, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(0.5f, 0.5f), new Vector2(9f, 9f), anchoredPosition);
             return img;
         }
 

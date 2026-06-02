@@ -176,7 +176,9 @@ namespace Sugoroku.UI
                 SetLayerY(card, "SelectedTab", 3f + (selected ? bob * 0.36f : 0f));
                 SetLayerY(card, "PortraitWindow", 35f + bob * 0.55f);
                 SetLayerY(card, "Portrait", 39f + bob);
+                SetLayerY(card, "RoleRibbon", 80f + (selected ? bob * 0.28f : bob * 0.10f));
                 SetLayerScale(card, "CharacterNumberBadge", selected ? 1f + pulse * 0.06f : 1f);
+                SetLayerScale(card, "RoleRibbon", selected ? 1f + pulse * 0.05f : 1f);
                 SetLayerScale(card, "SelectedCardHalo", selected ? 1f + pulse * 0.10f : 1f);
                 SetLayerScale(card, "SelectedTab", selected ? 1f + pulse * 0.04f : 0.96f);
                 SetLayerScale(card, "SelectionMeter", selected ? 1f + pulse * 0.08f : 1f);
@@ -184,6 +186,7 @@ namespace Sugoroku.UI
                 RotateLayer(card, "CardSparkleB", -time * (selected ? 74f : 28f) - index * 18f);
                 PulseLayerAlpha(card, "SelectedCardHalo", selected ? 0.20f : 0f, selected ? 0.18f : 0f, pulse);
                 PulseLayerAlpha(card, "CharacterNumberBadge", selected ? 0.86f : 0.56f, selected ? 0.12f : 0.06f, pulse);
+                PulseLayerAlpha(card, "RoleRibbon", selected ? 0.76f : 0.48f, selected ? 0.16f : 0.06f, pulse);
                 PulseLayerAlpha(card, "SelectedTab", selected ? 0.78f : 0f, selected ? 0.20f : 0f, pulse);
                 PulseLayerAlpha(card, "CardTopRule", selected ? 0.76f : 0.46f, selected ? 0.24f : 0.08f, pulse);
                 PulseLayerAlpha(card, "CardSparkleA", selected ? 0.48f : 0.18f, selected ? 0.34f : 0.10f, pulse);
