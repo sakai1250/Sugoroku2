@@ -81,7 +81,7 @@ namespace Sugoroku.UI
             if (_playerNameText != null)
                 HudTextStyle.ApplyReadable(_playerNameText, HudTextStyle.PlayerNameSize, new Color(1f, 0.95f, 0.7f), true);
             if (_turnStateText != null)
-                HudTextStyle.ApplyReadable(_turnStateText, HudTextStyle.InfoFontSize + HudTextStyle.Scale(3f),
+                HudTextStyle.ApplyReadable(_turnStateText, HudTextStyle.JuiceStatusFontSize,
                     new Color(0.55f, 1f, 0.75f), true);
             if (_goalDistanceText != null)
                 HudTextStyle.ApplyInfo(_goalDistanceText, new Color(0.88f, 0.92f, 1f));
@@ -204,7 +204,9 @@ namespace Sugoroku.UI
             GameManager.Instance.OnSquareEffect += (_, msg) => AppendLog(msg);
 
             foreach (var modal in Object.FindObjectsByType<EventModalUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
                 modal.EnsureInitialized();
+            }
 
             SetupDiceHudAnimator();
             if (DiceRoller.Instance != null)
@@ -239,7 +241,7 @@ namespace Sugoroku.UI
             {
                 _turnStateText.text = FormatStateLabel(state);
                 HudTextStyle.ApplyReadable(_turnStateText,
-                    HudTextStyle.InfoFontSize + HudTextStyle.Scale(3f),
+                    HudTextStyle.JuiceStatusFontSize,
                     GetStateColor(state), true);
             }
         }

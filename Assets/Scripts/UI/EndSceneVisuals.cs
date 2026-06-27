@@ -90,6 +90,31 @@ namespace Sugoroku.UI
                 body.raycastTarget = false;
                 HudTextStyle.ApplyOutlineSafe(body, 0.10f, new Color(0f, 0f, 0f, 0.72f));
             }
+
+            BringGameOverContentToFront(root);
+        }
+
+        /// <summary>演出レイヤーの上にテキスト列・本文・ボタンを重ねる。</summary>
+        public static void BringGameOverContentToFront(Transform root)
+        {
+            if (root == null) return;
+
+            var stage    = root.Find("GameOverVisualStage");
+            var impact   = root.Find("GameOverImpactPlate");
+            var backdrop = root.Find("GameOverTextBackdrop");
+            var accent   = root.Find("AccentPanel");
+            var title    = root.Find("GameOverTitle");
+            var body     = root.Find("GameOverBody");
+            var button   = root.Find("TitleButton");
+
+            int index = 9;
+            if (stage != null) stage.SetSiblingIndex(index++);
+            if (impact != null) impact.SetSiblingIndex(index++);
+            if (backdrop != null) backdrop.SetSiblingIndex(index++);
+            if (accent != null) accent.SetSiblingIndex(index++);
+            if (title != null) title.SetSiblingIndex(index++);
+            if (body != null) body.SetSiblingIndex(index++);
+            if (button != null) button.SetSiblingIndex(index++);
         }
 
         private static void EnsureEndBackdrop(Transform root, Color accent, bool danger)

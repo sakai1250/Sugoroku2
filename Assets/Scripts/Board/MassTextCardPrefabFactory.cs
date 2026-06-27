@@ -9,8 +9,16 @@ namespace Sugoroku.Board
     /// <summary>Mass_TextCard プレハブのランタイム／エディタ生成。</summary>
     public static class MassTextCardPrefabFactory
     {
-        public const float CardWorldWidth  = 2.6f;
-        public const float CardWorldHeight = 0.95f;
+        public const float CardAspectWidth  = 4f;
+        public const float CardAspectHeight = 3f;
+        public const float CardWorldWidth   = 2.4f;
+        public static float CardWorldHeight => CardWorldWidth * CardAspectHeight / CardAspectWidth;
+
+        public const float CardUiWidth  = 240f;
+        public const float CardUiHeight = 180f;
+
+        public static float RecommendedSpacingX => CardWorldWidth + 0.6f;
+        public static float RecommendedSpacingY => CardWorldHeight + 0.6f;
 
         public static Waypoint CreateRuntimeInstance(Transform parent, string name)
         {
@@ -38,17 +46,20 @@ namespace Sugoroku.Board
             canvas.sortingOrder = BoardSortingLayers.WaypointBaseOrder + 80;
 
             var canvasRt = canvasGo.GetComponent<RectTransform>();
-            canvasRt.sizeDelta = new Vector2(260f, 95f);
+            canvasRt.sizeDelta = new Vector2(CardUiWidth, CardUiHeight);
             float scale = CardWorldWidth / canvasRt.sizeDelta.x;
             canvasGo.transform.localScale = Vector3.one * scale;
 
             var borderGo = CreateUiImage(canvasRt, "CardBorder", new Vector2(0, 4));
-            borderGo.GetComponent<RectTransform>().sizeDelta = new Vector2(256, 91);
+            borderGo.GetComponent<RectTransform>().sizeDelta = new Vector2(CardUiWidth - 4f, CardUiHeight - 4f);
             borderGo.color = new Color(0.58f, 0.62f, 0.72f, 1f);
 
             var panelGo = CreateUiImage(canvasRt, "CardPanel", Vector2.zero);
-            panelGo.GetComponent<RectTransform>().sizeDelta = new Vector2(248, 83);
+            panelGo.GetComponent<RectTransform>().sizeDelta = new Vector2(CardUiWidth - 12f, CardUiHeight - 12f);
             panelGo.color = new Color(0.42f, 0.46f, 0.56f, 0.94f);
+
+            CreateMassArtImage(panelGo.transform);
+            MassTextCardArtLayout.EnsurePanelMask(panelGo.transform);
 
             var accentStrip = CreateUiImage(panelGo.transform, "AccentStrip", Vector2.zero);
             SetRect(accentStrip, new Vector2(0f, 0f), new Vector2(0f, 1f),
@@ -128,6 +139,12 @@ namespace Sugoroku.Board
             titleGo.textWrappingMode = TextWrappingModes.Normal;
             titleGo.overflowMode = TextOverflowModes.Ellipsis;
         }
+
+        private static Image CreateMassArtImage(Transform panel) =>
+            MassTextCardArtLayout.EnsureMassArtImage(panel);
+
+        public static Image CreateMassArtImageForPanel(Transform panel) =>
+            MassTextCardArtLayout.EnsureMassArtImage(panel);
 
         private static Image CreateUiImage(Transform parent, string name, Vector2 sizeDelta)
         {

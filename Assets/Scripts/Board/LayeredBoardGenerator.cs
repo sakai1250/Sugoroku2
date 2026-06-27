@@ -18,7 +18,7 @@ namespace Sugoroku.Board
         [Header("生成")]
         [SerializeField] private bool  _generateOnAwake    = true;
         [FormerlySerializedAs("_tileWorldWidth")]
-        [SerializeField] private float _cellSpacing        = 3.0f;
+        [SerializeField] private float _cellSpacing        = 3f;
         [SerializeField] private bool  _centerRouteOnBoard = true;
         [SerializeField] private bool  _dimBackgroundArt   = true;
         [SerializeField] private bool  _avoidCardOverlap   = true;
@@ -38,6 +38,10 @@ namespace Sugoroku.Board
         [SerializeField] private BoardManager _boardManager;
 
         private Transform _boardRoot;
+
+        private float SpacingX => Mathf.Max(_cellSpacing, MassTextCardPrefabFactory.RecommendedSpacingX);
+        private float SpacingY => Mathf.Max(_cellSpacing, MassTextCardPrefabFactory.RecommendedSpacingY);
+        private float RouteSpacing => Mathf.Max(SpacingX, SpacingY);
 
         private void Awake()
         {
@@ -68,6 +72,8 @@ namespace Sugoroku.Board
             var route = GetComponentInChildren<WaypointRoute>(true);
             if (route == null || route.Count == 0) return;
 
+            RelayoutRouteToSnakeGrid(route);
+
             if (_boardManager != null)
                 _boardManager.SetRoute(route);
             ApplyOverlapAvoidanceToRoute(route);
@@ -77,6 +83,30 @@ namespace Sugoroku.Board
             var depth = GetComponent<BoardDepthPresentation>();
             if (depth == null) depth = gameObject.AddComponent<BoardDepthPresentation>();
             depth.Rebuild(route);
+        }
+
+        /// <summary>シーンに手置きされたマスを S字グリッドへ再配置（重なり解消）。</summary>
+        private void RelayoutRouteToSnakeGrid(WaypointRoute route)
+        {
+            if (route == null || route.Count == 0) return;
+
+            var placedPositions = new List<Vector3>(route.Count);
+            int count = Mathf.Min(route.Count, SnakeBoardLayout.CellCount);
+
+            for (int i = 0; i < count; i++)
+            {
+                var wp = route.GetWaypoint(i);
+                if (wp == null) continue;
+
+                var basePos = SnakeBoardLayout.GetWorldPosition(i, SpacingX, SpacingY);
+                var pos     = ResolveCardPosition(basePos, i, placedPositions);
+                wp.transform.position = pos;
+                wp.SetCellSpacing(RouteSpacing);
+                placedPositions.Add(pos);
+            }
+
+            if (_centerRouteOnBoard)
+                route.CenterRouteAtOrigin();
         }
 
         public void GenerateLayeredBoard()
@@ -111,7 +141,7 @@ namespace Sugoroku.Board
             var cam = FindFirstObjectByType<BoardCameraController>();
             cam?.FrameBoard();
 
-            Debug.Log($"SnakeBoard: {route.Count} マスを S字ルートに配置しました（間隔 {_cellSpacing}）。");
+            Debug.Log($"SnakeBoard: {route.Count} マスを S字ルートに配置しました（間隔 X={SpacingX:F2} Y={SpacingY:F2}）。");
         }
 
         public void ClearLayeredBoard()
@@ -162,10 +192,11 @@ namespace Sugoroku.Board
             var placedPositions = new List<Vector3>(SnakeBoardLayout.CellCount);
 
             EventMassCatalog.EnsureLoaded();
+            EventMasuArt.Prewarm();
 
             for (int i = 0; i < SnakeBoardLayout.CellCount; i++)
             {
-                var basePos = SnakeBoardLayout.GetWorldPosition(i, _cellSpacing);
+                var basePos = SnakeBoardLayout.GetWorldPosition(i, SpacingX, SpacingY);
                 var pos     = ResolveCardPosition(basePos, i, placedPositions);
                 var type    = SnakeBoardLayout.GetSquareType(i);
                 var label   = SnakeBoardLayout.GetDisplayLabel(i);
@@ -185,7 +216,7 @@ namespace Sugoroku.Board
             if (!OverlapsAnyCard(basePos, placedPositions))
                 return basePos;
 
-            var previousBase = SnakeBoardLayout.GetWorldPosition(index - 1, _cellSpacing);
+            var previousBase = SnakeBoardLayout.GetWorldPosition(index - 1, SpacingX, SpacingY);
             return ResolvePositionAgainstPlaced(basePos, basePos - previousBase, index, placedPositions);
         }
 
@@ -234,7 +265,7 @@ namespace Sugoroku.Board
 
         private static bool OverlapsAnyCard(Vector3 pos, List<Vector3> placedPositions)
         {
-            const float margin = 0.18f;
+            const float margin = 0.45f;
             float minXDistance = MassTextCardPrefabFactory.CardWorldWidth + margin;
             float minYDistance = MassTextCardPrefabFactory.CardWorldHeight + margin;
 
@@ -267,7 +298,7 @@ namespace Sugoroku.Board
             }
 
             wp.transform.position = pos;
-            wp.SetCellSpacing(_cellSpacing);
+            wp.SetCellSpacing(RouteSpacing);
             wp.RemoveWorldLabels();
             wp.Configure(index, type, label, eventId);
             return wp;

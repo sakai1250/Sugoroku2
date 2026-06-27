@@ -34,6 +34,15 @@ namespace Sugoroku.UI
             KenneyUiStyler.StyleCanvas(canvas);
             EnsurePresentationDimmer(canvas);
             EnsureFontBootstrap(canvas);
+            RestoreModalLayerIfVisible();
+        }
+
+        private static void RestoreModalLayerIfVisible()
+        {
+            if (!EventModalUI.HasVisibleModal) return;
+            var modal = EventModalUI.Instance
+                ?? Object.FindFirstObjectByType<EventModalUI>(FindObjectsInactive.Include);
+            modal?.EnsureVisibleLayer();
         }
 
         private static void EnsureFontBootstrap(Canvas canvas)
@@ -86,7 +95,7 @@ namespace Sugoroku.UI
 
             float y = -14f;
             y = PlaceInfoText(panel.transform, "PlayerNameText",  y, 40f, HudTextStyle.PlayerNameSize, true);
-            y = PlaceInfoText(panel.transform, "TurnStateText",   y, 34f, HudTextStyle.InfoFontSize + HudTextStyle.Scale(1f), true);
+            y = PlaceInfoText(panel.transform, "TurnStateText",   y, 42f, HudTextStyle.JuiceStatusFontSize, true);
             y = PlaceInfoText(panel.transform, "MentalSlider",    y, 22f, 0f, false, new Vector2(314f, 18f));
             y = PlaceInfoText(panel.transform, "GoalDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
             y = PlaceInfoText(panel.transform, "TuitionDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
@@ -129,7 +138,7 @@ namespace Sugoroku.UI
 
             var turn = panel.Find("TurnStateText")?.GetComponent<TextMeshProUGUI>();
             if (turn != null)
-                HudTextStyle.ApplyReadable(turn, HudTextStyle.InfoFontSize + HudTextStyle.Scale(2f), new Color(0.55f, 1f, 0.75f), true);
+                HudTextStyle.ApplyReadable(turn, HudTextStyle.JuiceStatusFontSize, new Color(0.55f, 1f, 0.75f), true);
 
             foreach (var n in new[] { "GoalDistanceText", "TuitionDistanceText", "SkipTurnsText", "IgnoreEventsText" })
             {
@@ -433,7 +442,8 @@ namespace Sugoroku.UI
                 LayoutDiceIcon(dice);
             }
 
-            panel.SetAsLastSibling();
+            if (!EventModalUI.HasVisibleModal)
+                panel.SetAsLastSibling();
         }
 
         private static void LayoutActionChild(Transform child, Vector2 anchoredPosition, Vector2 size)

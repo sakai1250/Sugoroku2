@@ -170,9 +170,9 @@ namespace Sugoroku.Game
 
                 case SquareType.Lecture:
                     bool isSeriousImmune = player.Character == CharacterType.Serious;
-                    if (!isSeriousImmune)
-                        player.ApplyStatChange(0, -5, -10, 5);
                     GameManager.Instance.ShowSquareEffect(player, squareType);
+                    if (!isSeriousImmune)
+                        yield return StatChangeSequencer.Apply(player, 0, -5, -10, 5);
                     EndTurn();
                     break;
 
@@ -190,14 +190,16 @@ namespace Sugoroku.Game
                     break;
 
                 case SquareType.Bonus:
-                    player.ApplyStatChange(node?.BonusMoney ?? 5, 5, 10, 5);
                     GameManager.Instance.ShowSquareEffect(player, squareType);
+                    yield return StatChangeSequencer.Apply(player,
+                        node?.BonusMoney ?? 5, 5, 10, 5);
                     EndTurn();
                     break;
 
                 case SquareType.Penalty:
-                    player.ApplyStatChange(node?.PenaltyMoney ?? -5, -5, -10, -5);
                     GameManager.Instance.ShowSquareEffect(player, squareType);
+                    yield return StatChangeSequencer.Apply(player,
+                        node?.PenaltyMoney ?? -5, -5, -10, -5);
                     EndTurn();
                     break;
 

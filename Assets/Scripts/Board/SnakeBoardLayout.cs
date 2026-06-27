@@ -16,13 +16,18 @@ namespace Sugoroku.Board
         /// <summary>イベントマスに固定配置する EventId（events.json）。</summary>
         private static readonly string[] FixedEventIds =
         {
-            "", "", "", "", "",
-            "", "", "", "", "E012",
-            "E014", "", "", "", "",
-            "", "", "E016", "", "",
+            "",
+            "E012", "E013", "E014", "E015", "E016",
+            "E017", "E018", "E019", "E020", "E021",
+            "E022", "E023", "E024", "E025", "E026",
+            "E027", "E028", "E029", "E030",
+            "",
         };
 
-        public static Vector3 GetWorldPosition(int index, float cellSpacing)
+        public static Vector3 GetWorldPosition(int index, float cellSpacing) =>
+            GetWorldPosition(index, cellSpacing, cellSpacing);
+
+        public static Vector3 GetWorldPosition(int index, float spacingX, float spacingY)
         {
             if (index < 0 || index >= CellCount) return Vector3.zero;
 
@@ -31,7 +36,7 @@ namespace Sugoroku.Board
             int col      = (row % 2 == 0) ? posInRow : (Columns - 1 - posInRow);
             int rowY     = Rows - 1 - row;
 
-            return new Vector3(col * cellSpacing, rowY * cellSpacing, 0f);
+            return new Vector3(col * spacingX, rowY * spacingY, 0f);
         }
 
         public static string GetDisplayName(int index)
@@ -72,18 +77,7 @@ namespace Sugoroku.Board
         {
             if (index == 0) return SquareType.Start;
             if (index == CellCount - 1) return SquareType.Goal;
-
-            return index switch
-            {
-                2       => SquareType.Lecture,
-                3 or 14 => SquareType.PartTime,
-                4 or 11 => SquareType.Tuition,
-                5 or 13 => SquareType.Rest,
-                7 or 15 => SquareType.Journal,
-                9 or 10 or 17 => SquareType.Event,
-                18      => SquareType.Journal,
-                _       => SquareType.Normal,
-            };
+            return SquareType.Event;
         }
     }
 }

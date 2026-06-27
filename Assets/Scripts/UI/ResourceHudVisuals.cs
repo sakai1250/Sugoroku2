@@ -15,6 +15,7 @@ namespace Sugoroku.UI
         public static readonly Color IfTextColor     = new(0.55f, 0.85f, 1f);
         public static readonly Color MentalTextColor = new(0.75f, 0.95f, 0.8f);
         public static readonly Color VirtueTextColor  = new(0.82f, 0.65f, 1f);
+        public static readonly Color PinchTextColor   = new(1f, 0.22f, 0.22f, 1f);
 
         public static readonly Color MoneyIconTint  = new(1f, 0.82f, 0.2f);
         public static readonly Color IfIconTint     = new(0.35f, 0.78f, 1f);
@@ -125,6 +126,9 @@ namespace Sugoroku.UI
             SetText(FindInBar(bar, "MentalText"),  FormatMental(player.Mental, player.MaxMental), GetMentalTextColor(player));
             SetText(FindInBar(bar, "VirtueText"),  FormatVirtue(player.Virtue), VirtueTextColor);
 
+            UpdatePinchLabel(FindInBar(bar, "MoneyPinch"),  StatPinchThresholds.IsMoneyPinch(player.Money));
+            UpdatePinchLabel(FindInBar(bar, "MentalPinch"), StatPinchThresholds.IsMentalPinch(player.Mental));
+
             SetIcon(FindInBar(bar, "MoneyIcon"),  KenneyAssets.ResourceIcon.Money,  MoneyIconTint);
             SetIcon(FindInBar(bar, "IfIcon"),     KenneyAssets.ResourceIcon.IfScore, IfIconTint);
             SetIcon(FindInBar(bar, "MentalIcon"), KenneyAssets.ResourceIcon.Mental, GetMentalIconColor(player));
@@ -200,6 +204,40 @@ namespace Sugoroku.UI
 
             var iconRt = cell.Find(iconName)?.GetComponent<RectTransform>();
             if (iconRt != null) iconRt.sizeDelta = new Vector2(32f, 32f);
+
+            if (textName == "MoneyText")
+                EnsurePinchLabel(cell, "MoneyPinch");
+            else if (textName == "MentalText")
+                EnsurePinchLabel(cell, "MentalPinch");
+        }
+
+        private static void EnsurePinchLabel(Transform cell, string labelName)
+        {
+            if (cell.Find(labelName) != null) return;
+
+            var go = new GameObject(labelName, typeof(RectTransform));
+            go.transform.SetParent(cell, false);
+            go.transform.SetAsLastSibling();
+
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = "ピンチ！！";
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.raycastTarget = false;
+            HudTextStyle.ApplyReadable(tmp, HudTextStyle.Scale(16f), PinchTextColor, true);
+            HudTextStyle.ApplyOutlineSafe(tmp, 0.12f, new Color(0f, 0f, 0f, 0.75f));
+
+            var le = go.AddComponent<LayoutElement>();
+            le.flexibleWidth = 0f;
+            le.preferredWidth = 88f;
+            le.minHeight = 40f;
+
+            go.SetActive(false);
+        }
+
+        private static void UpdatePinchLabel(Transform label, bool visible)
+        {
+            if (label == null) return;
+            label.gameObject.SetActive(visible);
         }
 
         public static Color GetMentalIconColor(PlayerData player)

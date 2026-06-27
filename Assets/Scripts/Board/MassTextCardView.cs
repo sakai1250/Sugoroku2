@@ -22,6 +22,7 @@ namespace Sugoroku.Board
 
         [Header("UI")]
         [SerializeField] private Image           background;
+        [SerializeField] private Image           massArtImage;
         [SerializeField] private Image           border;
         [SerializeField] private Image           accentStrip;
         [SerializeField] private Image           headerBand;
@@ -68,6 +69,32 @@ namespace Sugoroku.Board
 
         public string EventId => eventId;
 
+        public void PlayEventHighlight()
+        {
+            if (!isActiveAndEnabled) return;
+            StopAllCoroutines();
+            StartCoroutine(EventHighlightCoroutine());
+        }
+
+        private IEnumerator EventHighlightCoroutine()
+        {
+            CaptureMotionBaseline();
+            if (_motionRoot == null) yield break;
+
+            float duration = GameConfig.AnimationDuration(0.55f);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float pulse = 1f + Mathf.Sin(t * Mathf.PI) * 0.14f;
+                _motionRoot.localScale = _motionRootBaseScale * pulse;
+                yield return null;
+            }
+
+            ResetMotionTransform();
+        }
+
         private Canvas  _cardCanvas;
         private Transform _motionRoot;
         private Vector3 _motionRootBaseScale = Vector3.one;
@@ -82,6 +109,7 @@ namespace Sugoroku.Board
         private float   _shineSeed;
         private Color   _panelColor  = new(0.42f, 0.46f, 0.56f, 0.94f);
         private Color   _accentColor = new(0.58f, 0.62f, 0.72f, 1f);
+        private bool    _massArtActive;
 
         private void Awake()
         {
@@ -148,6 +176,7 @@ namespace Sugoroku.Board
             if (border != null)
                 border.color = accent;
             ApplyCardDecoration(panel, accent);
+            ApplyMassArt(squareType, ev.Tags);
         }
 
         private void ApplySquareType(SquareType type, string title)
@@ -192,6 +221,139 @@ namespace Sugoroku.Board
             if (border != null)
                 border.color = accent;
             ApplyCardDecoration(panel, accent);
+            ApplyMassArt(type, null);
+        }
+
+        private void ApplyMassArt(SquareType type, string[] tags)
+        {
+            EnsureMassArtImage();
+
+            var category = EventMasuArt.ResolveCategory(type, tags);
+            var sprite   = EventMasuArt.GetCardSprite(category);
+
+            if (massArtImage == null)
+            {
+                SetMassArtPresentation(false);
+                return;
+            }
+
+            if (sprite == null)
+            {
+                MassTextCardArtLayout.ApplySprite(massArtImage, null);
+                SetMassArtPresentation(false);
+                return;
+            }
+
+            MassTextCardArtLayout.ApplySprite(massArtImage, sprite);
+            SetMassArtPresentation(true);
+
+            if (background != null)
+                background.color = new Color(0.06f, 0.07f, 0.09f, 1f);
+        }
+
+        private void SetMassArtPresentation(bool artActive)
+        {
+            _massArtActive = artActive;
+
+            SetGraphicVisible(pixelGroundLip, !artActive);
+            SetGraphicVisible(dirtChipLeft, !artActive);
+            SetGraphicVisible(dirtChipRight, !artActive);
+            SetGraphicVisible(terrainBlockLeft, !artActive);
+            SetGraphicVisible(terrainBlockMid, !artActive);
+            SetGraphicVisible(terrainBlockRight, !artActive);
+            SetGraphicVisible(coinPipTop, !artActive);
+            SetGraphicVisible(coinPipMid, !artActive);
+            SetGraphicVisible(coinPipLow, !artActive);
+            SetGraphicVisible(sparkleTop, !artActive);
+            SetGraphicVisible(sparkleMid, !artActive);
+            SetGraphicVisible(sparkleLow, !artActive);
+            SetGraphicVisible(titleRule, !artActive);
+            SetGraphicVisible(shineSweep, !artActive);
+
+            if (headerBand != null)
+            {
+                headerBand.enabled = true;
+                if (artActive)
+                {
+                    SetRect(headerBand, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                        new Vector2(0.5f, 0f), new Vector2(0f, 22f), new Vector2(0f, 11f));
+                    headerBand.color = new Color(0f, 0f, 0f, 0.72f);
+                }
+                else
+                {
+                    SetRect(headerBand, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                        new Vector2(0.5f, 1f), new Vector2(0f, 25f), new Vector2(0f, -12.5f));
+                }
+            }
+
+            EnsureMassArtSiblingOrder();
+
+            if (artActive)
+                LayoutMassArtCaption();
+            else
+                LayoutText();
+        }
+
+        private void EnsureMassArtSiblingOrder()
+        {
+            if (background == null) return;
+
+            var panel = background.transform;
+            var clip = panel.Find(MassTextCardArtLayout.ClipName);
+            if (clip == null) return;
+
+            clip.SetAsFirstSibling();
+            if (accentStrip != null)
+                accentStrip.transform.SetSiblingIndex(1);
+        }
+
+        private void LayoutMassArtCaption()
+        {
+            if (tagText != null)
+            {
+                var rt = tagText.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0f, 0f);
+                rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.anchoredPosition = new Vector2(14f, 2f);
+                rt.sizeDelta = new Vector2(-28f, 20f);
+                tagText.alignment = TextAlignmentOptions.BottomLeft;
+                tagText.enableAutoSizing = true;
+                tagText.fontSizeMin = 8f;
+                tagText.fontSizeMax = 11f;
+                HudTextStyle.ApplyOutlineSafe(tagText, 0.08f, new Color(0f, 0f, 0f, 0.62f));
+            }
+
+            if (titleText != null)
+            {
+                var rt = titleText.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0f, 0f);
+                rt.anchorMax = new Vector2(1f, 0f);
+                rt.pivot = new Vector2(0.5f, 0f);
+                rt.offsetMin = new Vector2(14f, 18f);
+                rt.offsetMax = new Vector2(-34f, 42f);
+                titleText.alignment = TextAlignmentOptions.BottomLeft;
+                titleText.enableAutoSizing = true;
+                titleText.fontSizeMin = 10f;
+                titleText.fontSizeMax = 14f;
+                HudTextStyle.ApplyOutlineSafe(titleText, 0.10f, new Color(0f, 0f, 0f, 0.68f));
+            }
+        }
+
+        private static void SetGraphicVisible(Graphic graphic, bool visible)
+        {
+            if (graphic != null)
+                graphic.enabled = visible;
+        }
+
+        private void EnsureMassArtImage()
+        {
+            var panel = background != null
+                ? background.transform
+                : transform.Find("CardCanvas/CardPanel");
+            if (panel == null) return;
+
+            massArtImage = MassTextCardArtLayout.EnsureMassArtImage(panel);
         }
 
         private void Update()
@@ -237,9 +399,11 @@ namespace Sugoroku.Board
             CaptureMotionBaseline();
 
             background ??= canvas.transform.Find("CardPanel")?.GetComponent<Image>();
+            massArtImage ??= canvas.transform.Find("CardPanel/MassArtClip/MassArtImage")?.GetComponent<Image>()
+                ?? canvas.transform.Find("CardPanel/MassArtImage")?.GetComponent<Image>();
             border     ??= canvas.transform.Find("CardBorder")?.GetComponent<Image>();
-            tagText    ??= canvas.transform.Find("TagLabel")?.GetComponent<TextMeshProUGUI>();
-            titleText  ??= canvas.transform.Find("TitleLabel")?.GetComponent<TextMeshProUGUI>();
+            tagText    ??= canvas.transform.Find("CardPanel/TagLabel")?.GetComponent<TextMeshProUGUI>();
+            titleText  ??= canvas.transform.Find("CardPanel/TitleLabel")?.GetComponent<TextMeshProUGUI>();
             CacheDecorationReferences();
             ApplyPixelSprites();
         }
@@ -363,7 +527,13 @@ namespace Sugoroku.Board
                 bottomExtrude.transform.SetSiblingIndex(outerGlow != null ? outerGlow.transform.GetSiblingIndex() + 1 : 1);
             if (rightExtrude != null)
                 rightExtrude.transform.SetSiblingIndex(bottomExtrude != null ? bottomExtrude.transform.GetSiblingIndex() + 1 : 1);
-            accentStrip.transform.SetAsFirstSibling();
+
+            var cardPanel = background != null ? background.transform : null;
+            var artClip = cardPanel != null ? cardPanel.Find(MassTextCardArtLayout.ClipName) : null;
+            if (artClip != null)
+                artClip.SetAsFirstSibling();
+            if (accentStrip != null)
+                accentStrip.transform.SetSiblingIndex(artClip != null ? 1 : 0);
             headerBand.transform.SetSiblingIndex(1);
             hoverWash.transform.SetSiblingIndex(2);
             shineSweep.transform.SetSiblingIndex(3);
@@ -469,6 +639,9 @@ namespace Sugoroku.Board
             if (sparkleMid != null) sparkleMid.color = WithAlpha(Tint(accent, 0.55f), 0.12f);
             if (sparkleLow != null) sparkleLow.color = WithAlpha(Tint(accent, 0.36f), 0.10f);
             if (markerText != null) markerText.color = WithAlpha(Shade(accent, 0.58f), 1f);
+
+            if (_massArtActive && massArtImage != null && massArtImage.sprite != null)
+                SetMassArtPresentation(true);
         }
 
         private void ApplyPixelSprites()
@@ -631,19 +804,29 @@ namespace Sugoroku.Board
             if (titleRule != null)
                 titleRule.color = WithAlpha(Tint(_accentColor, 0.36f), 0.78f + 0.18f * _hoverAmount);
 
-            if (pixelGroundLip != null)
-                pixelGroundLip.color = WithAlpha(PixelGrassColor(_accentColor), 0.88f + 0.08f * _hoverAmount);
+            if (!_massArtActive)
+            {
+                if (pixelGroundLip != null)
+                    pixelGroundLip.color = WithAlpha(PixelGrassColor(_accentColor), 0.88f + 0.08f * _hoverAmount);
 
-            AnimateTerrainBlocks(breathe);
-            AnimateCoinPips(time);
+                AnimateTerrainBlocks(breathe);
+                AnimateCoinPips(time);
+            }
 
             if (headerBand != null)
-                headerBand.color = WithAlpha(Shade(_panelColor, 0.24f), 0.42f + 0.10f * _hoverAmount);
+            {
+                headerBand.color = _massArtActive
+                    ? new Color(0f, 0f, 0f, 0.72f + _hoverAmount * 0.08f)
+                    : WithAlpha(Shade(_panelColor, 0.24f), 0.42f + 0.10f * _hoverAmount);
+            }
 
-            AnimateShine(time);
-            AnimateSparkle(sparkleTop, time, 0.00f, 0.12f);
-            AnimateSparkle(sparkleMid, time, 0.38f, 0.10f);
-            AnimateSparkle(sparkleLow, time, 0.67f, 0.09f);
+            if (!_massArtActive)
+            {
+                AnimateShine(time);
+                AnimateSparkle(sparkleTop, time, 0.00f, 0.12f);
+                AnimateSparkle(sparkleMid, time, 0.38f, 0.10f);
+                AnimateSparkle(sparkleLow, time, 0.67f, 0.09f);
+            }
         }
 
         private void AnimateShine(float time)
@@ -711,7 +894,10 @@ namespace Sugoroku.Board
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = new Vector2(0f, 4f);
-            rt.sizeDelta = new Vector2(250f, 86f);
+            var burstSize = new Vector2(
+                MassTextCardPrefabFactory.CardUiWidth - 8f,
+                MassTextCardPrefabFactory.CardUiHeight - 8f);
+            rt.sizeDelta = burstSize;
 
             int burstIndex = outerGlow != null ? outerGlow.transform.GetSiblingIndex() + 1 : 0;
             go.transform.SetSiblingIndex(burstIndex);
@@ -723,7 +909,7 @@ namespace Sugoroku.Board
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
                 float eased = JuiceMath.EaseOutQuad(t);
-                rt.sizeDelta = Vector2.Lerp(new Vector2(250f, 86f), new Vector2(292f, 112f), eased);
+                rt.sizeDelta = Vector2.Lerp(burstSize, burstSize * 1.18f, eased);
                 img.color = WithAlpha(Tint(_accentColor, 0.38f), (1f - t) * 0.24f);
                 yield return null;
             }

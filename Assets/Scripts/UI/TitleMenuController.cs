@@ -24,7 +24,10 @@ namespace Sugoroku.UI
             JapaneseFontProvider.WarmUp();
             var canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
+            {
                 JapaneseFontProvider.ApplyAllInCanvas(canvas);
+                TitleSceneDecorations.Ensure(canvas.transform);
+            }
         }
 
         private void Start()

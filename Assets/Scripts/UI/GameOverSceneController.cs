@@ -40,31 +40,18 @@ namespace Sugoroku.UI
             {
                 _bodyText.text = outcome.Body;
                 JapaneseFontProvider.Apply(_bodyText);
-                LayoutBodyForVisual(outcome.VisualStyle);
             }
 
             EndSceneVisuals.ApplyGameOver(transform, outcome);
-            if (_bodyText != null)
-                LayoutBodyForVisual(outcome.VisualStyle);
+            GameOverLayout.ApplyContent(transform, outcome.VisualStyle);
+            if (_accentImage != null)
+            {
+                var c = outcome.AccentColor;
+                _accentImage.color = new Color(c.r, c.g, c.b, 0.32f);
+                _accentImage.gameObject.SetActive(true);
+            }
             _juice?.Play(outcome);
-        }
-
-        private void LayoutBodyForVisual(GameOverVisualStyle style)
-        {
-            if (_bodyText == null) return;
-            var rt = _bodyText.rectTransform;
-
-            if (style == GameOverVisualStyle.ExpulsionList)
-            {
-                rt.anchoredPosition = new Vector2(0f, -290f);
-                rt.sizeDelta        = new Vector2(780f, 130f);
-                _bodyText.color     = new Color(0.82f, 0.82f, 0.88f);
-            }
-            else
-            {
-                rt.anchoredPosition = new Vector2(0f, -60f);
-                rt.sizeDelta        = new Vector2(800f, 280f);
-            }
+            EndSceneVisuals.BringGameOverContentToFront(transform);
         }
 
         private TextMeshProUGUI FindTmp(string n) => transform.Find(n)?.GetComponent<TextMeshProUGUI>();

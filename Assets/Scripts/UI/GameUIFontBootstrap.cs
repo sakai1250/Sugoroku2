@@ -22,7 +22,9 @@ namespace Sugoroku.UI
                 gameObject.AddComponent<GameStatusBanner>();
 
             foreach (var modal in FindObjectsByType<EventModalUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
                 modal.EnsureInitialized();
+            }
         }
     }
 }

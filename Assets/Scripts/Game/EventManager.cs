@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -94,7 +95,6 @@ namespace Sugoroku.Game
             }
 
             var modal = Object.FindFirstObjectByType<Sugoroku.UI.EventModalUI>(FindObjectsInactive.Include);
-            modal?.EnsureInitialized();
 
             bool hasListeners = OnEventTriggered != null;
             if (modal == null)
@@ -102,25 +102,81 @@ namespace Sugoroku.Game
 
             OnEventTriggered?.Invoke(ev, player);
 
-            if (!player.IsCpu)
+            if (modal != null)
             {
-                if (modal != null)
+                if (player != null && player.IsCpu)
+                    StartCoroutine(RunCpuEvent(ev, player));
+                else
                     modal.ShowEventFromManager(ev, player);
-                else if (!hasListeners)
-                    Sugoroku.UI.EventModalUI.ShowEventDirect(ev, player);
             }
+            else if (!hasListeners)
+                Sugoroku.UI.EventModalUI.ShowEventDirect(ev, player);
+        }
+
+        public IEnumerator ApplyChoiceSequence(PlayerData player, EventChoice choice)
+        {
+            if (player == null || choice == null) yield break;
+
+            yield return StatChangeSequencer.Apply(
+                player,
+                choice.MoneyChange,
+                choice.IfScoreChange,
+                choice.MentalChange,
+                choice.VirtueChange);
+
+            OnChoiceApplied?.Invoke(player, choice);
         }
 
         public void ApplyChoice(PlayerData player, EventChoice choice)
         {
-            // キャラ固有の補正
-            int money   = choice.MoneyChange;
-            int ifScore = choice.IfScoreChange;
-            int mental  = choice.MentalChange;
-            int virtue  = choice.VirtueChange;
+            StartCoroutine(ApplyChoiceSequence(player, choice));
+        }
 
-            player.ApplyStatChange(money, ifScore, mental, virtue);
-            OnChoiceApplied?.Invoke(player, choice);
+        public void RunHumanChoiceResolution(PlayerData player, EventChoice choice, System.Action dismissUi)
+        {
+            StartCoroutine(HumanChoiceResolution(player, choice, dismissUi));
+        }
+
+        private IEnumerator HumanChoiceResolution(PlayerData player, EventChoice choice, System.Action dismissUi)
+        {
+            dismissUi?.Invoke();
+            yield return ApplyChoiceSequence(player, choice);
+            TurnManager.Instance.EndTurn();
+            Object.FindFirstObjectByType<Sugoroku.UI.GameHUD>()?.RefreshAll();
+        }
+
+        private IEnumerator RunCpuEvent(EventMaster ev, PlayerData player)
+        {
+            yield return new WaitForSeconds(1.2f);
+            if (ev == null || player == null) yield break;
+
+            int idx = CpuController.Instance != null
+                ? CpuController.Instance.PickChoice(player, ev)
+                : EventRobustnessValidator.FirstSelectableIndex(ev, player);
+
+            if (idx >= 0)
+            {
+                var choice = ev.GetChoice(idx);
+                if (choice != null)
+                    yield return ApplyChoiceSequence(player, choice);
+            }
+            else if (player.Virtue >= GameConfig.VirtueRescueThreshold)
+            {
+                yield return StatChangeSequencer.Apply(player, 0, 0, 10, -5);
+            }
+            else
+            {
+                int fallback = EventRobustnessValidator.FirstUnconditionalIndex(ev);
+                if (fallback >= 0)
+                {
+                    var choice = ev.GetChoice(fallback);
+                    if (choice != null)
+                        yield return ApplyChoiceSequence(player, choice);
+                }
+            }
+
+            TurnManager.Instance.EndTurn();
+            Object.FindFirstObjectByType<Sugoroku.UI.GameHUD>()?.RefreshAll();
         }
 
         private void ValidateRobustness()

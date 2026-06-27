@@ -75,7 +75,7 @@ namespace Sugoroku.UI
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot     = new Vector2(0.5f, 1f);
             rt.anchoredPosition = new Vector2(0f, -(ResourceHudVisuals.TopBarHeight + 6f));
-            rt.sizeDelta = new Vector2(980f, 62f);
+            rt.sizeDelta = new Vector2(980f, 76f);
 
             var bg = root.AddComponent<Image>();
             bg.color = GameUiChrome.Surface;
@@ -96,8 +96,8 @@ namespace Sugoroku.UI
             _label = textGo.AddComponent<TextMeshProUGUI>();
             _label.alignment = TextAlignmentOptions.Center;
             _label.textWrappingMode = TextWrappingModes.Normal;
-            HudTextStyle.ApplyReadable(_label, HudTextStyle.Scale(20f), new Color(1f, 0.96f, 0.78f), true);
-            HudTextStyle.ApplyOutlineSafe(_label, 0.08f, HudTextStyle.OutlineColor);
+            HudTextStyle.ApplyReadable(_label, HudTextStyle.JuiceStatusFontSize, new Color(1f, 0.96f, 0.78f), true);
+            HudTextStyle.ApplyOutlineSafe(_label, HudTextStyle.JuiceOutlineWidth, HudTextStyle.OutlineColor);
             SetMessage("ゲーム準備中…");
         }
 

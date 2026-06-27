@@ -81,15 +81,21 @@ namespace Sugoroku.Data
             _                      => ""
         };
 
+        public const int RichBonusMoney = 10;
+
         public static CharacterProfile GetProfile(this CharacterType type) => type switch
         {
-            CharacterType.Hobbyist => new(30, 50, 50, 0, 0),
-            CharacterType.Serious  => new(30, 50, 50, 0, 0),
-            CharacterType.Athletic => new(30, 50, 50, 0, 0),
-            CharacterType.Rich     => new(40, 50, 50, 0, 0),
-            CharacterType.Genius   => new(30, 30, 30, 0, 0),
+            CharacterType.Hobbyist => new(GameConfig.InitialMoney, GameConfig.InitialMental, GameConfig.MaxMental, 0, 0),
+            CharacterType.Serious  => new(GameConfig.InitialMoney, GameConfig.InitialMental, GameConfig.MaxMental, 0, 0),
+            CharacterType.Athletic => new(GameConfig.InitialMoney, GameConfig.InitialMental, GameConfig.MaxMental, 0, 0),
+            CharacterType.Rich     => new(GameConfig.InitialMoney + RichBonusMoney, GameConfig.InitialMental, GameConfig.MaxMental, 0, 0),
+            CharacterType.Genius   => new(GameConfig.InitialMoney, GeniusInitialMental, GeniusInitialMental, 0, 0),
             _                      => new(GameConfig.InitialMoney, GameConfig.InitialMental, GameConfig.MaxMental, 0, 0)
         };
+
+        /// <summary>天才肌は標準の 60% メンタル（旧 30/50 と同比率）。</summary>
+        public static int GeniusInitialMental =>
+            Mathf.RoundToInt(GameConfig.InitialMental * 0.6f);
 
         public static Color AccentColor(this CharacterType type) => type switch
         {

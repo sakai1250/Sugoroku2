@@ -22,7 +22,13 @@ namespace Sugoroku.UI
 
             var canvas = modalRoot.GetComponentInParent<Canvas>();
             if (canvas != null)
-                modalRoot.SetAsLastSibling();
+            {
+                var overlay = canvas.transform.Find("EventModalOverlayRoot");
+                if (overlay != null)
+                    overlay.SetAsLastSibling();
+                else
+                    modalRoot.SetAsLastSibling();
+            }
 
             GameUiChrome.ApplySurface(modalRoot, new Color(0.12f, 0.14f, 0.20f, 0.98f));
             EnsureHeader(modalRoot, ev);
@@ -152,8 +158,8 @@ namespace Sugoroku.UI
             var rt = parent.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, -120f);
-            rt.sizeDelta = new Vector2(700f, 280f);
+            rt.anchoredPosition = new Vector2(0f, -140f);
+            rt.sizeDelta = new Vector2(700f, 320f);
             parent.SetAsLastSibling();
         }
     }

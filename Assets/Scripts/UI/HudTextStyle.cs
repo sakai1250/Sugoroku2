@@ -11,7 +11,12 @@ namespace Sugoroku.UI
         public const float PlayerNameSize    = 22f * TextScale;
         public const float InfoFontSize      = 16f * TextScale;
         public const float LogFontSize       = 13f * TextScale;
+        /// <summary>+15pt など駒上フロート表示。</summary>
+        public const float JuiceFloatingFontSize = 34f * TextScale;
+        /// <summary>移動中! / イベント! など状態コールアウト。</summary>
+        public const float JuiceStatusFontSize   = 28f * TextScale;
         public const float OutlineWidth      = 0.14f;
+        public const float JuiceOutlineWidth = 0.22f;
         public static readonly Color32 OutlineColor = new(0, 0, 0, 165);
 
         public static float Scale(float size) => size * TextScale;

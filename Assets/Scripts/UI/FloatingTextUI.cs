@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using Sugoroku.Data;
@@ -16,6 +17,23 @@ namespace Sugoroku.UI
 
         [SerializeField] private Canvas _canvas;
 
+        private readonly Queue<FloatRequest> _queue = new();
+        private Coroutine _queueRoutine;
+
+        private readonly struct FloatRequest
+        {
+            public readonly string Text;
+            public readonly Vector3 WorldPos;
+            public readonly Color Color;
+
+            public FloatRequest(string text, Vector3 worldPos, Color color)
+            {
+                Text = text;
+                WorldPos = worldPos;
+                Color = color;
+            }
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -24,34 +42,65 @@ namespace Sugoroku.UI
         }
 
         public void Show(string text, Vector3 worldPos, Color color) =>
-            StartCoroutine(FloatCoroutine(text, worldPos, color));
+            Enqueue(new FloatRequest(text, worldPos, color));
 
         public void ShowStatChange(int money, int ifScore, int mental, int virtue, Vector3 worldPos)
         {
+            var anchor = worldPos + Vector3.up * 0.65f;
+
             if (money != 0)
             {
                 string sign = money > 0 ? "+" : "";
-                Show($"所持金 {sign}{money}万", worldPos + Vector3.up * 0.35f,
-                    money > 0 ? FloatGreen : FloatRed);
+                Enqueue(new FloatRequest(
+                    $"所持金 {sign}{money}万", anchor,
+                    money > 0 ? FloatGreen : FloatRed));
             }
+
             if (ifScore != 0)
             {
                 string sign = ifScore > 0 ? "+" : "";
-                Show($"IF {sign}{ifScore} pt", worldPos + Vector3.up * 0.65f,
-                    ifScore > 0 ? FloatBlue : FloatRed);
+                Enqueue(new FloatRequest(
+                    $"IF {sign}{ifScore} pt", anchor,
+                    ifScore > 0 ? FloatBlue : FloatRed));
             }
+
             if (mental != 0)
             {
                 string sign = mental > 0 ? "+" : "";
-                Show($"メンタル {sign}{mental}", worldPos + Vector3.up * 0.95f,
-                    mental > 0 ? FloatGreen : FloatRed);
+                Enqueue(new FloatRequest(
+                    $"メンタル {sign}{mental}", anchor,
+                    mental > 0 ? FloatGreen : FloatRed));
             }
+
             if (virtue != 0)
             {
                 string sign = virtue > 0 ? "+" : "";
-                Show($"徳 {sign}{virtue}", worldPos + Vector3.up * 1.25f,
-                    virtue > 0 ? FloatGreen : FloatRed);
+                Enqueue(new FloatRequest(
+                    $"徳 {sign}{virtue}", anchor,
+                    virtue > 0 ? FloatGreen : FloatRed));
             }
+        }
+
+        private void Enqueue(FloatRequest request)
+        {
+            _queue.Enqueue(request);
+            if (_queueRoutine == null)
+                _queueRoutine = StartCoroutine(ProcessQueue());
+        }
+
+        private IEnumerator ProcessQueue()
+        {
+            float gap = GameConfig.AnimationDuration(GameConfig.StatFloatGapSeconds);
+
+            while (_queue.Count > 0)
+            {
+                var request = _queue.Dequeue();
+                yield return FloatCoroutine(request.Text, request.WorldPos, request.Color);
+                if (_queue.Count > 0 && gap > 0f)
+                    yield return new WaitForSeconds(gap);
+            }
+
+            _queueRoutine = null;
         }
 
         private IEnumerator FloatCoroutine(string text, Vector3 worldPos, Color color)
@@ -62,13 +111,13 @@ namespace Sugoroku.UI
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text      = text;
             tmp.color     = color;
-            tmp.fontSize  = HudTextStyle.Scale(22f);
+            tmp.fontSize  = HudTextStyle.JuiceFloatingFontSize;
             tmp.fontStyle = FontStyles.Bold;
             tmp.alignment = TextAlignmentOptions.Center;
-            HudTextStyle.ApplyOutlineSafe(tmp, 0.18f, new Color(0f, 0f, 0f, 0.8f));
+            HudTextStyle.ApplyOutlineSafe(tmp, HudTextStyle.JuiceOutlineWidth, new Color(0f, 0f, 0f, 0.88f));
 
             var rt = go.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(300f, 44f);
+            rt.sizeDelta = new Vector2(400f, 58f);
 
             var cam = Camera.main;
             if (cam != null && _canvas != null)

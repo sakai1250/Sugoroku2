@@ -44,6 +44,7 @@ namespace Sugoroku.Editor
 
             var canvasGo = CreateCanvasGo("TitleCanvas");
             canvasGo.AddComponent<TitleMenuController>();
+            canvasGo.AddComponent<TitleSceneDecorations>();
 
             var titlePanel = CreatePanel(canvasGo.transform, "TitlePanel", new Color(0.08f, 0.08f, 0.18f, 0.95f));
             CreateTMP(titlePanel.transform, "TitleLabel", "大学院生すごろく", 48, new Vector2(0, 160));
@@ -167,9 +168,9 @@ namespace Sugoroku.Editor
             barRt.sizeDelta = new Vector2(0, 72);
             barRt.anchoredPosition = Vector2.zero;
 
-            CreateBarStat(barGo.transform, "MoneyText",  "所持金: 30 万円",  new Vector2(-600, 0));
+            CreateBarStat(barGo.transform, "MoneyText",  "所持金: 45 万円",  new Vector2(-600, 0));
             CreateBarStat(barGo.transform, "IfScoreText","IF: 0.0 pt",       new Vector2(-200, 0));
-            CreateBarStat(barGo.transform, "MentalText", "メンタル: 50 / 50",new Vector2(200, 0));
+            CreateBarStat(barGo.transform, "MentalText", "メンタル: 75 / 75",new Vector2(200, 0));
             CreateBarStat(barGo.transform, "VirtueText", "徳: 0 pt",         new Vector2(600, 0));
 
             // HUD ルート（Canvas 配下は RectTransform 必須）
@@ -323,7 +324,7 @@ namespace Sugoroku.Editor
             panel.AddComponent<ResultSceneController>();
 
             CreateTMP(panel.transform, "ResultTitle", "修了発表", 44, new Vector2(0, 380));
-            var body = CreateTMP(panel.transform, "ResultBody", "", 18, new Vector2(0, 0));
+            var body = CreateTMP(panel.transform, "ResultBody", "", 30, new Vector2(0, 0));
             body.alignment = TextAlignmentOptions.TopLeft;
             body.GetComponent<RectTransform>().sizeDelta = new Vector2(900, 500);
             CreateButtonGo(panel.transform, "TitleButton", "タイトルへ", new Vector2(0, -380));
@@ -341,11 +342,8 @@ namespace Sugoroku.Editor
             panel.AddComponent<GameOverSceneController>();
             panel.AddComponent<GameOverSceneJuice>();
 
-            var accent = CreatePanel(panel.transform, "AccentPanel", new Color(0.55f, 0.1f, 0.1f, 0.9f));
-            var accentRt = accent.GetComponent<RectTransform>();
-            accentRt.anchorMin = accentRt.anchorMax = new Vector2(0.5f, 0.5f);
-            accentRt.sizeDelta = new Vector2(700, 320);
-            accentRt.anchoredPosition = new Vector2(0, 40);
+            var accent = CreatePanel(panel.transform, "AccentPanel", new Color(0.55f, 0.1f, 0.1f, 0.32f));
+            accent.GetComponent<Image>().raycastTarget = false;
 
             CreateTMP(panel.transform, "GameOverTitle", "【破産】学費・生活費未納による強制退学", 32, new Vector2(0, 300));
             var body = CreateTMP(panel.transform, "GameOverBody", "", 18, new Vector2(0, -60));

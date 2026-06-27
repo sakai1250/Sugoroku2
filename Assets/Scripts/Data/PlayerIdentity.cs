@@ -50,7 +50,21 @@ namespace Sugoroku.Data
                 players[i].PieceTint = SlotColors[i % SlotColors.Length];
         }
 
-        public static string FormatHudLabel(PlayerData player) =>
-            $"{player.Name}（{player.Character.DisplayName()}）";
+        public static string FormatHudLabel(PlayerData player)
+        {
+            if (player == null) return "";
+
+            var typeLabel = player.Character.DisplayName();
+            var name = player.Name;
+
+            if (string.IsNullOrWhiteSpace(name))
+                return typeLabel;
+
+            // Apply() で単独プレイヤー／CPU は既にクラス名を含む
+            if (name == typeLabel || name.Contains($"（{typeLabel}）"))
+                return name;
+
+            return $"{name}（{typeLabel}）";
+        }
     }
 }

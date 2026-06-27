@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Sugoroku.Game;
 using Sugoroku.Data;
 using Sugoroku.Network;
+using Sugoroku.Board;
 
 namespace Sugoroku.UI
 {
@@ -22,53 +23,54 @@ namespace Sugoroku.UI
         private EventMaster _currentEvent;
         private PlayerData  _currentPlayer;
         private readonly List<Button> _buttons = new();
-        private bool _subscribed;
-        private EventMaster _lastShownEvent;
-        private PlayerData _lastShownPlayer;
-        private int _lastShownFrame = -1;
         private bool _hasVisibleContent;
+        private int _showGeneration;
+        private Image _modalBackdrop;
+        private Transform _overlayRoot;
 
-        public static bool HasVisibleModal => Instance != null && Instance.IsVisible;
+        public static bool HasVisibleModal
+        {
+            get
+            {
+                var modal = Resolve();
+                return modal != null && modal.IsVisible;
+            }
+        }
+
+        private static EventModalUI Resolve() =>
+            Instance ?? Object.FindFirstObjectByType<EventModalUI>(FindObjectsInactive.Include);
 
         private bool IsVisible =>
             _hasVisibleContent &&
-            _panel != null &&
-            _panel.activeInHierarchy;
+            EnsureCanvasGroup().alpha > 0.01f;
 
         private void Awake()
         {
             Instance = this;
             AutoBind();
+            EnsureModalShell();
             EnsureCanvasGroup();
             EnsureInitialized();
+        }
+
+        public void EnsureAwakeAndReady()
+        {
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+            AutoBind();
+            EnsureModalShell();
+            EnsureCanvasGroup();
         }
 
         public void EnsureInitialized()
         {
             AutoBind();
-            if (_subscribed) return;
-            if (EventManager.Instance != null)
-            {
-                EventManager.Instance.OnEventTriggered += ShowEvent;
-                _subscribed = true;
-            }
-            else if (isActiveAndEnabled)
-                StartCoroutine(SubscribeWhenReady());
+            EnsureModalShell();
         }
 
         private void Start()
         {
             EnsureInitialized();
-            if (_panel != null && !_hasVisibleContent)
-                _panel.SetActive(false);
-        }
-
-        private System.Collections.IEnumerator SubscribeWhenReady()
-        {
-            while (EventManager.Instance == null) yield return null;
-            if (_subscribed) yield break;
-            EventManager.Instance.OnEventTriggered += ShowEvent;
-            _subscribed = true;
         }
 
         private void AutoBind()
@@ -96,18 +98,20 @@ namespace Sugoroku.UI
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
-            if (EventManager.Instance != null && _subscribed)
-                EventManager.Instance.OnEventTriggered -= ShowEvent;
         }
 
         /// <summary>OnEventTriggered 未接続時のフォールバック。</summary>
         public static void ShowEventDirect(EventMaster ev, PlayerData player)
         {
-            var modal = Instance ?? Object.FindFirstObjectByType<EventModalUI>(FindObjectsInactive.Include);
+            var modal = Resolve();
+            modal?.EnsureAwakeAndReady();
             modal?.ShowEvent(ev, player);
         }
 
-        public void ShowEventFromManager(EventMaster ev, PlayerData player) => ShowEvent(ev, player);
+        public void ShowEventFromManager(EventMaster ev, PlayerData player) =>
+            ShowEvent(ev, player);
+
+        public void EnsureVisibleLayer() => BringToFront();
 
         public static void ShowPreview(EventMaster ev)
         {
@@ -123,8 +127,10 @@ namespace Sugoroku.UI
 
         private void ShowPreviewOnly(EventMaster ev)
         {
+            EnsureAwakeAndReady();
             _hasVisibleContent = true;
-            if (_panel != null) _panel.SetActive(true);
+            ShowModalVisuals();
+            EventModalMassBackdrop.Apply(transform, ev, null);
             BringToFront();
             EventModalLayout.Apply(transform, ev);
             if (_titleText != null) _titleText.text = ev.Title;
@@ -140,8 +146,9 @@ namespace Sugoroku.UI
 
         private void ShowSquarePreviewOnly(Sugoroku.Data.SquareType type, string title, string description)
         {
+            EnsureAwakeAndReady();
             _hasVisibleContent = true;
-            if (_panel != null) _panel.SetActive(true);
+            ShowModalVisuals();
             BringToFront();
             if (_titleText != null) _titleText.text = title;
             if (_tagsText != null) _tagsText.text = $"[{type}]";
@@ -165,28 +172,27 @@ namespace Sugoroku.UI
                 new EventChoice { Label = "閉じる" },
                 true,
                 null);
-            btn.onClick.AddListener(() =>
-            {
-                if (_panel != null) _panel.SetActive(false);
-                _hasVisibleContent = false;
-            });
+            btn.onClick.AddListener(() => HideModal());
             _buttons.Add(btn);
         }
 
         private void ShowEvent(EventMaster ev, PlayerData player)
         {
-            if (_lastShownFrame == Time.frameCount && _lastShownEvent == ev && _lastShownPlayer == player)
-                return;
-            _lastShownFrame = Time.frameCount;
-            _lastShownEvent = ev;
-            _lastShownPlayer = player;
+            if (ev == null || player == null) return;
+
+            EnsureAwakeAndReady();
+            if (!gameObject.activeInHierarchy)
+                gameObject.SetActive(true);
 
             _currentEvent  = ev;
             _currentPlayer = player;
             _hasVisibleContent = true;
-            if (_panel != null) _panel.SetActive(true);
-            BringToFront();
-            EnsureWorldDimmer()?.ShowForEvent();
+            _showGeneration++;
+            int generation = _showGeneration;
+
+            ShowModalVisuals();
+
+            EventModalMassBackdrop.Apply(transform, ev, player);
             EventModalLayout.Apply(transform, ev);
             if (_titleText != null)
             {
@@ -242,48 +248,53 @@ namespace Sugoroku.UI
                 }
             }
 
-            _choiceButtonParent?.SetAsLastSibling();
+            if (_choiceButtonParent == null)
+            {
+                UnityEngine.Debug.LogError("EventModalUI: ChoiceButtonParent が見つかりません。");
+                HideModal();
+                return;
+            }
+
+            _choiceButtonParent.SetAsLastSibling();
             ConfigureModalRaycasts();
+            ClearEventSystemSelection();
+            BringToFront();
+            EnsureMassBackdropLayer();
+            EnsureWorldDimmer()?.ShowForEvent();
 
             if (player.IsCpu)
-                StartCoroutine(CpuPick(player, ev));
-            else if (forceSingle && selectable == 1)
-                StartCoroutine(AutoPickSingleChoice(0.6f));
+                StartCoroutine(CpuPick(player, ev, generation));
+        }
+
+        private static void ClearEventSystemSelection()
+        {
+            var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem != null)
+                eventSystem.SetSelectedGameObject(null);
         }
 
         private void AddVirtueRescueButton(PlayerData player)
         {
             if (player.Virtue < GameConfig.VirtueRescueThreshold) return;
 
-            var btn = CreateChoiceButton(
-                new EventChoice
-                {
-                    Label        = "積んだ徳が効く（周囲がフォロー）",
-                    MoneyChange  = 0,
-                    IfScoreChange= 0,
-                    MentalChange = 10,
-                    VirtueChange = -5
-                },
-                true,
-                null);
-            btn.onClick.AddListener(() =>
+            var rescueChoice = new EventChoice
             {
-                player.ApplyStatChange(0, 0, 10, -5);
-                CloseAndEndTurn();
-            });
+                Label        = "積んだ徳が効く（周囲がフォロー）",
+                MoneyChange  = 0,
+                IfScoreChange= 0,
+                MentalChange = 10,
+                VirtueChange = -5
+            };
+            var btn = CreateChoiceButton(rescueChoice, true, null);
+            btn.onClick.AddListener(() =>
+                EventManager.Instance.RunHumanChoiceResolution(_currentPlayer, rescueChoice, DismissModalUi));
             _buttons.Add(btn);
         }
 
-        private System.Collections.IEnumerator AutoPickSingleChoice(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            if (_currentEvent != null && _currentEvent.ChoiceCount == 1)
-                OnChoiceSelected(0);
-        }
-
-        private System.Collections.IEnumerator CpuPick(PlayerData player, EventMaster ev)
+        private System.Collections.IEnumerator CpuPick(PlayerData player, EventMaster ev, int generation)
         {
             yield return new WaitForSeconds(1.2f);
+            if (generation != _showGeneration || !_hasVisibleContent) yield break;
 
             int idx = EventRobustnessValidator.FirstSelectableIndex(ev, player);
             if (idx >= 0)
@@ -294,8 +305,12 @@ namespace Sugoroku.UI
 
             if (player.Virtue >= GameConfig.VirtueRescueThreshold)
             {
-                player.ApplyStatChange(0, 0, 10, -5);
-                CloseAndEndTurn();
+                var rescueChoice = new EventChoice
+                {
+                    MentalChange = 10,
+                    VirtueChange = -5
+                };
+                EventManager.Instance.RunHumanChoiceResolution(player, rescueChoice, DismissModalUi);
                 yield break;
             }
 
@@ -351,51 +366,157 @@ namespace Sugoroku.UI
             if (net != null && net.IsOnline)
             {
                 net.SubmitEventChoice(index, _currentEvent.EventId);
-                if (_panel != null) _panel.SetActive(false);
-                _hasVisibleContent = false;
+                HideModal();
                 return;
             }
 
-            EventManager.Instance.ApplyChoice(_currentPlayer, choice);
-            CloseAndEndTurn();
+            EventManager.Instance.RunHumanChoiceResolution(_currentPlayer, choice, DismissModalUi);
+        }
+
+        private void DismissModalUi()
+        {
+            HideModal();
+            EnsureWorldDimmer()?.Hide();
+            Board.BoardCameraController.Instance?.RestoreFramedView();
+            _showGeneration++;
         }
 
         private void CloseAndEndTurn()
         {
-            if (_panel != null) _panel.SetActive(false);
-            _hasVisibleContent = false;
+            _showGeneration++;
+            HideModal();
             EnsureWorldDimmer()?.Hide();
             Board.BoardCameraController.Instance?.RestoreFramedView();
             TurnManager.Instance.EndTurn();
             FindFirstObjectByType<GameHUD>()?.RefreshAll();
         }
 
-        private void BringToFront()
+        private void HideModal()
         {
-            var canvasRoot = GetComponentInParent<Canvas>()?.transform;
-            if (canvasRoot != null)
-                transform.SetParent(canvasRoot, false);
-
-            transform.SetAsLastSibling();
-
-            EnsureTopCanvas();
-            var cg = EnsureCanvasGroup();
-            cg.blocksRaycasts = true;
-            cg.interactable   = true;
-            cg.alpha          = 1f;
+            _hasVisibleContent = false;
+            HideImmediate();
         }
 
-        private void EnsureTopCanvas()
+        private void HideImmediate()
         {
-            var canvas = GetComponent<Canvas>();
-            if (canvas == null)
-                canvas = gameObject.AddComponent<Canvas>();
+            EventModalMassBackdrop.Clear(transform);
+            var cg = EnsureCanvasGroup();
+            cg.alpha = 0f;
+            cg.blocksRaycasts = false;
+            cg.interactable = false;
+            if (_modalBackdrop != null)
+                _modalBackdrop.enabled = false;
+        }
 
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = 5000;
+        private void ShowModalVisuals()
+        {
+            var cg = EnsureCanvasGroup();
+            cg.alpha = 1f;
+            cg.blocksRaycasts = true;
+            cg.interactable = true;
+            if (_modalBackdrop != null)
+            {
+                _modalBackdrop.enabled = true;
+                _modalBackdrop.color = new Color(0f, 0f, 0f, 0.42f);
+                _modalBackdrop.transform.SetAsFirstSibling();
+            }
+        }
 
-            if (GetComponent<GraphicRaycaster>() == null)
-                gameObject.AddComponent<GraphicRaycaster>();
+        private void EnsureModalShell()
+        {
+            _panel ??= gameObject;
+
+            if (_modalBackdrop == null)
+            {
+                var backdropGo = transform.Find("ModalBackdrop");
+                if (backdropGo == null)
+                {
+                    backdropGo = new GameObject("ModalBackdrop", typeof(RectTransform)).transform;
+                    backdropGo.SetParent(transform, false);
+                    backdropGo.SetAsFirstSibling();
+                    var rt = backdropGo.GetComponent<RectTransform>();
+                    rt.anchorMin = Vector2.zero;
+                    rt.anchorMax = Vector2.one;
+                    rt.offsetMin = rt.offsetMax = Vector2.zero;
+                    _modalBackdrop = backdropGo.gameObject.AddComponent<Image>();
+                    _modalBackdrop.color = new Color(0f, 0f, 0f, 0.55f);
+                }
+                else
+                {
+                    _modalBackdrop = backdropGo.GetComponent<Image>() ?? backdropGo.gameObject.AddComponent<Image>();
+                }
+                _modalBackdrop.raycastTarget = true;
+            }
+
+            if (_choiceButtonParent == null)
+            {
+                var existing = transform.Find("ChoiceButtonParent");
+                if (existing == null)
+                    existing = FindDeep<Transform>(transform, "ChoiceButtonParent");
+                _choiceButtonParent = existing;
+            }
+
+            if (_choiceButtonParent == null)
+            {
+                var choiceGo = new GameObject("ChoiceButtonParent", typeof(RectTransform));
+                choiceGo.transform.SetParent(transform, false);
+                _choiceButtonParent = choiceGo.transform;
+            }
+        }
+
+        private void EnsureMassBackdropLayer()
+        {
+            var backdrop = transform.Find(EventModalMassBackdrop.RootName);
+            if (backdrop == null) return;
+
+            var modalBackdrop = transform.Find("ModalBackdrop");
+            int index = modalBackdrop != null ? modalBackdrop.GetSiblingIndex() + 1 : 0;
+            backdrop.SetSiblingIndex(index);
+        }
+
+        private void BringToFront()
+        {
+            var root = EnsureOverlayRoot();
+            if (root != null && transform.parent != root)
+                transform.SetParent(root, false);
+
+            StretchToParent(transform as RectTransform);
+            root.SetAsLastSibling();
+            transform.SetAsLastSibling();
+
+            EnsureModalShell();
+            ShowModalVisuals();
+        }
+
+        private Transform EnsureOverlayRoot()
+        {
+            if (_overlayRoot != null) return _overlayRoot;
+
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) return transform.parent;
+
+            var existing = canvas.transform.Find("EventModalOverlayRoot");
+            if (existing != null)
+            {
+                _overlayRoot = existing;
+                return _overlayRoot;
+            }
+
+            var go = new GameObject("EventModalOverlayRoot", typeof(RectTransform));
+            go.transform.SetParent(canvas.transform, false);
+            StretchToParent(go.GetComponent<RectTransform>());
+            _overlayRoot = go.transform;
+            return _overlayRoot;
+        }
+
+        private static void StretchToParent(RectTransform rt)
+        {
+            if (rt == null) return;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            rt.localScale = Vector3.one;
         }
 
         private CanvasGroup EnsureCanvasGroup()
@@ -403,6 +524,7 @@ namespace Sugoroku.UI
             var cg = GetComponent<CanvasGroup>();
             if (cg == null)
                 cg = gameObject.AddComponent<CanvasGroup>();
+            cg.ignoreParentGroups = true;
             return cg;
         }
 

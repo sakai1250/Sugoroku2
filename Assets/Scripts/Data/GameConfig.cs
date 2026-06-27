@@ -3,10 +3,10 @@ namespace Sugoroku.Data
     public static class GameConfig
     {
         public const int BoardSize        = 20;
-        public const int InitialMoney     = 30;
+        public const int InitialMoney     = 45;
         public const int InitialIfScore   = 0;
-        public const int InitialMental    = 50;
-        public const int MaxMental        = 50;
+        public const int InitialMental    = 75;
+        public const int MaxMental        = 75;
         public const int InitialVirtue    = 0;
         public const int TuitionCost      = 20;
         public const int MinDice          = 1;
@@ -35,12 +35,16 @@ namespace Sugoroku.Data
         public const int RichSkillCost        = 10;
 
         // アニメーション時間
-        public const float AnimationSpeed = 0.8f;
+        public const float AnimationSpeed = 0.7f;
         public const float AnimationDurationScale = 1f / AnimationSpeed;
         public const float DiceRollDuration   = 1.0f;
         public const float PieceMoveDuration  = 0.25f;
-        public const float FloatingTextDuration = 0.5f;
-        public const float HudStatFlashDuration = 0.5f;
+        public const float FloatingTextDuration = 0.6f;
+        public const float StatFloatGapSeconds  = 0.3f;
+        public const float HudStatFlashDuration = 1.5f;
+        /// <summary>events.json から算出。1回のイベントで破産・失踪し得る所持金・メンタルの上限。</summary>
+        public const int PinchMoneyThresholdFallback  = 40;
+        public const int PinchMentalThresholdFallback = 40;
         public const float CameraDiceLookaheadBlend = 0.42f;
         public const float CameraEventZoomScale = 0.72f;
 

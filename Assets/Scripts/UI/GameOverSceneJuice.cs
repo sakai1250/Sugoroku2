@@ -18,14 +18,18 @@ namespace Sugoroku.UI
         public void Play(GameOverOutcome outcome)
         {
             if (_routine != null) StopCoroutine(_routine);
-            if (_accentPanel != null) _accentPanel.gameObject.SetActive(false);
             EnsureStage();
+            PlaceStageBehindContent(transform);
             _routine = StartCoroutine(PlayRoutine(outcome));
         }
 
         private void EnsureStage()
         {
-            if (_stage != null) return;
+            if (_stage != null)
+            {
+                GameOverLayout.ApplyStage(_stage);
+                return;
+            }
             var canvas = GetComponentInParent<Canvas>();
             var parent = transform as RectTransform;
             if (parent == null) return;
@@ -33,10 +37,19 @@ namespace Sugoroku.UI
             var go = new GameObject("GameOverVisualStage", typeof(RectTransform));
             go.transform.SetParent(parent, false);
             _stage = go.GetComponent<RectTransform>();
-            _stage.anchorMin = Vector2.zero;
-            _stage.anchorMax = Vector2.one;
-            _stage.offsetMin = _stage.offsetMax = Vector2.zero;
-            _stage.SetAsLastSibling();
+            GameOverLayout.ApplyStage(_stage);
+            PlaceStageBehindContent(parent);
+        }
+
+        private static void PlaceStageBehindContent(Transform root)
+        {
+            var stage = root.Find("GameOverVisualStage");
+            if (stage == null) return;
+
+            var title = root.Find("GameOverTitle");
+            int index = title != null ? title.GetSiblingIndex() : root.childCount;
+            stage.SetSiblingIndex(index);
+            EndSceneVisuals.BringGameOverContentToFront(root);
         }
 
         private IEnumerator PlayRoutine(GameOverOutcome outcome)
@@ -66,10 +79,10 @@ namespace Sugoroku.UI
 
         private IEnumerator BankruptcyNoticeRoutine(Color accent)
         {
-            var doc = CreatePanel(_stage, "Notice", new Vector2(420f, 520f), accent);
+            var doc = CreatePanel(_stage, "Notice", new Vector2(360f, 440f), accent);
             var rt = doc.GetComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2(0f, 80f);
-            rt.localScale = Vector3.one * 2.8f;
+            rt.anchoredPosition = new Vector2(0f, 20f);
+            rt.localScale = Vector3.one * 2.2f;
             rt.localRotation = Quaternion.Euler(20f, -12f, 8f);
 
             var title = CreateLabel(doc.transform, "強制退学\n通知書", 36, Color.white, FontStyles.Bold);
@@ -91,12 +104,12 @@ namespace Sugoroku.UI
                 elapsed += Time.deltaTime;
                 float t = elapsed / dur;
                 float eased = 1f - Mathf.Pow(1f - t, 3f);
-                rt.localScale = Vector3.one * Mathf.Lerp(2.8f, 1f, eased);
+                rt.localScale = Vector3.one * Mathf.Lerp(2.2f, 0.92f, eased);
                 rt.localRotation = Quaternion.Euler(
                     Mathf.Lerp(20f, 0f, eased),
                     Mathf.Lerp(-12f, 0f, eased),
                     Mathf.Lerp(8f, -2f, eased));
-                rt.anchoredPosition = Vector2.Lerp(new Vector2(0f, 200f), new Vector2(0f, 80f), eased);
+                rt.anchoredPosition = Vector2.Lerp(new Vector2(0f, 160f), new Vector2(0f, 20f), eased);
                 yield return null;
             }
 
@@ -105,14 +118,14 @@ namespace Sugoroku.UI
                 rt.anchoredPosition += new Vector2(Random.Range(-6f, 6f), Random.Range(-4f, 4f));
                 yield return new WaitForSeconds(GameConfig.AnimationDuration(0.04f));
             }
-            rt.anchoredPosition = new Vector2(0f, 80f);
+            rt.anchoredPosition = new Vector2(0f, 20f);
         }
 
         private IEnumerator MissingPhoneRoutine(Color glow)
         {
-            var room = CreatePanel(_stage, "DarkRoom", new Vector2(900f, 600f), new Color(0.04f, 0.04f, 0.06f, 0.85f));
+            var room = CreatePanel(_stage, "DarkRoom", new Vector2(680f, 460f), new Color(0.04f, 0.04f, 0.06f, 0.85f));
             var roomRt = room.GetComponent<RectTransform>();
-            roomRt.anchoredPosition = new Vector2(0f, 40f);
+            roomRt.anchoredPosition = new Vector2(0f, 10f);
 
             var phone = CreatePanel(room.transform, "Phone", new Vector2(200f, 360f), new Color(0.08f, 0.08f, 0.1f));
             var phoneRt = phone.GetComponent<RectTransform>();
@@ -151,7 +164,7 @@ namespace Sugoroku.UI
             var stamp = CreateLabel(room.transform, "消息不明", 42, glow, FontStyles.Bold);
             stamp.alignment = TextAlignmentOptions.Center;
             var stampRt = stamp.rectTransform;
-            stampRt.anchoredPosition = new Vector2(0f, -200f);
+            stampRt.anchoredPosition = new Vector2(0f, -170f);
             stampRt.sizeDelta = new Vector2(400f, 60f);
 
             float pulse = 0f;
@@ -172,9 +185,9 @@ namespace Sugoroku.UI
 
         private IEnumerator ExpulsionListRoutine(Color accent)
         {
-            var board = CreatePanel(_stage, "Bulletin", new Vector2(480f, 360f), new Color(0.92f, 0.88f, 0.75f));
+            var board = CreatePanel(_stage, "Bulletin", new Vector2(400f, 300f), new Color(0.92f, 0.88f, 0.75f));
             var boardRt = board.GetComponent<RectTransform>();
-            boardRt.anchoredPosition = new Vector2(0f, 80f);
+            boardRt.anchoredPosition = new Vector2(0f, 30f);
             boardRt.localRotation = Quaternion.Euler(8f, -6f, 1.5f);
 
             var header = CreateLabel(board.transform, "除籍対象者一覧", 28, new Color(0.25f, 0.15f, 0.1f), FontStyles.Bold);
@@ -235,7 +248,7 @@ namespace Sugoroku.UI
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, -116f);
+            rt.anchoredPosition = new Vector2(0f, -40f);
             rt.sizeDelta = new Vector2(120f, 34f);
 
             float elapsed = 0f;
