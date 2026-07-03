@@ -18,6 +18,8 @@ namespace Sugoroku.Game
         public event System.Action<EventMaster, PlayerData> OnEventTriggered;
         public event System.Action<PlayerData, EventChoice> OnChoiceApplied;
 
+        private string[] _lastEventTags;
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -94,6 +96,8 @@ namespace Sugoroku.Game
                 return;
             }
 
+            _lastEventTags = ev.Tags;
+
             var modal = Object.FindFirstObjectByType<Sugoroku.UI.EventModalUI>(FindObjectsInactive.Include);
 
             bool hasListeners = OnEventTriggered != null;
@@ -117,14 +121,30 @@ namespace Sugoroku.Game
         {
             if (player == null || choice == null) yield break;
 
-            yield return StatChangeSequencer.Apply(
-                player,
-                choice.MoneyChange,
-                choice.IfScoreChange,
-                choice.MentalChange,
-                choice.VirtueChange);
+            var (money, ifScore, mental, virtue) = CharacterTagAffinity.Apply(
+                player.Character, _lastEventTags,
+                choice.MoneyChange, choice.IfScoreChange, choice.MentalChange, choice.VirtueChange);
+
+            yield return StatChangeSequencer.Apply(player, money, ifScore, mental, virtue);
+
+            if (!string.IsNullOrEmpty(choice.SetsBranchRoute))
+                ApplyBranchRoute(player, choice.SetsBranchRoute);
+
+            if (choice.DelayTurns > 0)
+            {
+                var pending = PendingEventResult.FromChoice(choice);
+                player.PendingResults.Add(pending);
+                Sugoroku.UI.GameStatusBanner.Show(
+                    $"{PlayerIdentity.FormatHudLabel(player)} — {pending.Label}（{pending.TurnsRemaining}ターン後）");
+            }
 
             OnChoiceApplied?.Invoke(player, choice);
+        }
+
+        private static void ApplyBranchRoute(PlayerData player, string route)
+        {
+            if (route == "Lab") player.ActiveBranch = BranchRoute.Lab;
+            else if (route == "PartTime") player.ActiveBranch = BranchRoute.PartTime;
         }
 
         public void ApplyChoice(PlayerData player, EventChoice choice)

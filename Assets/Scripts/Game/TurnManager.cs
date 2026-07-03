@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Sugoroku.Data;
 using Sugoroku.Board;
@@ -45,7 +46,10 @@ namespace Sugoroku.Game
         private IEnumerator TurnStartCoroutine()
         {
             var player = CurrentPlayer;
+            player.LastDiceValue = -1;
             OnTurnStarted?.Invoke(player);
+
+            yield return StartCoroutine(ResolvePendingResults(player));
 
             if (player.SkipTurns > 0)
             {
@@ -72,6 +76,16 @@ namespace Sugoroku.Game
             var player = CurrentPlayer;
             BoardDicePlacement.PlaceNearPlayer(player);
             BoardCameraController.Instance?.PreviewDiceRoll(steps, player);
+
+            if (player.LastDiceValue == steps)
+            {
+                player.HasExtraRoll = true;
+                BoardCameraController.ShakeInstance(0.14f, 0.22f);
+                Sugoroku.UI.GameStatusBanner.Show(
+                    $"{PlayerIdentity.FormatHudLabel(player)} — ゾロ目！（{steps}）もう1回振れます！");
+            }
+            player.LastDiceValue = steps;
+
             SetState(TurnState.Moving);
             StartCoroutine(MoveCoroutine(player, steps));
         }
@@ -135,6 +149,17 @@ namespace Sugoroku.Game
             var squareType = BoardManager.Instance.GetSquareType(player.BoardPosition);
             var node       = BoardManager.Instance.GetWaypoint(player.BoardPosition);
 
+            if (PlayerInteractionRules.IsCollabEligible(squareType) &&
+                PlayerInteractionRules.TryFindCoOccupant(player, GameManager.Instance.GetAllPlayers(), out var coOccupant))
+            {
+                yield return StartCoroutine(ResolveCollabBonus(player, coOccupant));
+            }
+            else if (PlayerInteractionRules.IsEquipmentContestEligible(squareType) &&
+                     PlayerInteractionRules.TryFindCoOccupant(player, GameManager.Instance.GetAllPlayers(), out coOccupant))
+            {
+                yield return StartCoroutine(ResolveEquipmentContest(player, coOccupant));
+            }
+
             if (player.IgnoreNextEvents > 0 && IsEventType(squareType))
             {
                 player.IgnoreNextEvents--;
@@ -144,15 +169,29 @@ namespace Sugoroku.Game
                 yield break;
             }
 
-            SetState(squareType == SquareType.Event ? TurnState.Event : TurnState.Apply);
+            bool isChoiceSquare = squareType == SquareType.Event || squareType == SquareType.Branch;
+            SetState(isChoiceSquare ? TurnState.Event : TurnState.Apply);
             yield return new WaitForSeconds(0.5f);
 
             switch (squareType)
             {
                 case SquareType.Event:
+                    if (BranchRouteRules.IsInBranchRange(player.BoardPosition) && player.ActiveBranch != BranchRoute.None)
+                    {
+                        yield return StartCoroutine(ResolveBranchSquareEffect(player));
+                        break;
+                    }
                     var ev = node?.ResolveBoundEvent() ?? EventManager.Instance.DrawEvent();
                     if (ev != null)
                         EventManager.Instance.TriggerEvent(ev, player);
+                    else
+                        EndTurn();
+                    break;
+
+                case SquareType.Branch:
+                    var forkEv = node?.ResolveBoundEvent() ?? EventManager.Instance.GetById(BranchRouteRules.ForkEventId);
+                    if (forkEv != null)
+                        EventManager.Instance.TriggerEvent(forkEv, player);
                     else
                         EndTurn();
                     break;
@@ -214,14 +253,116 @@ namespace Sugoroku.Game
         {
             if (GameManager.Instance == null) return;
             SetState(TurnState.TurnEnd);
-            OnTurnEnded?.Invoke(CurrentPlayer);
+            var player = CurrentPlayer;
+            OnTurnEnded?.Invoke(player);
+
+            if (player != null && player.HasExtraRoll && !player.IsFinished)
+            {
+                player.HasExtraRoll = false;
+                StartCoroutine(StartExtraRoll(player));
+                return;
+            }
+
             GameManager.Instance.AdvanceTurn();
+        }
+
+        private IEnumerator StartExtraRoll(PlayerData player)
+        {
+            yield return new WaitForSeconds(GameConfig.AnimationDuration(0.35f));
+            BoardDicePlacement.PlaceNearPlayer(player);
+            SetState(TurnState.WaitAction);
+
+            if (player.IsCpu)
+            {
+                yield return new WaitForSeconds(0.8f);
+                CpuController.Instance.DecideAction(player);
+            }
         }
 
         private bool IsEventType(SquareType t)
         {
             return t == SquareType.Event || t == SquareType.Tuition ||
-                   t == SquareType.Journal || t == SquareType.Lecture;
+                   t == SquareType.Journal || t == SquareType.Lecture ||
+                   t == SquareType.Branch;
+        }
+
+        /// <summary>「査読中…」システム: 自分のターン開始時に結果待ちを1減算し、届いたものを解決する。</summary>
+        private IEnumerator ResolvePendingResults(PlayerData player)
+        {
+            if (player.PendingResults.Count == 0) yield break;
+
+            var due = new List<PendingEventResult>();
+            for (int i = player.PendingResults.Count - 1; i >= 0; i--)
+            {
+                var pending = player.PendingResults[i];
+                pending.TurnsRemaining--;
+                if (pending.TurnsRemaining <= 0)
+                {
+                    due.Add(pending);
+                    player.PendingResults.RemoveAt(i);
+                }
+            }
+
+            foreach (var pending in due)
+            {
+                bool accepted = GameRng.Range(0, 99) < pending.AcceptProbabilityPercent;
+                string text = accepted ? pending.AcceptedText : pending.RejectedText;
+                if (!string.IsNullOrEmpty(text))
+                    Sugoroku.UI.GameStatusBanner.Show($"{PlayerIdentity.FormatHudLabel(player)} — {text}");
+
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(0.8f));
+
+                if (accepted)
+                    yield return StatChangeSequencer.Apply(player,
+                        pending.AcceptMoneyChange, pending.AcceptIfScoreChange,
+                        pending.AcceptMentalChange, pending.AcceptVirtueChange);
+                else
+                    yield return StatChangeSequencer.Apply(player,
+                        pending.RejectMoneyChange, pending.RejectIfScoreChange,
+                        pending.RejectMentalChange, pending.RejectVirtueChange);
+            }
+        }
+
+        /// <summary>同じマスに他プレイヤーが滞在していた場合の「共同研究」ボーナス。両者に小さくIF/徳を加算。</summary>
+        private IEnumerator ResolveCollabBonus(PlayerData player, PlayerData other)
+        {
+            Sugoroku.UI.GameStatusBanner.Show(
+                $"★ 共同研究！ {PlayerIdentity.FormatHudLabel(player)} と {PlayerIdentity.FormatHudLabel(other)} が鉢合わせ");
+
+            yield return StatChangeSequencer.Apply(player, 0, 5, 0, 2);
+            yield return StatChangeSequencer.Apply(other, 0, 5, 0, 2);
+        }
+
+        /// <summary>同じマスで装置や席を取り合う小さな対人イベント。移動者が機材を確保し、先客は少しメンタルを削られる。</summary>
+        private IEnumerator ResolveEquipmentContest(PlayerData player, PlayerData other)
+        {
+            Sugoroku.UI.GameStatusBanner.Show(
+                $"★ 機材の取り合い！ {PlayerIdentity.FormatHudLabel(player)} が装置を確保、{PlayerIdentity.FormatHudLabel(other)} は待機");
+
+            yield return StatChangeSequencer.Apply(player, 0, 3, 0, 0);
+            int mentalPenalty = other.Mental > 1 ? -Mathf.Min(5, other.Mental - 1) : 0;
+            if (mentalPenalty != 0)
+                yield return StatChangeSequencer.Apply(other, 0, 0, mentalPenalty, 0);
+        }
+
+        /// <summary>分岐ルート区間のマス効果。研究室=IF重視・メンタル消耗、バイト=金重視・IF停滞。</summary>
+        private IEnumerator ResolveBranchSquareEffect(PlayerData player)
+        {
+            bool isLab = player.ActiveBranch == BranchRoute.Lab;
+            GameManager.Instance.ShowSquareEffect(player, isLab ? SquareType.Journal : SquareType.PartTime);
+            Sugoroku.UI.GameStatusBanner.Show(isLab
+                ? $"{PlayerIdentity.FormatHudLabel(player)} — 研究室ルート: 実験に没頭"
+                : $"{PlayerIdentity.FormatHudLabel(player)} — バイトルート: シフトに入る");
+
+            if (isLab)
+                yield return StatChangeSequencer.Apply(player, 0, 8, -6, 0);
+            else
+                yield return StatChangeSequencer.Apply(player, 9, 0, 2, 0);
+
+            if (player.BoardPosition >= BranchRouteRules.RangeEnd)
+                player.ActiveBranch = BranchRoute.None;
+
+            EndTurn();
         }
 
         private void RequestRandomEvent(PlayerData player)
@@ -247,6 +388,18 @@ namespace Sugoroku.Game
 
         public void ApplyJournalIfGain(PlayerData player, int ifGain, SquareType squareType = SquareType.Journal)
         {
+            int boardIndex = player.BoardPosition;
+            if (GameManager.Instance.IsJournalClaimed(boardIndex))
+            {
+                ifGain /= 2;
+                Sugoroku.UI.GameStatusBanner.Show(
+                    $"{PlayerIdentity.FormatHudLabel(player)} — 先を越された…！IF半減");
+            }
+            else
+            {
+                GameManager.Instance.ClaimJournal(boardIndex);
+            }
+
             player.ApplyStatChange(0, ifGain, 0, 0);
             GameManager.Instance.ShowSquareEffect(player, squareType);
             EndTurn();

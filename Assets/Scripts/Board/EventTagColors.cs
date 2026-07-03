@@ -45,6 +45,7 @@ namespace Sugoroku.Board
             Sugoroku.Data.SquareType.PartTime => new Color(0.68f, 0.56f, 0.22f, 0.94f),
             Sugoroku.Data.SquareType.Bonus    => new Color(0.76f, 0.58f, 0.20f, 0.94f),
             Sugoroku.Data.SquareType.Penalty => new Color(0.68f, 0.36f, 0.24f, 0.94f),
+            Sugoroku.Data.SquareType.Branch  => new Color(0.36f, 0.70f, 0.42f, 0.94f),
             _                              => new Color(0.44f, 0.48f, 0.58f, 0.92f),
         };
 

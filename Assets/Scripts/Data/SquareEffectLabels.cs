@@ -15,6 +15,7 @@ namespace Sugoroku.Data
             SquareType.Bonus   => "チャンス",
             SquareType.Penalty => "ペナルティ",
             SquareType.Goal    => "ゴール",
+            SquareType.Branch  => "進路の分岐点",
             _                  => type.ToString()
         };
     }

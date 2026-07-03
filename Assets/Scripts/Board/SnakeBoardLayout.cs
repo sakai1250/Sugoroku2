@@ -13,12 +13,12 @@ namespace Sugoroku.Board
         public const int Columns   = 5;
         public const int Rows      = 4;
 
-        /// <summary>イベントマスに固定配置する EventId（events.json）。</summary>
+        /// <summary>イベントマスに固定配置する EventId（events.json）。index 8 は分岐点(BranchRouteRules.ForkEventId)。</summary>
         private static readonly string[] FixedEventIds =
         {
             "",
             "E012", "E013", "E014", "E015", "E016",
-            "E017", "E018", "E019", "E020", "E021",
+            "E017", "E018", BranchRouteRules.ForkEventId, "E020", "E021",
             "E022", "E023", "E024", "E025", "E026",
             "E027", "E028", "E029", "E030",
             "",
@@ -49,6 +49,7 @@ namespace Sugoroku.Board
                 3  => "バイト",
                 4  => "学費納入",
                 7  => "ジャーナル",
+                8  => "進路の分岐点",
                 11 => "学費納入",
                 14 => "バイト",
                 15 => "ジャーナル",
@@ -77,6 +78,7 @@ namespace Sugoroku.Board
         {
             if (index == 0) return SquareType.Start;
             if (index == CellCount - 1) return SquareType.Goal;
+            if (BranchRouteRules.IsForkIndex(index)) return SquareType.Branch;
             return SquareType.Event;
         }
     }

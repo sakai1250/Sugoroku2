@@ -103,6 +103,26 @@ namespace Sugoroku.Data
                         Message = "複数選択肢ですが、条件なしの代替肢がありません（§7.1）。"
                     });
                 }
+
+                for (int i = 0; i < ev.ChoiceCount; i++)
+                {
+                    var choice = ev.GetChoice(i);
+                    if (choice == null || choice.DelayTurns <= 0) continue;
+
+                    if (string.IsNullOrEmpty(choice.AcceptedText) || string.IsNullOrEmpty(choice.RejectedText))
+                        issues.Add(new Issue
+                        {
+                            EventId = ev.EventId,
+                            Message = $"選択肢{i}: DelayTurns>0 だが AcceptedText/RejectedText が未設定です（査読中…システム）。"
+                        });
+
+                    if (choice.AcceptProbabilityPercent < 0 || choice.AcceptProbabilityPercent > 100)
+                        issues.Add(new Issue
+                        {
+                            EventId = ev.EventId,
+                            Message = $"選択肢{i}: AcceptProbabilityPercent が 0-100 の範囲外です。"
+                        });
+                }
             }
             return issues;
         }

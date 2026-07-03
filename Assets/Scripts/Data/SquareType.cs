@@ -12,6 +12,7 @@ namespace Sugoroku.Data
         PartTime,   // バイト（所持金+）
         Bonus,      // チャンス（ランダム好効果）
         Penalty,    // ペナルティ（ランダム悪効果）
-        Goal        // ゴール
+        Goal,       // ゴール
+        Branch      // 分岐点（研究室ルート / バイトルート）
     }
 }

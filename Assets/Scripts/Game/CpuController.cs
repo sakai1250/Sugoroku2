@@ -65,19 +65,32 @@ namespace Sugoroku.Game
                 if (bestIdx >= 0) return bestIdx;
             }
 
+            var weights = GetPersonalityWeights(player.Character);
             int best = -1;
             float bestScore = float.MinValue;
             for (int i = 0; i < ev.ChoiceCount; i++)
             {
                 var c = ev.GetChoice(i);
                 if (!EventRobustnessValidator.CanSelectChoice(ev, c, player)) continue;
-                float score = c.IfScoreChange * 3f + c.MentalChange + c.MoneyChange + c.VirtueChange;
+                float score = c.IfScoreChange * weights.ifScore + c.MentalChange * weights.mental +
+                              c.MoneyChange * weights.money + c.VirtueChange * weights.virtue;
                 if (score > bestScore) { bestScore = score; best = i; }
             }
             if (best >= 0) return best;
 
             return EventRobustnessValidator.FirstSelectableIndex(ev, player);
         }
+
+        /// <summary>キャラごとの選択肢評価の重み。「金で解決」「ハイリスク志向」等の性格を数値化する。</summary>
+        private static (float money, float ifScore, float mental, float virtue) GetPersonalityWeights(CharacterType type) => type switch
+        {
+            CharacterType.Rich     => (3.0f, 0.7f, 1.4f, 0.5f),
+            CharacterType.Genius   => (0.5f, 4.0f, 0.3f, 0.5f),
+            CharacterType.Athletic => (1.0f, 2.5f, 0.5f, 1.0f),
+            CharacterType.Serious  => (1.0f, 3.0f, 1.6f, 1.5f),
+            CharacterType.Hobbyist => (1.0f, 2.0f, 2.5f, 1.0f),
+            _                      => (1.0f, 3.0f, 1.0f, 1.0f)
+        };
 
         private bool ShouldUseSkill(PlayerData player)
         {

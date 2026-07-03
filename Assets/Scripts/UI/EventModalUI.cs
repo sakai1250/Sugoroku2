@@ -206,7 +206,9 @@ namespace Sugoroku.UI
             }
             if (_tagsText != null && ev.Tags != null && ev.Tags.Length > 0)
             {
-                _tagsText.text = string.Join("  ", System.Array.ConvertAll(ev.Tags, t => $"[{t}]"));
+                bool affinity = CharacterTagAffinity.HasAffinity(player.Character, ev.Tags);
+                string tagsLine = string.Join("  ", System.Array.ConvertAll(ev.Tags, t => $"[{t}]"));
+                _tagsText.text = affinity ? $"{tagsLine}  ◎相性" : tagsLine;
                 JapaneseFontProvider.Apply(_tagsText);
             }
 

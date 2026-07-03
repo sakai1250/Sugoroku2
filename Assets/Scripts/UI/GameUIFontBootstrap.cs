@@ -21,6 +21,9 @@ namespace Sugoroku.UI
             if (GetComponent<GameStatusBanner>() == null)
                 gameObject.AddComponent<GameStatusBanner>();
 
+            if (GetComponent<TutorialTooltipController>() == null)
+                gameObject.AddComponent<TutorialTooltipController>();
+
             foreach (var modal in FindObjectsByType<EventModalUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 modal.EnsureInitialized();

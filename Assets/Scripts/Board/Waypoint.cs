@@ -141,6 +141,7 @@ namespace Sugoroku.Board
             SquareType.PartTime => (BoardVisualUtility.GetSquareSprite(), new Color(0.95f, 0.78f, 0.2f), 0.44f),
             SquareType.Bonus => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.65f, 0.2f), 0.44f),
             SquareType.Penalty => (BoardVisualUtility.GetSquareSprite(), new Color(0.85f, 0.45f, 0.2f), 0.44f),
+            SquareType.Branch => (BoardVisualUtility.GetSquareSprite(), new Color(0.55f, 0.85f, 0.45f), 0.52f),
             _ => (BoardVisualUtility.GetCircleSprite(), Color.white, 0.42f),
         };
 
@@ -156,6 +157,7 @@ namespace Sugoroku.Board
             SquareType.PartTime => "バ",
             SquareType.Bonus    => "バ",
             SquareType.Penalty => "↓",
+            SquareType.Branch  => "分岐",
             _                  => ""
         };
 

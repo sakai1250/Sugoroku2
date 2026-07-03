@@ -11,7 +11,14 @@ namespace Sugoroku.Data
         public static GameOverReason LastGameOverReason = GameOverReason.None;
         public static PlayerSnapshot[] LastPlayers;
 
+        /// <summary>デイリーチャレンジ: 日付シード式の固定盤面でのスコアアタック。</summary>
+        public static bool IsDailyChallenge;
+        public static int  DailySeed;
+
         public static int TotalPlayerCount => HumanCount + CpuCount;
+
+        public static int ComputeDailySeed(System.DateTime date) =>
+            date.Year * 10000 + date.Month * 100 + date.Day;
 
         public static void EnsureHumanCharacters()
         {
@@ -67,6 +74,7 @@ namespace Sugoroku.Data
         public int           BoardPosition;
         public PlayerStatus  Status;
         public int           FinishRank;
+        public bool          SurvivedBankruptcyScare;
 
         public static PlayerSnapshot From(PlayerData p) => new()
         {
@@ -80,7 +88,8 @@ namespace Sugoroku.Data
             Virtue        = p.Virtue,
             BoardPosition = p.BoardPosition,
             Status        = p.Status,
-            FinishRank    = p.FinishRank
+            FinishRank    = p.FinishRank,
+            SurvivedBankruptcyScare = p.SurvivedBankruptcyScare
         };
 
         public int CalculateScore() => ScoreCalculator.Total(this);

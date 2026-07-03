@@ -56,7 +56,7 @@ namespace Sugoroku.Network
                     return fusion;
             }
 #endif
-            return new LocalNetworkSessionBackend();
+            return new LocalNetworkSessionBackend(GameSession.IsDailyChallenge ? GameSession.DailySeed : (int?)null);
         }
 
         public bool CanLocalPlayerRoll()

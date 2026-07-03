@@ -11,6 +11,16 @@ namespace Sugoroku.Network
         public bool HasStateAuthority => true;
         public int  LocalPlayerIndex => 0;
 
+        private readonly System.Random _seededRandom;
+
+        public LocalNetworkSessionBackend() : this(null) { }
+
+        /// <summary>seed が指定された場合、全乱数呼び出しを決定論的な System.Random に切り替える(デイリーチャレンジ用)。</summary>
+        public LocalNetworkSessionBackend(int? seed)
+        {
+            _seededRandom = seed.HasValue ? new System.Random(seed.Value) : null;
+        }
+
         public event Action<int, int> OnDiceRollSynced;
         public event Action<int, string> OnEventDrawSynced;
         public event Action<int, int> OnJournalIfGainSynced;
@@ -28,7 +38,9 @@ namespace Sugoroku.Network
             RollRangeOnAuthority(GameConfig.MinDice, GameConfig.MaxDice);
 
         public int RollRangeOnAuthority(int minInclusive, int maxInclusive) =>
-            UnityEngine.Random.Range(minInclusive, maxInclusive + 1);
+            _seededRandom != null
+                ? _seededRandom.Next(minInclusive, maxInclusive + 1)
+                : UnityEngine.Random.Range(minInclusive, maxInclusive + 1);
 
         public string DrawEventIdOnAuthority()
         {

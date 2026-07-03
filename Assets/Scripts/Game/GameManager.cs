@@ -23,6 +23,12 @@ namespace Sugoroku.Game
         private int           _finishRankCounter = 1;
         private GameObject[]  _pieces;
 
+        /// <summary>「先を越される」判定用: 既にIFを獲得済みのジャーナルマスindex。</summary>
+        private readonly HashSet<int> _claimedJournalIndices = new();
+
+        /// <summary>中間発表の周期判定用。個人ターンが進むたびに加算。</summary>
+        private int _turnCounter;
+
         [Header("駒表示")]
         [SerializeField] private float _pieceTargetHeight = 1.0f;
 
@@ -61,6 +67,8 @@ namespace Sugoroku.Game
 
         private void InitGame()
         {
+            _claimedJournalIndices.Clear();
+            _turnCounter = 0;
             int total = Mathf.Clamp(HumanCount + CpuCount, 1, GameConfig.MaxPlayers);
 
             _players = new PlayerData[total];
@@ -69,7 +77,7 @@ namespace Sugoroku.Game
             {
                 bool isCpu = i >= HumanCount;
                 var charType = isCpu
-                    ? (CharacterType)Random.Range(0, 5)
+                    ? (CharacterType)GameRng.Range(0, 4)
                     : GameSession.GetHumanCharacter(i);
                 _players[i] = PlayerData.Create(i, charType, isCpu);
             }
@@ -139,6 +147,12 @@ namespace Sugoroku.Game
             }
         }
 
+        /// <summary>「先を越される」: このジャーナルマスindexは既にIF加算済みか。</summary>
+        public bool IsJournalClaimed(int boardIndex) => _claimedJournalIndices.Contains(boardIndex);
+
+        /// <summary>このジャーナルマスindexを加算済みとして記録する。</summary>
+        public void ClaimJournal(int boardIndex) => _claimedJournalIndices.Add(boardIndex);
+
         public PlayerData   GetCurrentPlayer()  => IsInitialized ? _players[_currentPlayerIndex] : null;
         public int          GetCurrentPlayerIndex() => _currentPlayerIndex;
         public PlayerData[] GetAllPlayers()      => _players ?? System.Array.Empty<PlayerData>();
@@ -160,6 +174,18 @@ namespace Sugoroku.Game
             do { _currentPlayerIndex = (_currentPlayerIndex + 1) % _players.Length; }
             while (_players[_currentPlayerIndex].IsFinished && !IsAllFinished());
             NetworkSessionHost.Instance?.NotifyTurnAdvanced(_currentPlayerIndex);
+
+            _turnCounter++;
+            int interval = Mathf.Max(1, _players.Length) * GameConfig.MidGameCheckInterval;
+            if (_turnCounter % interval == 0)
+                StartCoroutine(RunMidGameAnnouncementThenStartTurn());
+            else
+                TurnManager.Instance.StartTurn();
+        }
+
+        private IEnumerator RunMidGameAnnouncementThenStartTurn()
+        {
+            yield return StartCoroutine(MidGameAnnouncementRules.Resolve(_players));
             TurnManager.Instance.StartTurn();
         }
 

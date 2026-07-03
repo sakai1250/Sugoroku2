@@ -9,14 +9,22 @@ namespace Sugoroku.UI
     {
         private static TMP_FontAsset _cached;
         private static bool _warned;
+        private static MethodInfo _updateFontAssetDataMethod;
+        private static bool _updateFontAssetDataMethodResolved;
 
         private const int SamplingPointSize = 90;
         private const int AtlasPadding = 9;
-        private const int AtlasSize = 1024;
+        private const int AtlasSize = 2048;
         private const int GlyphRenderModeSdfAa = 3;
         private const int AtlasPopulationDynamic = 1;
 
-        private const string PreWarmCharacters =
+        private const string SdfResourcePath = "Fonts/NotoSansJP-Regular SDF";
+        private const string TtfResourcePath = "Fonts/NotoSansJP-Regular";
+        private const string RuntimeFontName = "NotoSansJP Runtime Dynamic SDF";
+        private const string FullCharsetResourcePath = "Fonts/JapaneseFullCharset";
+
+        /// <summary>ゲーム内で最低限必要な文字（フルセットのリソースが読めない場合のフォールバック）。</summary>
+        private const string FallbackPreWarmCharacters =
             "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
             "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっー、。！？（）・△×" +
             "★◇♪" +
@@ -27,7 +35,39 @@ namespace Sugoroku.UI
             "イベントタイトルイベント説明文タイトルへポーズ再開閉じる人間未実装選択肢条件を満たしていません" +
             "【】生活未納強制退学通知書届研究室机赤叩節約重要音信不通ドロップアウト消息明薄暗部屋" +
             "画面虚光着拒否読嵐教授無視留年業績不振除籍対象者一覧自分番号載総合スコア暫定順位全員" +
-            "初期ステータス固有特性戦略的役割低円位博士進職候補修羅道";
+            "初期ステータス固有特性戦略的役割低円位博士進職候補修羅道" +
+            "✓・？？？（）◎相性";
+
+        private static string _preWarmCharacters;
+
+        private static string PreWarmCharacters
+        {
+            get
+            {
+                if (_preWarmCharacters == null)
+                {
+                    var charsetAsset = Resources.Load<TextAsset>(FullCharsetResourcePath);
+                    _preWarmCharacters = charsetAsset != null && !string.IsNullOrEmpty(charsetAsset.text)
+                        ? charsetAsset.text
+                        : FallbackPreWarmCharacters;
+                }
+                return _preWarmCharacters;
+            }
+        }
+
+        /// <summary>
+        /// キャッシュ済みフォント・プリウォーム文字列・リフレクション結果を破棄する。
+        /// Domain Reload が無効な環境で Play ボタンを押すたびに最新のフォント/文字セットを
+        /// 反映させたい場合に、エディタ側から呼び出す想定。
+        /// </summary>
+        public static void ResetCache()
+        {
+            _cached = null;
+            _warned = false;
+            _preWarmCharacters = null;
+            _updateFontAssetDataMethod = null;
+            _updateFontAssetDataMethodResolved = false;
+        }
 
         public static void WarmUp() => WarmUpAndSetDefault();
 
@@ -44,11 +84,21 @@ namespace Sugoroku.UI
 
             _cached = null;
 
-            var sdf = Resources.Load<TMP_FontAsset>("Fonts/NotoSansJP-Regular SDF");
-            if (sdf != null && TryEnsureBaked(sdf))
+            var sdf = Resources.Load<TMP_FontAsset>(SdfResourcePath);
+            if (sdf != null)
             {
-                _cached = sdf;
-                return _cached;
+                // 実行時に文字を追加する Dynamic モードのフォントは、共有アセットを直接書き換えると
+                // エディタ再生中に「Importer generated inconsistent result」の再インポート警告が
+                // 発生するため、ランタイム専用のインスタンスへ複製してから使用する。
+                var runtimeInstance = sdf.atlasPopulationMode == AtlasPopulationMode.Dynamic
+                    ? CreateRuntimeInstance(sdf)
+                    : sdf;
+
+                if (runtimeInstance != null && TryEnsureBaked(runtimeInstance))
+                {
+                    _cached = runtimeInstance;
+                    return _cached;
+                }
             }
 
             _cached = CreateDynamicFromTtf();
@@ -88,7 +138,12 @@ namespace Sugoroku.UI
         public static bool NeedsJapaneseFont(TMP_FontAsset current)
         {
             if (current == null) return true;
-            string n = current.name ?? "";
+            return IsNonJapaneseFallbackFont(current);
+        }
+
+        private static bool IsNonJapaneseFallbackFont(TMP_FontAsset font)
+        {
+            string n = font.name ?? "";
             return n.Contains("Liberation") || n.Contains("Arial");
         }
 
@@ -127,10 +182,7 @@ namespace Sugoroku.UI
 
             if (font.atlasPopulationMode == AtlasPopulationMode.Dynamic)
             {
-                var method = typeof(TMP_FontAsset).GetMethod(
-                    "UpdateFontAssetData",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-                method?.Invoke(font, null);
+                GetUpdateFontAssetDataMethod()?.Invoke(font, null);
                 font.TryAddCharacters(PreWarmCharacters);
                 font.ReadFontAssetDefinition();
             }
@@ -139,11 +191,22 @@ namespace Sugoroku.UI
             return HasBakedGlyphs(font);
         }
 
+        private static MethodInfo GetUpdateFontAssetDataMethod()
+        {
+            if (!_updateFontAssetDataMethodResolved)
+            {
+                _updateFontAssetDataMethod = typeof(TMP_FontAsset).GetMethod(
+                    "UpdateFontAssetData",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                _updateFontAssetDataMethodResolved = true;
+            }
+            return _updateFontAssetDataMethod;
+        }
+
         private static bool IsUsableJapaneseFont(TMP_FontAsset font)
         {
             if (font == null) return false;
-            string n = font.name ?? "";
-            if (n.Contains("Liberation") || n.Contains("Arial")) return false;
+            if (IsNonJapaneseFallbackFont(font)) return false;
             return HasBakedGlyphs(font);
         }
 
@@ -207,15 +270,46 @@ namespace Sugoroku.UI
             return false;
         }
 
+        /// <summary>
+        /// 共有アセットを書き換えないよう、Dynamic フォントをランタイム専用インスタンスへ複製する。
+        /// マテリアル・アトラステクスチャも複製し、元アセットとの共有を断つ。
+        /// </summary>
+        private static TMP_FontAsset CreateRuntimeInstance(TMP_FontAsset source)
+        {
+            if (source == null) return null;
+
+            var instance = Object.Instantiate(source);
+            instance.name = source.name + " (Runtime Copy)";
+
+            if (source.material != null)
+                instance.material = Object.Instantiate(source.material);
+
+            if (source.atlasTextures != null && source.atlasTextures.Length > 0)
+            {
+                // マルチアトラス（複数ページ）構成の場合、全ページを同じ順序で複製しないと
+                // TMP_MaterialManager が atlasIndex でアクセスした際に範囲外エラーになる。
+                var atlasCopies = new Texture2D[source.atlasTextures.Length];
+                for (int i = 0; i < source.atlasTextures.Length; i++)
+                {
+                    atlasCopies[i] = source.atlasTextures[i] != null
+                        ? Object.Instantiate(source.atlasTextures[i])
+                        : null;
+                }
+                instance.atlasTextures = atlasCopies;
+            }
+
+            return instance;
+        }
+
         private static TMP_FontAsset CreateDynamicFromTtf()
         {
-            var ttf = Resources.Load<Font>("Fonts/NotoSansJP-Regular");
+            var ttf = Resources.Load<Font>(TtfResourcePath);
             if (ttf == null) return null;
 
             var asset = CreateFontAssetViaReflection(ttf) ?? TMP_FontAsset.CreateFontAsset(ttf);
             if (asset == null) return null;
 
-            asset.name = "NotoSansJP Runtime Dynamic SDF";
+            asset.name = RuntimeFontName;
             asset.atlasPopulationMode = AtlasPopulationMode.Dynamic;
             BindAtlasToMaterial(asset);
             return asset;

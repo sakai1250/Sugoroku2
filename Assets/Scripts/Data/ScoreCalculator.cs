@@ -109,9 +109,9 @@ namespace Sugoroku.Data
 
         public static string GetCareerForRank(string rank) => rank switch
         {
-            "S" => "大手メーカー研究職",
-            "A" => "博士進学",
-            "B" => "修士就職",
+            "S" => "教授",
+            "A" => "民間研究職",
+            "B" => "博士進学",
             _   => "ポスドク候補（修羅の道）"
         };
     }

@@ -1044,5 +1044,100 @@
         "VirtueChange": 0
       }
     ]
+  },
+  {
+    "EventId": "E_BRANCH_FORK",
+    "Tags": ["進路", "分岐"],
+    "Title": "進路の分岐点",
+    "Description": "研究室にこもって実験を続けるか、バイトで生活費を稼ぐか。次の数マスの過ごし方を決める。",
+    "Choices": [
+      {
+        "Label": "研究室ルートを選ぶ（IF重視・メンタル消耗）",
+        "MoneyChange": 0,
+        "IfScoreChange": 0,
+        "MentalChange": -3,
+        "VirtueChange": 0,
+        "SetsBranchRoute": "Lab"
+      },
+      {
+        "Label": "バイトルートを選ぶ（金稼ぎ・IF停滞）",
+        "MoneyChange": 5,
+        "IfScoreChange": 0,
+        "MentalChange": 0,
+        "VirtueChange": 0,
+        "SetsBranchRoute": "PartTime"
+      }
+    ]
+  },
+  {
+    "EventId": "E062",
+    "Tags": ["研究", "査読"],
+    "Title": "満を持して論文投稿",
+    "Description": "3ヶ月かけた成果をトップジャーナルに投稿した。結果が届くまで、しばらく「査読中…」の日々が続く。",
+    "Choices": [
+      {
+        "Label": "投稿する（結果は3ターン後）",
+        "MoneyChange": 0,
+        "IfScoreChange": 0,
+        "MentalChange": -10,
+        "VirtueChange": 0,
+        "DelayTurns": 3,
+        "PendingLabel": "査読中…",
+        "AcceptProbabilityPercent": 45,
+        "AcceptMoneyChange": 0,
+        "AcceptIfScoreChange": 40,
+        "AcceptMentalChange": 20,
+        "AcceptVirtueChange": 5,
+        "AcceptedText": "査読結果、届く。「採択」— やった、通った！",
+        "RejectMoneyChange": 0,
+        "RejectIfScoreChange": 0,
+        "RejectMentalChange": -20,
+        "RejectVirtueChange": 5,
+        "RejectedText": "査読結果、届く。「リジェクト」… だが諦めない心は徳を積んだ。"
+      },
+      {
+        "Label": "様子見して手元で寝かせる",
+        "MoneyChange": 0,
+        "IfScoreChange": 0,
+        "MentalChange": 5,
+        "VirtueChange": -5
+      }
+    ]
+  },
+  {
+    "EventId": "E063",
+    "Tags": ["研究", "査読", "緊急"],
+    "Title": "国際会議にダメ元で投稿",
+    "Description": "採択率が低い難関国際会議に、ダメ元で論文を送ってみた。",
+    "Choices": [
+      {
+        "Label": "投稿する（結果は2ターン後）",
+        "Conditions": "Mental >= 20",
+        "MoneyChange": -5,
+        "IfScoreChange": 0,
+        "MentalChange": -15,
+        "VirtueChange": 0,
+        "DelayTurns": 2,
+        "PendingLabel": "査読中…（国際会議）",
+        "AcceptProbabilityPercent": 30,
+        "AcceptMoneyChange": 0,
+        "AcceptIfScoreChange": 60,
+        "AcceptMentalChange": 25,
+        "AcceptVirtueChange": 0,
+        "AcceptedText": "国際会議、まさかの採択！渡航が決まる。",
+        "RejectMoneyChange": 0,
+        "RejectIfScoreChange": 5,
+        "RejectMentalChange": -20,
+        "RejectVirtueChange": 10,
+        "RejectedText": "国際会議はリジェクト。でも査読コメントは次の糧になった（徳+10）。"
+      },
+      {
+        "Label": "今回は見送る",
+        "MoneyChange": 0,
+        "IfScoreChange": 0,
+        "MentalChange": 0,
+        "VirtueChange": 0
+      }
+    ]
   }
 ]

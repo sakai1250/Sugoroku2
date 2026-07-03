@@ -22,9 +22,12 @@ namespace Sugoroku.Editor
 
         private const int SamplingPointSize = 90;
         private const int AtlasPadding = 9;
-        private const int AtlasSize = 1024;
+        private const int AtlasSize = 2048;
 
-        private const string PreWarmCharacters =
+        private const string FullCharsetAssetPath = "Assets/Resources/Fonts/JapaneseFullCharset.txt";
+
+        /// <summary>フルセットのテキストアセットが見つからない場合のフォールバック。</summary>
+        private const string FallbackPreWarmCharacters =
             "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん" +
             "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっー、。！？（）・△×" +
             "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
@@ -35,6 +38,17 @@ namespace Sugoroku.Editor
             "【】生活未納強制退学通知書届研究室机赤叩節約重要音信不通ドロップアウト消息明薄暗部屋" +
             "画面虚光着拒否読嵐教授無視留年業績不振除籍対象者一覧自分番号載総合スコア暫定順位全員" +
             "初期ステータス固有特性戦略的役割低円位博士進職候補修羅道";
+
+        private static string PreWarmCharacters
+        {
+            get
+            {
+                var charsetAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(FullCharsetAssetPath);
+                return charsetAsset != null && !string.IsNullOrEmpty(charsetAsset.text)
+                    ? charsetAsset.text
+                    : FallbackPreWarmCharacters;
+            }
+        }
 
         [MenuItem("Tools/Sugoroku/Regenerate Japanese Font Asset")]
         public static void RegenerateFromMenu() => Create();

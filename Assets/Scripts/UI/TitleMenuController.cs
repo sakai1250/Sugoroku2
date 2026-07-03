@@ -13,6 +13,7 @@ namespace Sugoroku.UI
         private GameObject  _titlePanel;
         private GameObject  _settingsPanel;
         private GameObject  _achievementsPanel;
+        private AchievementsPanelController _achievementsPanelController;
         private Slider      _humanSlider;
         private Slider      _cpuSlider;
 
@@ -38,8 +39,15 @@ namespace Sugoroku.UI
             _titlePanel        = FindChild("TitlePanel");
             _settingsPanel     = FindChild("SettingsPanel");
             _achievementsPanel = FindChild("AchievementsPanel");
+            if (_achievementsPanel != null)
+            {
+                _achievementsPanelController = _achievementsPanel.GetComponent<AchievementsPanelController>();
+                if (_achievementsPanelController == null)
+                    _achievementsPanelController = _achievementsPanel.AddComponent<AchievementsPanelController>();
+            }
 
             EnsureSettingsControls();
+            EnsureDailyChallengeButton();
             WireButtons();
             RefreshSettingsLabels();
 
@@ -153,11 +161,46 @@ namespace Sugoroku.UI
             return tmp;
         }
 
+        private void EnsureDailyChallengeButton()
+        {
+            if (_titlePanel == null) return;
+            if (_titlePanel.transform.Find("DailyChallengeButton") != null) return;
+
+            var startRt = _titlePanel.transform.Find("StartButton")?.GetComponent<RectTransform>();
+            var pos = new Vector2(0f, -200f);
+
+            var go = new GameObject("DailyChallengeButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(_titlePanel.transform, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.sizeDelta = startRt != null ? startRt.sizeDelta : new Vector2(240f, 48f);
+            rt.anchoredPosition = pos;
+
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var tmp = labelGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = "デイリーチャレンジ";
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 22f;
+            var labelRt = tmp.rectTransform;
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+            ApplyJapaneseFont(tmp);
+
+            var btn = go.GetComponent<Button>();
+            GameUiChrome.ApplyButton(btn, primary: false);
+        }
+
         private void WireButtons()
         {
             WireButton("TitlePanel/StartButton",          OnStartGame);
+            WireButton("TitlePanel/DailyChallengeButton", OnStartDailyChallenge);
             WireButton("TitlePanel/SettingsButton",       () => ShowPanel(_settingsPanel));
-            WireButton("TitlePanel/AchievementsButton",   () => ShowPanel(_achievementsPanel));
+            WireButton("TitlePanel/AchievementsButton",   () =>
+            {
+                _achievementsPanelController?.Refresh();
+                ShowPanel(_achievementsPanel);
+            });
             WireButton("SettingsPanel/CloseButton",       () => ShowPanel(_titlePanel));
             WireButton("AchievementsPanel/CloseButton",   () => ShowPanel(_titlePanel));
 
@@ -209,8 +252,19 @@ namespace Sugoroku.UI
         private void OnStartGame()
         {
             ClampCounts();
+            GameSession.IsDailyChallenge = false;
             GameSession.HumanCount = _humanCount;
             GameSession.CpuCount   = _cpuCount;
+            GameSession.EnsureHumanCharacters();
+            SceneManager.LoadScene("CharacterSelectScene");
+        }
+
+        private void OnStartDailyChallenge()
+        {
+            GameSession.IsDailyChallenge = true;
+            GameSession.DailySeed        = GameSession.ComputeDailySeed(System.DateTime.UtcNow);
+            GameSession.HumanCount       = 1;
+            GameSession.CpuCount         = 0;
             GameSession.EnsureHumanCharacters();
             SceneManager.LoadScene("CharacterSelectScene");
         }

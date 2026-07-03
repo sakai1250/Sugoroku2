@@ -29,7 +29,12 @@ namespace Sugoroku.UI
 
         private void ApplyReason(GameOverReason reason)
         {
+            AchievementEvaluator.OnGameOver(reason);
+            if (GameSession.IsDailyChallenge)
+                AchievementEvaluator.OnDailyChallengePlayed();
+
             var outcome = GameOverOutcomeResolver.Resolve(reason);
+            string dailyScoreLine = GameSession.IsDailyChallenge ? BuildDailyScoreLine() : "";
 
             if (_titleText != null)
             {
@@ -38,7 +43,9 @@ namespace Sugoroku.UI
             }
             if (_bodyText != null)
             {
-                _bodyText.text = outcome.Body;
+                _bodyText.text = string.IsNullOrEmpty(dailyScoreLine)
+                    ? outcome.Body
+                    : $"{outcome.Body}\n\n{dailyScoreLine}";
                 JapaneseFontProvider.Apply(_bodyText);
             }
 
@@ -52,6 +59,31 @@ namespace Sugoroku.UI
             }
             _juice?.Play(outcome);
             EndSceneVisuals.BringGameOverContentToFront(transform);
+        }
+
+        private string BuildDailyScoreLine()
+        {
+            var players = GameSession.LastPlayers;
+            if (players == null || players.Length == 0) return "";
+
+            PlayerSnapshot player = players[0];
+            for (int i = 0; i < players.Length; i++)
+            {
+                if (!players[i].IsCpu)
+                {
+                    player = players[i];
+                    break;
+                }
+            }
+
+            int score = player.CalculateScore();
+            int best = AchievementStore.GetDailyBestScore(GameSession.DailySeed);
+            bool isNewBest = score > best;
+            if (isNewBest) AchievementStore.SetDailyBestScore(GameSession.DailySeed, score);
+            int bestScore = isNewBest ? score : best;
+
+            return $"本日のスコア: {score:N0}点" +
+                   (isNewBest ? "（自己ベスト更新！）" : $"（自己ベスト: {bestScore:N0}点）");
         }
 
         private TextMeshProUGUI FindTmp(string n) => transform.Find(n)?.GetComponent<TextMeshProUGUI>();

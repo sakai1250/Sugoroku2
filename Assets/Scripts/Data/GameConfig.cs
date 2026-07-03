@@ -31,6 +31,9 @@ namespace Sugoroku.Data
         // 徳による救済（全選択肢が条件未達のとき）
         public const int VirtueRescueThreshold = 20;
 
+        /// <summary>中間発表: 1人あたりこの個人ターン数ごとに首位ボーナス/最下位デバフを実施。</summary>
+        public const int MidGameCheckInterval = 10;
+
         // スキル使用コスト
         public const int RichSkillCost        = 10;
 
