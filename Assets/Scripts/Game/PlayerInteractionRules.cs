@@ -1,3 +1,4 @@
+using Sugoroku.Board;
 using Sugoroku.Data;
 
 namespace Sugoroku.Game
@@ -24,6 +25,9 @@ namespace Sugoroku.Game
                 if (p == null || p == mover) continue;
                 if (p.IsFinished) continue;
                 if (p.BoardPosition != mover.BoardPosition) continue;
+                if (BranchRouteRules.IsInBranchRange(mover.BoardPosition) &&
+                    p.ActiveBranch != mover.ActiveBranch)
+                    continue;
                 other = p;
                 return true;
             }

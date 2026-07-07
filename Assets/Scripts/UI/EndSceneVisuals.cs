@@ -81,6 +81,11 @@ namespace Sugoroku.UI
             {
                 title.color = outcome.AccentColor;
                 HudTextStyle.ApplyOutlineSafe(title, 0.16f, new Color(0f, 0f, 0f, 0.88f));
+                title.enableAutoSizing = true;
+                title.fontSizeMax = 28f;
+                title.fontSizeMin = 16f;
+                title.textWrappingMode = TextWrappingModes.Normal;
+                title.overflowMode = TextOverflowModes.Ellipsis;
             }
 
             var body = root.Find("GameOverBody")?.GetComponent<TextMeshProUGUI>();
@@ -89,6 +94,11 @@ namespace Sugoroku.UI
                 body.color = new Color(0.82f, 0.82f, 0.88f);
                 body.raycastTarget = false;
                 HudTextStyle.ApplyOutlineSafe(body, 0.10f, new Color(0f, 0f, 0f, 0.72f));
+                body.enableAutoSizing = true;
+                body.fontSizeMax = 20f;
+                body.fontSizeMin = 13f;
+                body.textWrappingMode = TextWrappingModes.Normal;
+                body.overflowMode = TextOverflowModes.Ellipsis;
             }
 
             BringGameOverContentToFront(root);
@@ -212,11 +222,11 @@ namespace Sugoroku.UI
         {
             var card = EnsureContainer(root, "CareerDecision3DCard");
             var rt = card.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1f, 0f);
-            rt.anchorMax = new Vector2(1f, 0f);
-            rt.pivot = new Vector2(1f, 0f);
+            rt.anchorMin = new Vector2(1f, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(1f, 0.5f);
             rt.sizeDelta = new Vector2(350f, 142f);
-            rt.anchoredPosition = new Vector2(-42f, 42f);
+            rt.anchoredPosition = new Vector2(-36f, 24f);
             card.transform.SetSiblingIndex(8);
 
             var accent = outcome?.AccentColor ?? new Color(0.86f, 0.68f, 0.28f, 1f);

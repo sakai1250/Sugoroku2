@@ -55,16 +55,18 @@ namespace Sugoroku.Board
         public void SyncRouteIndices(bool refreshVisuals = true)
         {
             if (waypoints == null) return;
-            for (int i = 0; i < waypoints.Count; i++)
+            for (int physical = 0; physical < waypoints.Count; physical++)
             {
-                if (waypoints[i] == null) continue;
-                waypoints[i].ApplyRouteData(
-                    i,
-                    SnakeBoardLayout.GetSquareType(i),
-                    SnakeBoardLayout.GetDisplayName(i),
-                    SnakeBoardLayout.GetEventId(i));
+                if (waypoints[physical] == null) continue;
+                int logical = BoardNavigation.GetLogical(physical);
+                var lane    = BoardNavigation.GetLane(physical);
+                waypoints[physical].ApplyRouteData(
+                    physical,
+                    BoardNavigation.GetSquareType(logical, lane),
+                    BoardNavigation.GetDisplayLabel(logical, lane),
+                    BoardNavigation.GetEventId(logical, lane));
                 if (refreshVisuals)
-                    waypoints[i].RequestVisualUpdate();
+                    waypoints[physical].RequestVisualUpdate();
             }
         }
 
@@ -90,6 +92,12 @@ namespace Sugoroku.Board
         }
 
         private void OnValidate() => SyncRouteIndices(refreshVisuals: false);
+
+        private void Start()
+        {
+            if (Application.isPlaying)
+                SyncRouteIndices();
+        }
 
         private void OnDrawGizmos()
         {

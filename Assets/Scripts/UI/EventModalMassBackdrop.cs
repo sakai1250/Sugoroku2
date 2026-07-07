@@ -139,7 +139,7 @@ namespace Sugoroku.UI
         private static Waypoint ResolveWaypoint(PlayerData player)
         {
             if (player == null || BoardManager.Instance == null) return null;
-            return BoardManager.Instance.GetWaypoint(player.BoardPosition);
+            return BoardManager.Instance.GetWaypoint(player);
         }
 
         private static void FocusCameraOnMass(Waypoint wp, PlayerData player)

@@ -14,6 +14,8 @@ namespace Sugoroku.UI
         private TextMeshProUGUI _label;
         private CanvasGroup     _group;
         private bool            _subscribed;
+        private bool            _suppressed;
+        private string          _lastMessage = "";
 
         private void Awake()
         {
@@ -101,17 +103,32 @@ namespace Sugoroku.UI
             SetMessage("ゲーム準備中…");
         }
 
+        /// <summary>イベントモーダル表示中はバナーを隠し、選択肢との Z 重なりを防ぐ。</summary>
+        public static void SetSuppressed(bool suppressed)
+        {
+            if (Instance == null) return;
+            Instance._suppressed = suppressed;
+            if (suppressed)
+                Instance.SetMessage("", null, force: true);
+            else if (!string.IsNullOrEmpty(Instance._lastMessage))
+                Instance.SetMessage(Instance._lastMessage, null, force: true);
+        }
+
         public static void Show(string message)
         {
             if (Instance == null) return;
+            if (Instance._suppressed || EventModalUI.HasVisibleModal) return;
             Instance.SetMessage(message);
+            GameplayUiOverlayQueue.Enqueue(message, dim: false);
         }
 
-        private void SetMessage(string message, Color? color = null)
+        private void SetMessage(string message, Color? color = null, bool force = false)
         {
-            if (_label != null) _label.text = message ?? "";
+            if (!force && _suppressed) return;
+            _lastMessage = message ?? "";
+            if (_label != null) _label.text = _lastMessage;
             if (_label != null && color.HasValue) _label.color = color.Value;
-            if (_group != null) _group.alpha = string.IsNullOrEmpty(message) ? 0f : 1f;
+            if (_group != null) _group.alpha = string.IsNullOrEmpty(_lastMessage) ? 0f : 1f;
         }
 
         private void OnTurnStarted(PlayerData player)
@@ -128,7 +145,7 @@ namespace Sugoroku.UI
 
         private void OnEventTriggered(EventMaster ev, PlayerData player)
         {
-            if (ev == null) return;
+            if (ev == null || _suppressed || EventModalUI.HasVisibleModal) return;
             string who = player != null ? PlayerIdentity.FormatHudLabel(player) : "";
             SetMessage(string.IsNullOrEmpty(who)
                 ? $"★ イベント: {ev.Title}"
@@ -166,6 +183,7 @@ namespace Sugoroku.UI
                     SetMessage($"◇ {name}  マス確認!", new Color(0.72f, 1f, 0.62f, 1f));
                     break;
                 case TurnState.Event:
+                    if (_suppressed || EventModalUI.HasVisibleModal) break;
                     // イベント本文は OnEventTriggered で上書き
                     if (_label == null || string.IsNullOrEmpty(_label.text) ||
                         !_label.text.Contains("イベント"))

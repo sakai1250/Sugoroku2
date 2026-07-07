@@ -64,7 +64,7 @@ namespace Sugoroku.Board
         private bool NeedsGeneration()
         {
             var route = GetComponentInChildren<WaypointRoute>(true);
-            return route == null || route.Count == 0;
+            return route == null || route.Count == 0 || route.Count != BoardNavigation.PhysicalWaypointCount;
         }
 
         private void RefreshExistingRoutePresentation()
@@ -72,6 +72,7 @@ namespace Sugoroku.Board
             var route = GetComponentInChildren<WaypointRoute>(true);
             if (route == null || route.Count == 0) return;
 
+            route.SyncRouteIndices();
             RelayoutRouteToSnakeGrid(route);
 
             if (_boardManager != null)
@@ -91,15 +92,16 @@ namespace Sugoroku.Board
             if (route == null || route.Count == 0) return;
 
             var placedPositions = new List<Vector3>(route.Count);
-            int count = Mathf.Min(route.Count, SnakeBoardLayout.CellCount);
 
-            for (int i = 0; i < count; i++)
+            for (int p = 0; p < route.Count; p++)
             {
-                var wp = route.GetWaypoint(i);
+                var wp = route.GetWaypoint(p);
                 if (wp == null) continue;
 
-                var basePos = SnakeBoardLayout.GetWorldPosition(i, SpacingX, SpacingY);
-                var pos     = ResolveCardPosition(basePos, i, placedPositions);
+                int logical = BoardNavigation.GetLogical(p);
+                var lane    = BoardNavigation.GetLane(p);
+                var basePos = BoardNavigation.GetWorldPosition(logical, lane, SpacingX, SpacingY);
+                var pos     = ResolveCardPosition(basePos, p, placedPositions);
                 wp.transform.position = pos;
                 wp.SetCellSpacing(RouteSpacing);
                 placedPositions.Add(pos);
@@ -124,6 +126,8 @@ namespace Sugoroku.Board
             if (_centerRouteOnBoard)
                 route.CenterRouteAtOrigin();
 
+            ApplyOverlapAvoidanceToRoute(route);
+
             if (_buildRouteConnectors)
                 BuildRouteConnectors(routeRoot, route);
 
@@ -141,7 +145,7 @@ namespace Sugoroku.Board
             var cam = FindFirstObjectByType<BoardCameraController>();
             cam?.FrameBoard();
 
-            Debug.Log($"SnakeBoard: {route.Count} マスを S字ルートに配置しました（間隔 X={SpacingX:F2} Y={SpacingY:F2}）。");
+            Debug.Log($"SnakeBoard: {route.Count} ウェイポイント（論理{BoardNavigation.LogicalCellCount}マス・分岐レーン）を配置しました（間隔 X={SpacingX:F2} Y={SpacingY:F2}）。");
         }
 
         public void ClearLayeredBoard()
@@ -188,20 +192,22 @@ namespace Sugoroku.Board
             var route = routeRoot.GetComponent<WaypointRoute>();
             if (route == null) route = routeRoot.gameObject.AddComponent<WaypointRoute>();
 
-            var list = new List<Waypoint>(SnakeBoardLayout.CellCount);
-            var placedPositions = new List<Vector3>(SnakeBoardLayout.CellCount);
+            var list = new List<Waypoint>(BoardNavigation.PhysicalWaypointCount);
+            var placedPositions = new List<Vector3>(BoardNavigation.PhysicalWaypointCount);
 
             EventMassCatalog.EnsureLoaded();
             EventMasuArt.Prewarm();
 
-            for (int i = 0; i < SnakeBoardLayout.CellCount; i++)
+            for (int p = 0; p < BoardNavigation.PhysicalWaypointCount; p++)
             {
-                var basePos = SnakeBoardLayout.GetWorldPosition(i, SpacingX, SpacingY);
-                var pos     = ResolveCardPosition(basePos, i, placedPositions);
-                var type    = SnakeBoardLayout.GetSquareType(i);
-                var label   = SnakeBoardLayout.GetDisplayLabel(i);
-                var eventId = SnakeBoardLayout.GetEventId(i);
-                list.Add(SpawnWaypointInstance(routeRoot, pos, i, type, label, eventId));
+                int logical = BoardNavigation.GetLogical(p);
+                var lane    = BoardNavigation.GetLane(p);
+                var basePos = BoardNavigation.GetWorldPosition(logical, lane, SpacingX, SpacingY);
+                var pos     = ResolveCardPosition(basePos, p, placedPositions);
+                var type    = BoardNavigation.GetSquareType(logical, lane);
+                var label   = BoardNavigation.GetDisplayLabel(logical, lane);
+                var eventId = BoardNavigation.GetEventId(logical, lane);
+                list.Add(SpawnWaypointInstance(routeRoot, pos, p, lane, type, label, eventId));
                 placedPositions.Add(pos);
             }
 
@@ -209,15 +215,21 @@ namespace Sugoroku.Board
             return route;
         }
 
-        private Vector3 ResolveCardPosition(Vector3 basePos, int index, List<Vector3> placedPositions)
+        private Vector3 ResolveCardPosition(Vector3 basePos, int physicalIndex, List<Vector3> placedPositions)
         {
+            // 分岐レーンは専用レイアウトで間隔を確保済み
+            if (BoardNavigation.GetLane(physicalIndex) != BranchRoute.None)
+                return basePos;
+
             if (!_avoidCardOverlap || placedPositions == null || placedPositions.Count == 0)
                 return basePos;
             if (!OverlapsAnyCard(basePos, placedPositions))
                 return basePos;
 
-            var previousBase = SnakeBoardLayout.GetWorldPosition(index - 1, SpacingX, SpacingY);
-            return ResolvePositionAgainstPlaced(basePos, basePos - previousBase, index, placedPositions);
+            var previousBase = physicalIndex > 0 && placedPositions.Count > 0
+                ? placedPositions[placedPositions.Count - 1]
+                : BoardNavigation.GetWorldPosition(0, BranchRoute.None, SpacingX, SpacingY);
+            return ResolvePositionAgainstPlaced(basePos, basePos - previousBase, physicalIndex, placedPositions);
         }
 
         private void ApplyOverlapAvoidanceToRoute(WaypointRoute route)
@@ -229,6 +241,12 @@ namespace Sugoroku.Board
             {
                 var wp = route.GetWaypoint(i);
                 if (wp == null) continue;
+
+                if (BoardNavigation.GetLane(i) != BranchRoute.None)
+                {
+                    placedPositions.Add(wp.transform.position);
+                    continue;
+                }
 
                 var pos = wp.transform.position;
                 if (placedPositions.Count > 0 && OverlapsAnyCard(pos, placedPositions))
@@ -279,9 +297,10 @@ namespace Sugoroku.Board
             return false;
         }
 
-        private Waypoint SpawnWaypointInstance(Transform parent, Vector3 pos, int index,
-            SquareType type, string label, string eventId)
+        private Waypoint SpawnWaypointInstance(Transform parent, Vector3 pos, int physicalIndex,
+            BranchRoute lane, SquareType type, string label, string eventId)
         {
+            string laneTag = lane == BranchRoute.None ? "" : lane == BranchRoute.Lab ? "_Lab" : "_PT";
             Waypoint wp;
             if (_waypointPrefab != null)
             {
@@ -294,13 +313,13 @@ namespace Sugoroku.Board
             }
             else
             {
-                wp = MassTextCardPrefabFactory.CreateRuntimeInstance(parent, $"W{index:D2}");
+                wp = MassTextCardPrefabFactory.CreateRuntimeInstance(parent, $"W{physicalIndex:D2}{laneTag}");
             }
 
             wp.transform.position = pos;
             wp.SetCellSpacing(RouteSpacing);
             wp.RemoveWorldLabels();
-            wp.Configure(index, type, label, eventId);
+            wp.Configure(physicalIndex, type, label, eventId);
             return wp;
         }
 
@@ -318,18 +337,16 @@ namespace Sugoroku.Board
             var connectorsRoot = CreateChild(routeRoot, "RouteConnectors");
             connectorsRoot.SetAsFirstSibling();
 
-            for (int i = 0; i < route.Count - 1; i++)
-            {
-                var from = route.GetWaypoint(i);
-                var to   = route.GetWaypoint(i + 1);
-                if (from == null || to == null) continue;
+            var segments = new List<(Vector3 from, Vector3 to)>();
+            BoardNavigation.CollectConnectorSegments(route, segments);
 
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var (from, to) = segments[i];
                 CreateConnectorSegment(connectorsRoot, $"RouteConnector_{i:D2}_Edge",
-                    from.transform.position, to.transform.position,
-                    _connectorWidth + 0.16f, _connectorEdgeColor, BoardSortingLayers.PathOrder);
+                    from, to, _connectorWidth + 0.16f, _connectorEdgeColor, BoardSortingLayers.PathOrder);
                 CreateConnectorSegment(connectorsRoot, $"RouteConnector_{i:D2}",
-                    from.transform.position, to.transform.position,
-                    _connectorWidth, _connectorColor, BoardSortingLayers.PathOrder + 1);
+                    from, to, _connectorWidth, _connectorColor, BoardSortingLayers.PathOrder + 1);
             }
         }
 

@@ -103,8 +103,18 @@ namespace Sugoroku.Game
                     yield break;
                 }
 
-                Vector3 target = BoardManager.Instance.GetPosition(player.BoardPosition);
+                Vector3 target = BoardManager.Instance.GetPosition(player);
                 yield return StartCoroutine(MovePiece(player, target));
+
+                if (player.BoardPosition >= BranchRouteRules.MergeLogicalIndex)
+                    player.ActiveBranch = BranchRoute.None;
+
+                if (BoardMovementRules.IsMandatoryStop(player.BoardPosition))
+                {
+                    Sugoroku.UI.GameStatusBanner.Show(
+                        $"{PlayerIdentity.FormatHudLabel(player)} — 分岐点で停止！（進路を選んでください）");
+                    break;
+                }
             }
 
             OnPlayerMoved?.Invoke(player, player.BoardPosition);
@@ -146,8 +156,8 @@ namespace Sugoroku.Game
 
         private IEnumerator MassCheckCoroutine(PlayerData player)
         {
-            var squareType = BoardManager.Instance.GetSquareType(player.BoardPosition);
-            var node       = BoardManager.Instance.GetWaypoint(player.BoardPosition);
+            var squareType = BoardManager.Instance.GetSquareType(player);
+            var node       = BoardManager.Instance.GetWaypoint(player);
 
             if (PlayerInteractionRules.IsCollabEligible(squareType) &&
                 PlayerInteractionRules.TryFindCoOccupant(player, GameManager.Instance.GetAllPlayers(), out var coOccupant))
@@ -359,7 +369,7 @@ namespace Sugoroku.Game
             else
                 yield return StatChangeSequencer.Apply(player, 9, 0, 2, 0);
 
-            if (player.BoardPosition >= BranchRouteRules.RangeEnd)
+            if (player.BoardPosition >= BranchRouteRules.MergeLogicalIndex)
                 player.ActiveBranch = BranchRoute.None;
 
             EndTurn();

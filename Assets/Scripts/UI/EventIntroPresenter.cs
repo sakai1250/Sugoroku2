@@ -119,7 +119,7 @@ namespace Sugoroku.UI
         private static void PulseMasuAtPlayer(PlayerData player)
         {
             if (player == null || BoardManager.Instance == null) return;
-            var wp = BoardManager.Instance.GetWaypoint(player.BoardPosition);
+            var wp = BoardManager.Instance.GetWaypoint(player);
             var card = wp != null ? wp.GetComponentInChildren<MassTextCardView>(true) : null;
             card?.PlayEventHighlight();
         }

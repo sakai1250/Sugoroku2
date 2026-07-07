@@ -26,6 +26,12 @@ namespace Sugoroku.Board
             {
                 foreach (var tag in tags)
                 {
+                    if (tag is "進路" or "分岐")
+                        return Category.Lab;
+                }
+
+                foreach (var tag in tags)
+                {
                     if (tag is "研究" or "学会")
                         return Category.Research;
                 }
@@ -57,6 +63,7 @@ namespace Sugoroku.Board
                 SquareType.Rest    => Category.Lab,
                 SquareType.Bonus   => Category.Event,
                 SquareType.Penalty => Category.Event,
+                SquareType.Branch  => Category.Lab,
                 _                  => Category.None
             };
         }

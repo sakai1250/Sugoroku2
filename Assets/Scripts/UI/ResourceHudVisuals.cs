@@ -126,8 +126,9 @@ namespace Sugoroku.UI
             SetText(FindInBar(bar, "MentalText"),  FormatMental(player.Mental, player.MaxMental), GetMentalTextColor(player));
             SetText(FindInBar(bar, "VirtueText"),  FormatVirtue(player.Virtue), VirtueTextColor);
 
-            UpdatePinchLabel(FindInBar(bar, "MoneyPinch"),  StatPinchThresholds.IsMoneyPinch(player.Money));
-            UpdatePinchLabel(FindInBar(bar, "MentalPinch"), StatPinchThresholds.IsMentalPinch(player.Mental));
+            UpdatePinchLabel(FindInBar(bar, "MoneyPinch"), false);
+            UpdatePinchLabel(FindInBar(bar, "MentalPinch"), false);
+            UpdatePrimaryPinchPulse(bar, player);
 
             SetIcon(FindInBar(bar, "MoneyIcon"),  KenneyAssets.ResourceIcon.Money,  MoneyIconTint);
             SetIcon(FindInBar(bar, "IfIcon"),     KenneyAssets.ResourceIcon.IfScore, IfIconTint);
@@ -238,6 +239,30 @@ namespace Sugoroku.UI
         {
             if (label == null) return;
             label.gameObject.SetActive(visible);
+        }
+
+        private static void UpdatePrimaryPinchPulse(Transform bar, PlayerData player)
+        {
+            var pulse = bar.GetComponent<HudPinchPulse>() ?? bar.gameObject.AddComponent<HudPinchPulse>();
+            Transform target = null;
+            float worst = 0f;
+
+            if (StatPinchThresholds.IsMoneyPinch(player.Money))
+            {
+                float threshold = Mathf.Max(1, StatPinchThresholds.WorstEventMoneyLoss);
+                worst = 1f - Mathf.Clamp01(player.Money / threshold);
+                target = bar.Find("MoneyCell");
+            }
+
+            if (StatPinchThresholds.IsMentalPinch(player.Mental))
+            {
+                float threshold = Mathf.Max(1, StatPinchThresholds.WorstEventMentalLoss);
+                float severity = 1f - Mathf.Clamp01(player.Mental / threshold);
+                if (target == null || severity > worst)
+                    target = bar.Find("MentalCell");
+            }
+
+            pulse.SetTarget(target);
         }
 
         public static Color GetMentalIconColor(PlayerData player)

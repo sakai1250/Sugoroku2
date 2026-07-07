@@ -36,6 +36,7 @@ namespace Sugoroku.Board
         private Vector3 _followTarget;
         private Coroutine _shakeRoutine;
         private Coroutine _zoomRoutine;
+        private bool      _overviewMode;
         private Quaternion _baseRotation;
         private Vector3 _lastCameraPosition;
 
@@ -118,8 +119,33 @@ namespace Sugoroku.Board
             ApplyFauxDepthBank();
         }
 
+        public bool IsOverviewMode => _overviewMode;
+
+        public void ToggleOverview()
+        {
+            if (_overviewMode) ExitOverview();
+            else EnterOverview();
+        }
+
+        public void EnterOverview()
+        {
+            FrameBoard();
+            _overviewMode = true;
+            StopFollowing();
+            if (_zoomRoutine != null) StopCoroutine(_zoomRoutine);
+            _zoomRoutine = StartCoroutine(ZoomCoroutine(_boardCenter, _boardOrthoSize, restoreFollow: false));
+        }
+
+        public void ExitOverview()
+        {
+            if (!_overviewMode) return;
+            _overviewMode = false;
+            RestoreFramedView();
+        }
+
         public void FollowPosition(Vector3 worldPos)
         {
+            if (_overviewMode) return;
             _isFollowing  = true;
             _followTarget = new Vector3(worldPos.x, worldPos.y, _cameraZ);
         }
@@ -128,6 +154,7 @@ namespace Sugoroku.Board
 
         public void FocusCurrentPlayer(PlayerData player)
         {
+            if (_overviewMode) return;
             if (player == null || GameManager.Instance == null) return;
             var piece = GameManager.Instance.GetPiece(player.Index);
             if (piece == null) return;
@@ -167,9 +194,9 @@ namespace Sugoroku.Board
             if (piece == null) return;
 
             int board = _boardManager.BoardSize;
-            int target = Mathf.Min(player.BoardPosition + steps, board - 1);
+            int target = BoardMovementRules.ResolveLandingIndex(player.BoardPosition, steps, board);
             Vector3 from = piece.transform.position;
-            Vector3 ahead = _boardManager.GetPosition(target);
+            Vector3 ahead = _boardManager.GetPositionAtLogical(target, player);
             float blend = GameConfig.CameraDiceLookaheadBlend > 0
                 ? GameConfig.CameraDiceLookaheadBlend
                 : _diceLookaheadBlend;
@@ -179,6 +206,7 @@ namespace Sugoroku.Board
 
         public void ZoomForEvent(Vector3 worldPos)
         {
+            _overviewMode = false;
             if (_zoomRoutine != null) StopCoroutine(_zoomRoutine);
             _zoomRoutine = StartCoroutine(ZoomCoroutine(worldPos, _boardOrthoSize * _eventZoomScale));
         }
@@ -186,11 +214,13 @@ namespace Sugoroku.Board
         public void RestoreFramedView()
         {
             if (_zoomRoutine != null) StopCoroutine(_zoomRoutine);
-            _zoomRoutine = StartCoroutine(ZoomCoroutine(_boardCenter, _boardOrthoSize, restoreFollow: true));
+            _zoomRoutine = StartCoroutine(ZoomCoroutine(_boardCenter, _boardOrthoSize, restoreFollow: !_overviewMode));
         }
 
         private void HandleTurnState(TurnState state)
         {
+            if (_overviewMode) return;
+
             var player = GameManager.Instance?.GetCurrentPlayer();
             if (player == null) return;
 

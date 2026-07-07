@@ -30,6 +30,7 @@ namespace Sugoroku.UI
             LayoutLogPanel(canvas.transform);
             HideSquareLegend(canvas.transform);
             LayoutActionArea(canvas.transform);
+            LayoutOverviewButton(canvas.transform);
             LayoutMenuButton(canvas.transform);
             KenneyUiStyler.StyleCanvas(canvas);
             EnsurePresentationDimmer(canvas);
@@ -50,6 +51,8 @@ namespace Sugoroku.UI
             if (canvas == null) return;
             if (canvas.GetComponent<GameUIFontBootstrap>() == null)
                 canvas.gameObject.AddComponent<GameUIFontBootstrap>();
+            if (canvas.GetComponent<BoardOverviewUi>() == null)
+                canvas.gameObject.AddComponent<BoardOverviewUi>();
         }
 
         private static void EnsurePresentationDimmer(Canvas canvas)
@@ -403,6 +406,11 @@ namespace Sugoroku.UI
             panelRt.sizeDelta = new Vector2(264f, 204f);
             GameUiChrome.ApplySurface(panel, new Color(0.10f, 0.12f, 0.18f, 0.88f));
             GameUiChrome.ApplyAccentRail(panel, new Color(0.86f, 0.68f, 0.28f, 0.82f), 4f);
+            if (!panel.TryGetComponent<CanvasGroup>(out var cg) || cg == null)
+                cg = panel.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 0.92f;
+            cg.blocksRaycasts = true;
+            cg.interactable = true;
 
             var v = panel.GetComponent<VerticalLayoutGroup>();
             if (v != null) v.enabled = false;
@@ -506,6 +514,49 @@ namespace Sugoroku.UI
                     HudTextStyle.ApplyOutlineSafe(labelT, 0f, Color.clear);
                 }
             }
+        }
+
+        private static void LayoutOverviewButton(Transform canvas)
+        {
+            var btn = canvas.Find("OverviewButton");
+            if (btn == null)
+            {
+                var go = new GameObject("OverviewButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                go.transform.SetParent(canvas, false);
+                btn = go.transform;
+
+                var labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(btn, false);
+                var tmp = labelGo.AddComponent<TextMeshProUGUI>();
+                tmp.text = "全体を見る";
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.color = Color.white;
+                HudTextStyle.ApplyReadable(tmp, HudTextStyle.Scale(15f), Color.white, true);
+                JapaneseFontProvider.Apply(tmp);
+                var labelRt = labelGo.GetComponent<RectTransform>();
+                labelRt.anchorMin = Vector2.zero;
+                labelRt.anchorMax = Vector2.one;
+                labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+            }
+
+            var rt = btn.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot     = new Vector2(1f, 1f);
+            rt.anchoredPosition = new Vector2(-152f, -ResourceHudVisuals.TopBarHeight - 12f);
+            rt.sizeDelta = new Vector2(132f, 44f);
+
+            var img = btn.GetComponent<Image>();
+            if (img != null)
+            {
+                img.color = new Color(0.14f, 0.18f, 0.26f, 0.92f);
+                img.raycastTarget = true;
+            }
+
+            var button = btn.GetComponent<Button>();
+            if (button != null)
+                GameUiChrome.ApplyChoiceButton(button, true);
+
+            btn.SetAsLastSibling();
         }
 
         private static void LayoutMenuButton(Transform canvas)

@@ -10,8 +10,8 @@ namespace Sugoroku.UI
     public static class GameOverLayout
     {
         public const float StageWidthFraction = 0.54f;
+        const float TextPadLeft  = 28f;
         const float TextPadRight = 36f;
-        const float TextColumnWidth = 480f;
 
         public static void ApplyStage(RectTransform stage)
         {
@@ -71,14 +71,18 @@ namespace Sugoroku.UI
         {
             if (title is not RectTransform rt) return;
 
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);
-            rt.pivot = new Vector2(1f, 0.5f);
-            rt.anchoredPosition = new Vector2(-TextPadRight, 210f);
-            rt.sizeDelta = new Vector2(TextColumnWidth, 80f);
+            rt.anchorMin = new Vector2(StageWidthFraction, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(TextPadLeft, 170f);
+            rt.offsetMax = new Vector2(-TextPadRight, 250f);
 
             var tmp = title.GetComponent<TextMeshProUGUI>();
             if (tmp != null)
+            {
                 tmp.alignment = TextAlignmentOptions.TopRight;
+                ApplyColumnText(tmp, 28f, 16f);
+            }
         }
 
         static void LayoutBody(Transform body, GameOverVisualStyle style)
@@ -92,7 +96,17 @@ namespace Sugoroku.UI
             {
                 tmp.alignment = TextAlignmentOptions.TopRight;
                 tmp.color = new Color(0.82f, 0.82f, 0.88f);
+                ApplyColumnText(tmp, 20f, 13f);
             }
+        }
+
+        static void ApplyColumnText(TextMeshProUGUI tmp, float maxSize, float minSize)
+        {
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMax = maxSize;
+            tmp.fontSizeMin = minSize;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
         }
 
         static void LayoutAccentPanel(Transform accent, Transform backdrop, GameOverVisualStyle style)
@@ -132,22 +146,23 @@ namespace Sugoroku.UI
 
         static void ApplyBodyRect(RectTransform rt, GameOverVisualStyle style)
         {
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);
-            rt.pivot = new Vector2(1f, 0.5f);
-
             var (y, height) = GetBodyLayout(style);
-            rt.anchoredPosition = new Vector2(-TextPadRight, y);
-            rt.sizeDelta = new Vector2(TextColumnWidth, height);
+            rt.anchorMin = new Vector2(StageWidthFraction, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(TextPadLeft, y - height * 0.5f);
+            rt.offsetMax = new Vector2(-TextPadRight, y + height * 0.5f);
         }
 
         static void LayoutButton(Transform button)
         {
             if (button is not RectTransform rt) return;
 
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.anchorMin = new Vector2(StageWidthFraction, 0.5f);
+            rt.anchorMax = new Vector2(1f, 0.5f);
             rt.pivot = new Vector2(1f, 0.5f);
-            rt.anchoredPosition = new Vector2(-TextPadRight - 140f, -270f);
-            rt.sizeDelta = new Vector2(280f, 55f);
+            rt.offsetMin = new Vector2(TextPadLeft, -298f);
+            rt.offsetMax = new Vector2(-TextPadRight - 140f, -243f);
         }
     }
 }

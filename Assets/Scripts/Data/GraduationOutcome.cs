@@ -32,7 +32,8 @@ namespace Sugoroku.Data
         public static string ResolveRank(PlayerSnapshot player)
         {
             int score = ScoreCalculator.Total(player);
-            if (score >= RankSThreshold) return "S";
+            int sThreshold = DifficultyRules.RankSThreshold(GameSession.Difficulty);
+            if (score >= sThreshold) return "S";
             if (score >= RankAThreshold || (player.IfScore >= RankAIfMin && score >= RankAScoreMin))
                 return "A";
             if (score >= RankBThreshold) return "B";
@@ -56,10 +57,10 @@ namespace Sugoroku.Data
 
         public static string GetSubtitle(string rank) => rank switch
         {
-            "S" => "高い総合スコア",
-            "A" => "高いIFと特定ステータス",
-            "B" => "標準的なスコアで無事着地",
-            _   => "ギリギリでの修了、修羅の道"
+            "S" => "学界の頂点——次はあなたがちゃぶ台返しする番",
+            "A" => "学会より年次考課の方が現実的",
+            "B" => "博士進学は『一旦保留』で社会へ",
+            _   => "ポスドク修羅は遠い——実家の店を継ぐ"
         };
 
         public static Color GetAccentColor(string rank) => rank switch

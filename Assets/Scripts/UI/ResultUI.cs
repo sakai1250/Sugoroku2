@@ -78,6 +78,7 @@ namespace Sugoroku.UI
             {
                 GameUiChrome.ApplySurface(_panel.transform, new Color(0.08f, 0.12f, 0.18f, 0.98f));
                 EndSceneVisuals.ApplyGraduation(_panel.transform, hero);
+                ResultSceneLayout.Apply(_panel.transform);
             }
 
             if (_rankingParent != null)

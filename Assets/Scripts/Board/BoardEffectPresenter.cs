@@ -16,6 +16,8 @@ namespace Sugoroku.Board
         [SerializeField] private float _squarePulseDuration = 0.44f;
 
         private bool _subscribed;
+        private SpriteRenderer _currentMarker;
+        private Coroutine _markerPulseRoutine;
 
         public static BoardEffectPresenter EnsureSceneInstance()
         {
@@ -79,6 +81,7 @@ namespace Sugoroku.Board
             if (piece == null) return;
 
             var pos = piece.transform.position;
+            MoveCurrentMarker(pos, player != null ? player.PieceTint : Color.white);
             var color = player != null ? player.PieceTint : Color.white;
             StartCoroutine(RingPulse(pos, color, 0.45f, 1.65f,
                 GameConfig.AnimationDuration(_turnRingDuration), BoardSortingLayers.WaypointBaseOrder + 120));
@@ -92,9 +95,10 @@ namespace Sugoroku.Board
         private void HandlePlayerMoved(PlayerData player, int boardPosition)
         {
             var pos = BoardManager.Instance != null
-                ? BoardManager.Instance.GetPosition(boardPosition)
+                ? BoardManager.Instance.GetPosition(player)
                 : (GetPiece(player)?.transform.position ?? Vector3.zero);
-            var color = GetSquareColor(BoardManager.Instance?.GetSquareType(boardPosition) ?? SquareType.Normal);
+            MoveCurrentMarker(pos, player != null ? player.PieceTint : Color.white);
+            var color = GetSquareColor(BoardManager.Instance?.GetSquareType(player) ?? SquareType.Normal);
             StartCoroutine(RingPulse(pos, color, 0.55f, 2.0f,
                 GameConfig.AnimationDuration(_squarePulseDuration), BoardSortingLayers.WaypointBaseOrder + 95));
             StartCoroutine(DepthShockwave(pos, color, 0.82f, 2.45f,
@@ -105,10 +109,10 @@ namespace Sugoroku.Board
         {
             if (player == null || BoardManager.Instance == null) return;
 
-            var type = BoardManager.Instance.GetSquareType(player.BoardPosition);
+            var type = BoardManager.Instance.GetSquareType(player);
             bool ignored = !string.IsNullOrEmpty(message) && message.Contains("回避");
             var color = ignored ? new Color(0.72f, 0.74f, 0.78f, 0.95f) : GetSquareColor(type);
-            var pos = BoardManager.Instance.GetPosition(player.BoardPosition);
+            var pos = BoardManager.Instance.GetPosition(player);
 
             StartCoroutine(SquarePulse(pos, color, ignored));
             StartCoroutine(DepthShockwave(pos, color, ignored ? 0.72f : 0.95f, ignored ? 1.75f : 2.80f,
@@ -122,6 +126,7 @@ namespace Sugoroku.Board
 
         public void PlayStepLanding(PlayerData player, Vector3 worldPos)
         {
+            MoveCurrentMarker(worldPos, player != null ? player.PieceTint : Color.white);
             var color = player != null ? player.PieceTint : Color.white;
             StartCoroutine(RingPulse(worldPos, color, 0.24f, 0.95f,
                 GameConfig.AnimationDuration(_stepRingDuration), BoardSortingLayers.WaypointBaseOrder + 100));
@@ -234,6 +239,37 @@ namespace Sugoroku.Board
             sr.color = color;
             BoardVisualUtility.ApplySpriteRenderer(sr, BoardSortingLayers.Board, order);
             return sr;
+        }
+
+        private void MoveCurrentMarker(Vector3 pos, Color color)
+        {
+            if (_currentMarker == null)
+            {
+                var go = new GameObject("CurrentPositionMarker");
+                go.transform.SetParent(transform, false);
+                _currentMarker = go.AddComponent<SpriteRenderer>();
+                _currentMarker.sprite = BoardVisualUtility.GetCircleSprite();
+                BoardVisualUtility.ApplySpriteRenderer(_currentMarker, BoardSortingLayers.Board, BoardSortingLayers.WaypointBaseOrder + 150);
+                SetWorldSize(_currentMarker.transform, 1.20f);
+            }
+
+            _currentMarker.transform.position = pos + new Vector3(0f, 0f, -0.02f);
+            _currentMarker.color = WithAlpha(color, 0.50f);
+            if (_markerPulseRoutine == null)
+                _markerPulseRoutine = StartCoroutine(CurrentMarkerPulse());
+        }
+
+        private IEnumerator CurrentMarkerPulse()
+        {
+            while (_currentMarker != null)
+            {
+                float pulse = (Mathf.Sin(Time.time * 5.4f) + 1f) * 0.5f;
+                SetWorldSize(_currentMarker.transform, Mathf.Lerp(1.05f, 1.45f, pulse));
+                var c = _currentMarker.color;
+                _currentMarker.color = WithAlpha(c, Mathf.Lerp(0.24f, 0.58f, pulse));
+                yield return null;
+            }
+            _markerPulseRoutine = null;
         }
 
         private static GameObject GetPiece(PlayerData player) =>

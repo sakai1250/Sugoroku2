@@ -1,5 +1,6 @@
 using UnityEngine;
 using Sugoroku.Data;
+using Sugoroku.Network;
 
 namespace Sugoroku.Game
 {
@@ -76,7 +77,22 @@ namespace Sugoroku.Game
                               c.MoneyChange * weights.money + c.VirtueChange * weights.virtue;
                 if (score > bestScore) { bestScore = score; best = i; }
             }
-            if (best >= 0) return best;
+            if (best >= 0)
+            {
+                float noise = DifficultyRules.CpuChoiceNoise(GameSession.Difficulty);
+                if (noise > 0f && GameRng.Value01() < noise)
+                {
+                    var selectable = new System.Collections.Generic.List<int>();
+                    for (int i = 0; i < ev.ChoiceCount; i++)
+                    {
+                        if (EventRobustnessValidator.CanSelectChoice(ev, ev.GetChoice(i), player))
+                            selectable.Add(i);
+                    }
+                    if (selectable.Count > 0)
+                        return selectable[GameRng.Range(0, selectable.Count)];
+                }
+                return best;
+            }
 
             return EventRobustnessValidator.FirstSelectableIndex(ev, player);
         }

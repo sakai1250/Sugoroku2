@@ -27,6 +27,7 @@ namespace Sugoroku.UI
         private int _showGeneration;
         private Image _modalBackdrop;
         private Transform _overlayRoot;
+        private TextMeshProUGUI _instructionText;
 
         public static bool HasVisibleModal
         {
@@ -128,6 +129,7 @@ namespace Sugoroku.UI
         private void ShowPreviewOnly(EventMaster ev)
         {
             EnsureAwakeAndReady();
+            UiLayerManager.ApplyEventModalOpen();
             _hasVisibleContent = true;
             ShowModalVisuals();
             EventModalMassBackdrop.Apply(transform, ev, null);
@@ -147,6 +149,7 @@ namespace Sugoroku.UI
         private void ShowSquarePreviewOnly(Sugoroku.Data.SquareType type, string title, string description)
         {
             EnsureAwakeAndReady();
+            UiLayerManager.ApplyEventModalOpen();
             _hasVisibleContent = true;
             ShowModalVisuals();
             BringToFront();
@@ -184,6 +187,8 @@ namespace Sugoroku.UI
             if (!gameObject.activeInHierarchy)
                 gameObject.SetActive(true);
 
+            UiLayerManager.ApplyEventModalOpen();
+
             _currentEvent  = ev;
             _currentPlayer = player;
             _hasVisibleContent = true;
@@ -212,7 +217,7 @@ namespace Sugoroku.UI
                 JapaneseFontProvider.Apply(_tagsText);
             }
 
-            GameStatusBanner.Show(
+            EnsureModalInstruction(
                 $"{PlayerIdentity.FormatHudLabel(player)} — 「{ev.Title}」— 下の選択肢を選んでください");
 
             foreach (var b in _buttons) if (b != null) Destroy(b.gameObject);
@@ -245,7 +250,7 @@ namespace Sugoroku.UI
                     AddStuckFallbackButton(ev, player);
                 if (!player.IsCpu && _buttons.Count == 0)
                 {
-                    GameStatusBanner.Show("選択できる肢がありません。積んだ徳が足りるか確認してください。");
+                    EnsureModalInstruction("選択できる肢がありません。積んだ徳が足りるか確認してください。");
                     AddForceSkipButton();
                 }
             }
@@ -397,6 +402,7 @@ namespace Sugoroku.UI
         {
             _hasVisibleContent = false;
             HideImmediate();
+            UiLayerManager.ApplyEventModalClosed();
         }
 
         private void HideImmediate()
@@ -408,6 +414,8 @@ namespace Sugoroku.UI
             cg.interactable = false;
             if (_modalBackdrop != null)
                 _modalBackdrop.enabled = false;
+            if (_instructionText != null)
+                _instructionText.gameObject.SetActive(false);
         }
 
         private void ShowModalVisuals()
@@ -492,23 +500,52 @@ namespace Sugoroku.UI
 
         private Transform EnsureOverlayRoot()
         {
-            if (_overlayRoot != null) return _overlayRoot;
+            if (_overlayRoot != null)
+            {
+                _overlayRoot.SetAsLastSibling();
+                return _overlayRoot;
+            }
 
             var canvas = GetComponentInParent<Canvas>();
             if (canvas == null) return transform.parent;
 
-            var existing = canvas.transform.Find("EventModalOverlayRoot");
-            if (existing != null)
+            _overlayRoot = UiLayerManager.EnsureEventModalRoot(canvas);
+            return _overlayRoot;
+        }
+
+        private void EnsureModalInstruction(string message)
+        {
+            if (_instructionText == null)
             {
-                _overlayRoot = existing;
-                return _overlayRoot;
+                var existing = transform.Find("ModalInstruction");
+                if (existing == null)
+                {
+                    var go = new GameObject("ModalInstruction", typeof(RectTransform));
+                    go.transform.SetParent(transform, false);
+                    var rt = go.GetComponent<RectTransform>();
+                    rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+                    rt.pivot = new Vector2(0.5f, 1f);
+                    rt.anchoredPosition = new Vector2(0f, 248f);
+                    rt.sizeDelta = new Vector2(720f, 52f);
+                    _instructionText = go.AddComponent<TextMeshProUGUI>();
+                    _instructionText.alignment = TextAlignmentOptions.Center;
+                    _instructionText.fontSize = EventModalLayout.PreviewFontSize + 2f;
+                    _instructionText.color = new Color(1f, 0.96f, 0.78f);
+                    _instructionText.raycastTarget = false;
+                    JapaneseFontProvider.Apply(_instructionText);
+                    HudTextStyle.ApplyOutlineSafe(_instructionText, 0.10f, new Color(0f, 0f, 0f, 0.80f));
+                }
+                else
+                {
+                    _instructionText = existing.GetComponent<TextMeshProUGUI>();
+                }
             }
 
-            var go = new GameObject("EventModalOverlayRoot", typeof(RectTransform));
-            go.transform.SetParent(canvas.transform, false);
-            StretchToParent(go.GetComponent<RectTransform>());
-            _overlayRoot = go.transform;
-            return _overlayRoot;
+            if (_instructionText != null)
+            {
+                _instructionText.text = message ?? "";
+                _instructionText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            }
         }
 
         private static void StretchToParent(RectTransform rt)
@@ -574,28 +611,29 @@ namespace Sugoroku.UI
             GameUiChrome.ApplyChoiceButton(btn, interactable);
 
             var rt = go.GetComponent<RectTransform>();
-            float height = interactable ? 100f : 110f;
+            float height = interactable ? 100f : 124f;
             rt.sizeDelta = new Vector2(680f, height);
             var le = go.AddComponent<LayoutElement>();
             le.preferredHeight = height;
             le.minHeight       = height;
             le.preferredWidth  = 680f;
 
-            var row = new GameObject("Row", typeof(RectTransform));
-            row.transform.SetParent(go.transform, false);
-            var h = row.AddComponent<HorizontalLayoutGroup>();
-            h.padding = new RectOffset(12, 12, 8, 8);
-            h.spacing = 8f;
-            h.childAlignment = TextAnchor.MiddleLeft;
-            h.childControlWidth = h.childControlHeight = true;
-            h.childForceExpandWidth = false;
-            var rowRt = row.GetComponent<RectTransform>();
-            rowRt.anchorMin = Vector2.zero;
-            rowRt.anchorMax = Vector2.one;
-            rowRt.offsetMin = rowRt.offsetMax = Vector2.zero;
+            var column = new GameObject("Column", typeof(RectTransform));
+            column.transform.SetParent(go.transform, false);
+            var columnV = column.AddComponent<VerticalLayoutGroup>();
+            columnV.padding = new RectOffset(12, 12, 8, 8);
+            columnV.spacing = 4f;
+            columnV.childAlignment = TextAnchor.UpperLeft;
+            columnV.childControlWidth = columnV.childControlHeight = true;
+            columnV.childForceExpandWidth = true;
+            columnV.childForceExpandHeight = false;
+            var columnRt = column.GetComponent<RectTransform>();
+            columnRt.anchorMin = Vector2.zero;
+            columnRt.anchorMax = Vector2.one;
+            columnRt.offsetMin = columnRt.offsetMax = Vector2.zero;
 
             var content = new GameObject("Content", typeof(RectTransform));
-            content.transform.SetParent(row.transform, false);
+            content.transform.SetParent(column.transform, false);
             var contentV = content.AddComponent<VerticalLayoutGroup>();
             contentV.spacing = 4f;
             contentV.childAlignment = TextAnchor.UpperLeft;
@@ -615,35 +653,96 @@ namespace Sugoroku.UI
             labelTmp.raycastTarget = false;
             JapaneseFontProvider.Apply(labelTmp);
 
-            var previewGo = new GameObject("Preview");
-            previewGo.transform.SetParent(content.transform, false);
-            var previewTmp = previewGo.AddComponent<TextMeshProUGUI>();
-            previewTmp.text = EventChoicePreview.FormatRich(c, player);
-            previewTmp.fontSize = EventModalLayout.PreviewFontSize;
-            previewTmp.alignment = TextAlignmentOptions.Left;
-            previewTmp.color = interactable ? GameUiChrome.MutedText : new Color(0.70f, 0.72f, 0.76f, 0.70f);
-            previewTmp.richText = true;
-            previewTmp.raycastTarget = false;
-            JapaneseFontProvider.Apply(previewTmp);
+            CreateChoiceEffectRow(content.transform, c, player, interactable);
 
             if (!string.IsNullOrEmpty(failReason))
             {
                 var failGo = new GameObject("FailReason");
-                failGo.transform.SetParent(row.transform, false);
+                failGo.transform.SetParent(column.transform, false);
                 var failTmp = failGo.AddComponent<TextMeshProUGUI>();
                 failTmp.text = EventChoicePreview.FormatFailBadge(failReason);
                 failTmp.fontSize = EventModalLayout.PreviewFontSize;
-                failTmp.alignment = TextAlignmentOptions.Right;
+                failTmp.alignment = TextAlignmentOptions.Left;
                 failTmp.color = new Color(1f, 0.35f, 0.35f);
                 failTmp.richText = true;
                 failTmp.raycastTarget = false;
                 JapaneseFontProvider.Apply(failTmp);
                 var failLe = failGo.AddComponent<LayoutElement>();
-                failLe.minWidth = 160f;
-                failLe.preferredWidth = 200f;
+                failLe.minHeight = 18f;
+                failLe.preferredHeight = 22f;
             }
 
             return btn;
+        }
+
+        private static void CreateChoiceEffectRow(Transform parent, EventChoice choice, PlayerData player, bool interactable)
+        {
+            var rowGo = new GameObject("EffectPreviewRow", typeof(RectTransform));
+            rowGo.transform.SetParent(parent, false);
+            var row = rowGo.AddComponent<HorizontalLayoutGroup>();
+            row.spacing = 8f;
+            row.childAlignment = TextAnchor.MiddleLeft;
+            row.childControlWidth = row.childControlHeight = true;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+
+            int money = choice.MoneyChange;
+            int mental = choice.MentalChange;
+            int ifScore = choice.IfScoreChange;
+            int virtue = choice.VirtueChange;
+            if (player != null)
+            {
+                money = PlayerStatRules.ClampMoney(player.Money + choice.MoneyChange) - player.Money;
+                mental = PlayerStatRules.ClampMental(player.Mental + choice.MentalChange, player.MaxMental) - player.Mental;
+                ifScore = PlayerStatRules.ClampIfScore(player.IfScore + choice.IfScoreChange) - player.IfScore;
+                // Virtue is intentionally unbounded in PlayerData.ApplyStatChange, so the raw delta is exact.
+            }
+
+            bool any = false;
+            any |= CreateEffectSlot(rowGo.transform, "所持金", money, "万", interactable);
+            any |= CreateEffectSlot(rowGo.transform, "メンタル", mental, "", interactable);
+            any |= CreateEffectSlot(rowGo.transform, "IF", ifScore, "", interactable);
+            any |= CreateEffectSlot(rowGo.transform, "徳", virtue, "", interactable);
+
+            if (!any)
+                CreateNeutralSlot(rowGo.transform, interactable);
+        }
+
+        private static bool CreateEffectSlot(Transform parent, string label, int delta, string unit, bool interactable)
+        {
+            if (delta == 0) return false;
+            var go = new GameObject($"{label}Effect", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            string sign = delta > 0 ? "+" : "";
+            tmp.text = $"{label} {sign}{delta}{unit}";
+            tmp.fontSize = EventModalLayout.PreviewFontSize;
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.color = delta > 0
+                ? new Color(0.40f, 1f, 0.58f, interactable ? 1f : 0.60f)
+                : new Color(1f, 0.38f, 0.38f, interactable ? 1f : 0.60f);
+            tmp.raycastTarget = false;
+            JapaneseFontProvider.Apply(tmp);
+            var le = go.AddComponent<LayoutElement>();
+            le.preferredWidth = label == "所持金" ? 142f : 116f;
+            le.minHeight = 26f;
+            return true;
+        }
+
+        private static void CreateNeutralSlot(Transform parent, bool interactable)
+        {
+            var go = new GameObject("NoEffect", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = "変化なし";
+            tmp.fontSize = EventModalLayout.PreviewFontSize;
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.color = interactable ? GameUiChrome.MutedText : new Color(0.70f, 0.72f, 0.76f, 0.70f);
+            tmp.raycastTarget = false;
+            JapaneseFontProvider.Apply(tmp);
+            var le = go.AddComponent<LayoutElement>();
+            le.preferredWidth = 140f;
+            le.minHeight = 26f;
         }
     }
 }

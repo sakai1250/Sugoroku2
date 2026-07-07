@@ -167,10 +167,14 @@ namespace Sugoroku.Board
                 titleText.color = Color.white;
             }
             if (markerText != null)
-                markerText.text = "EV";
+                markerText.text = squareType == SquareType.Branch ? "分岐" : "EV";
 
-            var panel  = EventTagColors.GetPanelColor(ev.Tags);
-            var accent = EventTagColors.GetBorderColor(ev.Tags);
+            var panel  = squareType == SquareType.Branch
+                ? EventTagColors.GetSquareTypePanelColor(SquareType.Branch)
+                : EventTagColors.GetPanelColor(ev.Tags);
+            var accent = squareType == SquareType.Branch
+                ? EventTagColors.GetSquareTypePanelColor(SquareType.Branch)
+                : EventTagColors.GetBorderColor(ev.Tags);
             if (background != null)
                 background.color = panel;
             if (border != null)
@@ -192,6 +196,7 @@ namespace Sugoroku.Board
                 SquareType.PartTime => "バイト",
                 SquareType.Bonus    => "チャンス",
                 SquareType.Penalty => "ペナルティ",
+                SquareType.Branch  => "分岐",
                 SquareType.Event   => "イベント",
                 _                  => "通常",
             };

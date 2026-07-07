@@ -69,6 +69,7 @@ namespace Sugoroku.Game
         {
             _claimedJournalIndices.Clear();
             _turnCounter = 0;
+            BoardLayoutGenerator.Invalidate();
             int total = Mathf.Clamp(HumanCount + CpuCount, 1, GameConfig.MaxPlayers);
 
             _players = new PlayerData[total];

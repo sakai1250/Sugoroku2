@@ -22,13 +22,7 @@ namespace Sugoroku.UI
 
             var canvas = modalRoot.GetComponentInParent<Canvas>();
             if (canvas != null)
-            {
-                var overlay = canvas.transform.Find("EventModalOverlayRoot");
-                if (overlay != null)
-                    overlay.SetAsLastSibling();
-                else
-                    modalRoot.SetAsLastSibling();
-            }
+                UiLayerManager.EnsureEventModalRoot(canvas);
 
             GameUiChrome.ApplySurface(modalRoot, new Color(0.12f, 0.14f, 0.20f, 0.98f));
             EnsureHeader(modalRoot, ev);

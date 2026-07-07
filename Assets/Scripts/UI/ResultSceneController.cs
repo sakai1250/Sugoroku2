@@ -44,7 +44,7 @@ namespace Sugoroku.UI
             PlayerSnapshot heroPlayer = default;
             var lines = new System.Text.StringBuilder();
             lines.AppendLine("【ランク別進路】");
-            lines.AppendLine("S: 教授  |  A: 民間研究職  |  B: 博士進学  |  C: ポスドク候補");
+            lines.AppendLine("S: 教授  |  A: 大手メーカー  |  B: 修士就職  |  C: 実家稼業");
             lines.AppendLine();
 
             for (int i = 0; i < players.Length; i++)
@@ -90,6 +90,7 @@ namespace Sugoroku.UI
 
             if (_bodyText != null) _bodyText.text = lines.ToString().TrimEnd();
             EndSceneVisuals.ApplyGraduation(transform, hero);
+            ResultSceneLayout.Apply(transform);
         }
 
         private void AppendDailyScore(System.Text.StringBuilder lines, PlayerSnapshot heroPlayer)
@@ -186,9 +187,16 @@ namespace Sugoroku.UI
             GameUiChrome.ApplyAccentRail(transform, new Color(0.86f, 0.68f, 0.28f, 0.88f), 6f);
 
             if (_titleText != null)
+            {
                 GameUiChrome.ApplyReadable(_titleText, new Color(1f, 0.94f, 0.70f, 1f), FontStyles.Bold);
+                HudTextStyle.ApplyOutlineSafe(_titleText, 0.16f, new Color(0f, 0f, 0f, 0.88f));
+            }
             if (_bodyText != null)
-                GameUiChrome.ApplyReadable(_bodyText, GameUiChrome.MutedText);
+            {
+                _bodyText.color = new Color(0.90f, 0.93f, 0.98f);
+                _bodyText.alignment = TextAlignmentOptions.TopLeft;
+                HudTextStyle.ApplyOutlineSafe(_bodyText, 0.12f, new Color(0f, 0f, 0f, 0.85f));
+            }
             if (_titleButton != null)
                 GameUiChrome.ApplyButton(_titleButton, primary: true);
         }

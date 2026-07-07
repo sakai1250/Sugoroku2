@@ -94,9 +94,15 @@ namespace Sugoroku.UI
             GameUiChrome.ApplySurface(transform, new Color(0.08f, 0.08f, 0.10f, 0.98f));
             GameUiChrome.ApplyAccentRail(transform, new Color(0.86f, 0.24f, 0.20f, 0.90f), 6f);
             if (_titleText != null)
+            {
                 GameUiChrome.ApplyReadable(_titleText, new Color(1f, 0.78f, 0.70f, 1f), FontStyles.Bold);
+                HudTextStyle.ApplyOutlineSafe(_titleText, 0.16f, new Color(0f, 0f, 0f, 0.88f));
+            }
             if (_bodyText != null)
+            {
                 GameUiChrome.ApplyReadable(_bodyText, new Color(0.86f, 0.86f, 0.90f, 1f));
+                HudTextStyle.ApplyOutlineSafe(_bodyText, 0.12f, new Color(0f, 0f, 0f, 0.82f));
+            }
             if (_titleButton != null)
                 GameUiChrome.ApplyButton(_titleButton, primary: false);
         }

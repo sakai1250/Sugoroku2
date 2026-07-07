@@ -20,6 +20,8 @@ namespace Sugoroku.Board
                 "ゼミ"     => new Color(0.32f, 0.50f, 0.58f, 0.94f),
                 "事務"     => new Color(0.48f, 0.48f, 0.54f, 0.94f),
                 "バイト"   => new Color(0.68f, 0.56f, 0.22f, 0.94f),
+                "進路"     => new Color(0.30f, 0.72f, 0.38f, 0.96f),
+                "分岐"     => new Color(0.24f, 0.66f, 0.46f, 0.96f),
                 _          => new Color(0.42f, 0.46f, 0.56f, 0.94f),
             };
         }

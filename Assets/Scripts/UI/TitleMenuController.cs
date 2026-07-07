@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Sugoroku.Game;
 using Sugoroku.Data;
+using Sugoroku.Board;
 
 namespace Sugoroku.UI
 {
@@ -16,9 +17,13 @@ namespace Sugoroku.UI
         private AchievementsPanelController _achievementsPanelController;
         private Slider      _humanSlider;
         private Slider      _cpuSlider;
+        private Slider      _boardSlider;
+        private Slider      _difficultySlider;
 
         private int _humanCount = 1;
         private int _cpuCount   = 1;
+        private int _boardCells = (int)BoardLengthOption.Standard;
+        private GameDifficulty _difficulty = GameDifficulty.Normal;
 
         private void Awake()
         {
@@ -33,8 +38,11 @@ namespace Sugoroku.UI
 
         private void Start()
         {
-            _humanCount = GameSession.HumanCount;
-            _cpuCount   = GameSession.CpuCount;
+            GameSession.LoadSettings();
+            _humanCount  = GameSession.HumanCount;
+            _cpuCount    = GameSession.CpuCount;
+            _boardCells  = GameSession.BoardCellCount;
+            _difficulty  = GameSession.Difficulty;
 
             _titlePanel        = FindChild("TitlePanel");
             _settingsPanel     = FindChild("SettingsPanel");
@@ -65,24 +73,42 @@ namespace Sugoroku.UI
             _humanSlider = FindChildComponent<Slider>("SettingsPanel/HumanCountSlider");
             if (_humanSlider == null)
             {
-                _humanSlider = CreateCountSlider(panel, "HumanCountSlider", new Vector2(140f, 80f), 1, 4);
+                _humanSlider = CreateCountSlider(panel, "HumanCountSlider", new Vector2(140f, 130f), 1, 4);
                 SetText("SettingsPanel/HumanCountText", $"人間プレイヤー: {_humanCount}");
                 var humanTextRt = panel.Find("HumanCountText")?.GetComponent<RectTransform>();
-                if (humanTextRt != null) humanTextRt.anchoredPosition = new Vector2(-120f, 80f);
+                if (humanTextRt != null) humanTextRt.anchoredPosition = new Vector2(-120f, 130f);
             }
 
             _cpuSlider = FindChildComponent<Slider>("SettingsPanel/CpuCountSlider");
             if (_cpuSlider == null)
             {
-                _cpuSlider = CreateCountSlider(panel, "CpuCountSlider", new Vector2(140f, 0f), 0, 3);
+                _cpuSlider = CreateCountSlider(panel, "CpuCountSlider", new Vector2(140f, 80f), 0, 3);
                 SetText("SettingsPanel/CpuCountText", $"CPU: {_cpuCount}");
                 var cpuTextRt = panel.Find("CpuCountText")?.GetComponent<RectTransform>();
-                if (cpuTextRt != null) cpuTextRt.anchoredPosition = new Vector2(-120f, 0f);
+                if (cpuTextRt != null) cpuTextRt.anchoredPosition = new Vector2(-120f, 80f);
+            }
+
+            _boardSlider = FindChildComponent<Slider>("SettingsPanel/BoardLengthSlider");
+            if (_boardSlider == null)
+            {
+                _boardSlider = CreateCountSlider(panel, "BoardLengthSlider", new Vector2(140f, 30f), 0, 2);
+                SetText("SettingsPanel/BoardLengthText", DifficultyRules.GetBoardLengthLabel(_boardCells));
+                var boardTextRt = panel.Find("BoardLengthText")?.GetComponent<RectTransform>();
+                if (boardTextRt != null) boardTextRt.anchoredPosition = new Vector2(-120f, 30f);
+            }
+
+            _difficultySlider = FindChildComponent<Slider>("SettingsPanel/DifficultySlider");
+            if (_difficultySlider == null)
+            {
+                _difficultySlider = CreateCountSlider(panel, "DifficultySlider", new Vector2(140f, -20f), 0, 2);
+                SetText("SettingsPanel/DifficultyText", $"難易度: {DifficultyRules.GetLabel(_difficulty)}");
+                var diffTextRt = panel.Find("DifficultyText")?.GetComponent<RectTransform>();
+                if (diffTextRt != null) diffTextRt.anchoredPosition = new Vector2(-120f, -20f);
             }
 
             if (panel.Find("TotalCountText") == null)
             {
-                var total = CreateTMP(panel, "TotalCountText", "合計: 2人", 20, new Vector2(0f, -70f));
+                var total = CreateTMP(panel, "TotalCountText", "合計: 2人", 20, new Vector2(0f, -80f));
                 total.color = new Color(0.75f, 0.8f, 0.95f);
             }
         }
@@ -227,7 +253,43 @@ namespace Sugoroku.UI
                     RefreshSettingsLabels();
                 });
             }
+
+            if (_boardSlider != null)
+            {
+                _boardSlider.value = BoardCellsToSlider(_boardCells);
+                _boardSlider.onValueChanged.RemoveAllListeners();
+                _boardSlider.onValueChanged.AddListener(v =>
+                {
+                    _boardCells = SliderToBoardCells((int)v);
+                    RefreshSettingsLabels();
+                });
+            }
+
+            if (_difficultySlider != null)
+            {
+                _difficultySlider.value = (int)_difficulty;
+                _difficultySlider.onValueChanged.RemoveAllListeners();
+                _difficultySlider.onValueChanged.AddListener(v =>
+                {
+                    _difficulty = (GameDifficulty)(int)v;
+                    RefreshSettingsLabels();
+                });
+            }
         }
+
+        private static int BoardCellsToSlider(int cells) => cells switch
+        {
+            16 => 0,
+            24 => 2,
+            _  => 1
+        };
+
+        private static int SliderToBoardCells(int slider) => slider switch
+        {
+            0 => (int)BoardLengthOption.Short,
+            2 => (int)BoardLengthOption.Long,
+            _ => (int)BoardLengthOption.Standard
+        };
 
         private void ClampCounts()
         {
@@ -240,21 +302,34 @@ namespace Sugoroku.UI
 
             if (_humanSlider != null) _humanSlider.SetValueWithoutNotify(_humanCount);
             if (_cpuSlider != null)   _cpuSlider.SetValueWithoutNotify(_cpuCount);
+            if (_boardSlider != null) _boardSlider.SetValueWithoutNotify(BoardCellsToSlider(_boardCells));
+            if (_difficultySlider != null) _difficultySlider.SetValueWithoutNotify((int)_difficulty);
         }
 
         private void RefreshSettingsLabels()
         {
             SetText("SettingsPanel/HumanCountText", $"人間プレイヤー: {_humanCount}");
             SetText("SettingsPanel/CpuCountText",   $"CPU: {_cpuCount}");
+            SetText("SettingsPanel/BoardLengthText", $"マス数: {DifficultyRules.GetBoardLengthLabel(_boardCells)}");
+            SetText("SettingsPanel/DifficultyText", $"難易度: {DifficultyRules.GetLabel(_difficulty)}");
             SetText("SettingsPanel/TotalCountText", $"合計: {_humanCount + _cpuCount} 人（最大 {GameConfig.MaxPlayers}）");
+        }
+
+        private void ApplySessionSettings()
+        {
+            GameSession.HumanCount     = _humanCount;
+            GameSession.CpuCount       = _cpuCount;
+            GameSession.BoardCellCount = _boardCells;
+            GameSession.Difficulty     = _difficulty;
+            GameSession.SaveSettings();
+            BoardLayoutGenerator.Invalidate();
         }
 
         private void OnStartGame()
         {
             ClampCounts();
             GameSession.IsDailyChallenge = false;
-            GameSession.HumanCount = _humanCount;
-            GameSession.CpuCount   = _cpuCount;
+            ApplySessionSettings();
             GameSession.EnsureHumanCharacters();
             SceneManager.LoadScene("CharacterSelectScene");
         }
@@ -265,6 +340,8 @@ namespace Sugoroku.UI
             GameSession.DailySeed        = GameSession.ComputeDailySeed(System.DateTime.UtcNow);
             GameSession.HumanCount       = 1;
             GameSession.CpuCount         = 0;
+            GameSession.ApplyDailyChallengeDefaults();
+            BoardLayoutGenerator.Invalidate();
             GameSession.EnsureHumanCharacters();
             SceneManager.LoadScene("CharacterSelectScene");
         }

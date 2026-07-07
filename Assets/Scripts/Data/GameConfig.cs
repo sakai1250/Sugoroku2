@@ -1,14 +1,22 @@
+using UnityEngine;
+
 namespace Sugoroku.Data
 {
     public static class GameConfig
     {
-        public const int BoardSize        = 20;
-        public const int InitialMoney     = 45;
-        public const int InitialIfScore   = 0;
-        public const int InitialMental    = 75;
-        public const int MaxMental        = 75;
-        public const int InitialVirtue    = 0;
-        public const int TuitionCost      = 20;
+        public const int BaseBoardSize      = 20;
+        public const int BaseInitialMoney   = 45;
+        public const int BaseInitialMental  = 75;
+        public const int BaseMaxMental      = 75;
+        public const int BaseTuitionCost    = 20;
+
+        public static int BoardSize        => GameSession.BoardCellCount;
+        public static int InitialMoney     => BaseInitialMoney + DifficultyRules.InitialMoneyBonus(GameSession.Difficulty);
+        public static int InitialIfScore   = 0;
+        public static int InitialMental    => Mathf.Clamp(BaseInitialMental + DifficultyRules.InitialMentalBonus(GameSession.Difficulty), 20, 99);
+        public static int MaxMental        => Mathf.Clamp(BaseMaxMental + DifficultyRules.MaxMentalBonus(GameSession.Difficulty), 40, 99);
+        public static int InitialVirtue    = 0;
+        public static int TuitionCost      => DifficultyRules.TuitionCost(GameSession.Difficulty);
         public const int MinDice          = 1;
         public const int MaxDice          = 6;
         public const int MaxPlayers       = 4;

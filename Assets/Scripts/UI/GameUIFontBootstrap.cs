@@ -12,6 +12,8 @@ namespace Sugoroku.UI
             var canvas = GetComponent<Canvas>() ?? GetComponentInParent<Canvas>();
             if (canvas == null) return;
 
+            UiLayerManager.ConfigureCanvas(canvas, UiLayerManager.SortStatusBanner);
+
             var layout = canvas.GetComponent<GameMainLayout>();
             if (layout != null) layout.ApplyLayout();
             else ResourceHudVisuals.SetupTopResourceBar(canvas.transform);
@@ -20,6 +22,9 @@ namespace Sugoroku.UI
 
             if (GetComponent<GameStatusBanner>() == null)
                 gameObject.AddComponent<GameStatusBanner>();
+
+            if (GetComponent<GameplayUiOverlayQueue>() == null)
+                gameObject.AddComponent<GameplayUiOverlayQueue>();
 
             if (GetComponent<TutorialTooltipController>() == null)
                 gameObject.AddComponent<TutorialTooltipController>();

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 using Sugoroku.Game;
 using Sugoroku.Data;
 using Sugoroku.Visual;
@@ -42,6 +43,9 @@ namespace Sugoroku.UI
         private bool _isSubscribed;
         private DiceHudAnimator _diceHudAnimator;
         private HudStatFlash _statFlash;
+        private readonly Dictionary<TextMeshProUGUI, Coroutine> _statCountRoutines = new();
+        private System.Action<PlayerData> _turnStartedHandler;
+        private System.Action<PlayerData, string> _squareEffectHandler;
 
         private void Awake()
         {
@@ -197,11 +201,14 @@ namespace Sugoroku.UI
                 GameManager.Instance == null || !GameManager.Instance.IsInitialized)
                 return false;
 
+            _turnStartedHandler ??= _ => RefreshAll();
+            _squareEffectHandler ??= (_, msg) => AppendLog(msg);
+
             TurnManager.Instance.OnStateChanged += OnStateChanged;
-            TurnManager.Instance.OnTurnStarted  += _ => RefreshAll();
+            TurnManager.Instance.OnTurnStarted  += _turnStartedHandler;
             DiceRoller.Instance.OnRollComplete  += OnDiceResult;
             GameManager.Instance.OnLog          += AppendLog;
-            GameManager.Instance.OnSquareEffect += (_, msg) => AppendLog(msg);
+            GameManager.Instance.OnSquareEffect += _squareEffectHandler;
 
             foreach (var modal in Object.FindObjectsByType<EventModalUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
@@ -222,14 +229,16 @@ namespace Sugoroku.UI
             if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.OnStateChanged -= OnStateChanged;
-                TurnManager.Instance.OnTurnStarted  -= _ => RefreshAll();
+                if (_turnStartedHandler != null)
+                    TurnManager.Instance.OnTurnStarted -= _turnStartedHandler;
             }
             if (DiceRoller.Instance != null)
                 DiceRoller.Instance.OnRollComplete -= OnDiceResult;
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnLog -= AppendLog;
-                GameManager.Instance.OnSquareEffect -= (_, msg) => AppendLog(msg);
+                if (_squareEffectHandler != null)
+                    GameManager.Instance.OnSquareEffect -= _squareEffectHandler;
             }
         }
 
@@ -350,11 +359,50 @@ namespace Sugoroku.UI
             int board = Board.BoardManager.Instance?.BoardSize ?? GameConfig.BoardSize;
             int remain = board - 1 - player.BoardPosition;
             if (_goalDistanceText != null) _goalDistanceText.text = $"ゴールまで {remain}マス";
-            int tuition = Board.BoardManager.Instance?.GetNextTuitionIndex(player.BoardPosition) ?? 0;
+            int tuition = Board.BoardManager.Instance?.GetNextTuitionIndex(player) ?? 0;
             if (_tuitionDistanceText != null) _tuitionDistanceText.text = $"学費△{tuition}";
             if (_skipTurnsText != null) _skipTurnsText.text = player.SkipTurns > 0 ? $"休み×{player.SkipTurns}" : "";
             if (_ignoreEventsText != null) _ignoreEventsText.text = player.IgnoreNextEvents > 0 ? $"回避{player.IgnoreNextEvents}" : "";
             if (_skillButtonText != null) _skillButtonText.text = $"ワザ: {player.Character.SkillName()}";
+        }
+
+        public void AnimateStatChange(PlayerData player, int money, int ifScore, int mental, int virtue)
+        {
+            if (player == null) return;
+            float duration = GameConfig.AnimationDuration(GameConfig.FloatingTextDuration);
+            if (money != 0)
+                AnimateCounter(_moneyText, player.Money - money, player.Money, duration, ResourceHudVisuals.FormatMoney);
+            if (ifScore != 0)
+                AnimateCounter(_ifScoreText, player.IfScore - ifScore, player.IfScore, duration, ResourceHudVisuals.FormatIf);
+            if (mental != 0)
+                AnimateCounter(_mentalText, player.Mental - mental, player.Mental, duration,
+                    v => ResourceHudVisuals.FormatMental(v, player.MaxMental));
+            if (virtue != 0)
+                AnimateCounter(_virtueText, player.Virtue - virtue, player.Virtue, duration, ResourceHudVisuals.FormatVirtue);
+        }
+
+        private void AnimateCounter(TextMeshProUGUI tmp, int from, int to, float duration, System.Func<int, string> formatter)
+        {
+            if (tmp == null || formatter == null) return;
+            if (_statCountRoutines.TryGetValue(tmp, out var existing) && existing != null)
+                StopCoroutine(existing);
+            _statCountRoutines[tmp] = StartCoroutine(AnimateCounterCoroutine(tmp, from, to, duration, formatter));
+        }
+
+        private IEnumerator AnimateCounterCoroutine(TextMeshProUGUI tmp, int from, int to, float duration, System.Func<int, string> formatter)
+        {
+            float elapsed = 0f;
+            duration = Mathf.Max(0.01f, duration);
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                int value = Mathf.RoundToInt(Mathf.Lerp(from, to, JuiceMath.EaseOutQuad(t)));
+                tmp.text = formatter(value);
+                yield return null;
+            }
+            tmp.text = formatter(to);
+            _statCountRoutines.Remove(tmp);
         }
 
         private void UpdateMentalSliderFill(PlayerData player)

@@ -40,6 +40,7 @@ namespace Sugoroku.UI
             if (gm != null && gm.GetCurrentPlayer() == player)
             {
                 _hud?.RefreshAll();
+                _hud?.AnimateStatChange(player, money, ifScore, mental, virtue);
                 _hudFlash?.Flash(money, ifScore, mental, virtue);
             }
         }

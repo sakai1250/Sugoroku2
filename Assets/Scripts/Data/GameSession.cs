@@ -3,10 +3,16 @@ namespace Sugoroku.Data
     /// <summary>シーン間で受け渡すプレイ設定・結果。</summary>
     public static class GameSession
     {
+        const string PrefBoardCells   = "sugoroku_board_cells";
+        const string PrefDifficulty   = "sugoroku_difficulty";
+
         public static int           HumanCount     = 1;
         public static int           CpuCount       = 1;
         public static CharacterType HumanCharacter = CharacterType.Hobbyist;
         public static CharacterType[] HumanCharacters = { CharacterType.Hobbyist };
+
+        public static int            BoardCellCount = (int)BoardLengthOption.Standard;
+        public static GameDifficulty Difficulty     = GameDifficulty.Normal;
 
         public static GameOverReason LastGameOverReason = GameOverReason.None;
         public static PlayerSnapshot[] LastPlayers;
@@ -16,6 +22,34 @@ namespace Sugoroku.Data
         public static int  DailySeed;
 
         public static int TotalPlayerCount => HumanCount + CpuCount;
+
+        public static void LoadSettings()
+        {
+            BoardCellCount = UnityEngine.PlayerPrefs.GetInt(PrefBoardCells, (int)BoardLengthOption.Standard);
+            if (BoardCellCount != 16 && BoardCellCount != 20 && BoardCellCount != 24)
+                BoardCellCount = (int)BoardLengthOption.Standard;
+
+            int diff = UnityEngine.PlayerPrefs.GetInt(PrefDifficulty, (int)GameDifficulty.Normal);
+            Difficulty = diff switch
+            {
+                (int)GameDifficulty.Easy   => GameDifficulty.Easy,
+                (int)GameDifficulty.Hard   => GameDifficulty.Hard,
+                _                          => GameDifficulty.Normal
+            };
+        }
+
+        public static void SaveSettings()
+        {
+            UnityEngine.PlayerPrefs.SetInt(PrefBoardCells, BoardCellCount);
+            UnityEngine.PlayerPrefs.SetInt(PrefDifficulty, (int)Difficulty);
+            UnityEngine.PlayerPrefs.Save();
+        }
+
+        public static void ApplyDailyChallengeDefaults()
+        {
+            BoardCellCount = (int)BoardLengthOption.Standard;
+            Difficulty     = GameDifficulty.Normal;
+        }
 
         public static int ComputeDailySeed(System.DateTime date) =>
             date.Year * 10000 + date.Month * 100 + date.Day;

@@ -8,7 +8,7 @@ namespace Sugoroku.Board
     /// </summary>
     public static class LayeredBoardLayout
     {
-        public const int CellCount = SnakeBoardLayout.CellCount;
+        public static int CellCount => SnakeBoardLayout.CellCount;
 
         public static Vector3 GetWorldPosition(int index, float tileWorldWidth) =>
             SnakeBoardLayout.GetWorldPosition(index, tileWorldWidth);
