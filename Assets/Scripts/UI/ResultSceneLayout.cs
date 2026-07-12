@@ -12,7 +12,7 @@ namespace Sugoroku.UI
         const float PadLeft  = 28f;
         const float PadRight = 24f;
         const float PadTop   = 88f;
-        const float PadBottom = 120f;
+        const float PadBottom = 148f;
 
         public static void Apply(Transform root)
         {
@@ -85,10 +85,10 @@ namespace Sugoroku.UI
         {
             if (button is not RectTransform rt) return;
 
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
-            rt.pivot = new Vector2(0.5f, 0f);
-            rt.anchoredPosition = new Vector2(0f, 28f);
-            rt.sizeDelta = new Vector2(280f, 52f);
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-UiSafeLayout.OuterMargin, UiSafeLayout.OuterMargin);
+            rt.sizeDelta = new Vector2(300f, 56f);
         }
 
         static void LayoutCareerCard(Transform card)
@@ -140,6 +140,7 @@ namespace Sugoroku.UI
             var card     = root.Find("CareerDecision3DCard");
             var button   = root.Find("TitleButton");
             var share    = root.Find("ShareButtonRow");
+            var chart    = root.Find("StatHistoryChart");
 
             int index = 12;
             if (stage != null) stage.SetSiblingIndex(index++);
@@ -149,6 +150,7 @@ namespace Sugoroku.UI
             if (body != null) body.SetSiblingIndex(index++);
             if (button != null) button.SetSiblingIndex(index++);
             if (share != null) share.SetSiblingIndex(index++);
+            if (chart != null) chart.SetSiblingIndex(index++);
         }
     }
 }

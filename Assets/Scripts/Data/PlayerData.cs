@@ -47,6 +47,16 @@ namespace Sugoroku.Data
         /// <summary>実績用: 一度でも所持金が崖っぷちラインまで落ちたか。</summary>
         public bool SurvivedBankruptcyScare;
 
+        /// <summary>リザルト画面の推移グラフ用。EndTurn()の度に1件追加される。</summary>
+        public List<StatSnapshot> History = new();
+        /// <summary>このプレイヤーが経過した個人ターン数。Historyの記録に使う。</summary>
+        public int TurnsTaken;
+
+        /// <summary>アイテム所持数。バイトマス通過時に確率で拾得する。</summary>
+        public int ItemDiceRerollCount;
+        public int ItemMentalHealCount;
+        public int ItemMoneyBonusCount;
+
         public static PlayerData Create(int index, CharacterType character, bool isCpu)
         {
             var profile = character.GetProfile();

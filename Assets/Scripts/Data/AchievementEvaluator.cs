@@ -21,6 +21,7 @@ namespace Sugoroku.Data
                 AchievementStore.Unlock(AchievementId.SurviveBankruptcyScare);
 
             AchievementStore.MarkCharacterCleared(player.Character);
+            AchievementStore.MarkCareerOutcomeSeen(player.Character, rank);
         }
 
         /// <summary>デイリーチャレンジをプレイしたことを記録する(結果に関わらず解除)。</summary>

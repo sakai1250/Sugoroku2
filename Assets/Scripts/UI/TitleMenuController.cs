@@ -5,6 +5,7 @@ using TMPro;
 using Sugoroku.Game;
 using Sugoroku.Data;
 using Sugoroku.Board;
+using Sugoroku.Audio;
 
 namespace Sugoroku.UI
 {
@@ -19,6 +20,12 @@ namespace Sugoroku.UI
         private Slider      _cpuSlider;
         private Slider      _boardSlider;
         private Slider      _difficultySlider;
+        private Slider      _bgmVolumeSlider;
+        private Slider      _seVolumeSlider;
+        private Slider      _professorSlider;
+        private float _bgmVolume = 0.7f;
+        private float _seVolume  = 1.0f;
+        private ProfessorType _professor = ProfessorType.None;
 
         private int _humanCount = 1;
         private int _cpuCount   = 1;
@@ -43,6 +50,9 @@ namespace Sugoroku.UI
             _cpuCount    = GameSession.CpuCount;
             _boardCells  = GameSession.BoardCellCount;
             _difficulty  = GameSession.Difficulty;
+            _bgmVolume   = GameSession.BgmVolume;
+            _seVolume    = GameSession.SeVolume;
+            _professor   = GameSession.SelectedProfessor;
 
             _titlePanel        = FindChild("TitlePanel");
             _settingsPanel     = FindChild("SettingsPanel");
@@ -56,6 +66,7 @@ namespace Sugoroku.UI
 
             EnsureSettingsControls();
             EnsureDailyChallengeButton();
+            ApplySafeLayout();
             WireButtons();
             RefreshSettingsLabels();
 
@@ -63,6 +74,7 @@ namespace Sugoroku.UI
             if (canvas != null) KenneyUiStyler.StyleCanvas(canvas);
             ApplyScreenChrome();
             ShowPanel(_titlePanel);
+            GameAudioController.Instance?.PlayTitleBgm();
         }
 
         private void EnsureSettingsControls()
@@ -91,8 +103,8 @@ namespace Sugoroku.UI
             _boardSlider = FindChildComponent<Slider>("SettingsPanel/BoardLengthSlider");
             if (_boardSlider == null)
             {
-                _boardSlider = CreateCountSlider(panel, "BoardLengthSlider", new Vector2(140f, 30f), 0, 2);
-                SetText("SettingsPanel/BoardLengthText", DifficultyRules.GetBoardLengthLabel(_boardCells));
+                _boardSlider = CreateCountSlider(panel, "BoardLengthSlider", new Vector2(140f, 30f), 0, 1);
+                SetText("SettingsPanel/BoardLengthText", $"コース: {DifficultyRules.GetBoardLengthLabel(_boardCells)}");
                 var boardTextRt = panel.Find("BoardLengthText")?.GetComponent<RectTransform>();
                 if (boardTextRt != null) boardTextRt.anchoredPosition = new Vector2(-120f, 30f);
             }
@@ -104,6 +116,29 @@ namespace Sugoroku.UI
                 SetText("SettingsPanel/DifficultyText", $"難易度: {DifficultyRules.GetLabel(_difficulty)}");
                 var diffTextRt = panel.Find("DifficultyText")?.GetComponent<RectTransform>();
                 if (diffTextRt != null) diffTextRt.anchoredPosition = new Vector2(-120f, -20f);
+            }
+
+            _bgmVolumeSlider = FindChildComponent<Slider>("SettingsPanel/BgmVolumeSlider");
+            if (_bgmVolumeSlider == null)
+            {
+                _bgmVolumeSlider = CreateCountSlider(panel, "BgmVolumeSlider", new Vector2(140f, -130f), 0, 1);
+                _bgmVolumeSlider.wholeNumbers = false;
+                CreateTMP(panel, "BgmVolumeText", $"BGM音量: {Mathf.RoundToInt(_bgmVolume * 100f)}", 20, new Vector2(-120f, -130f));
+            }
+
+            _seVolumeSlider = FindChildComponent<Slider>("SettingsPanel/SeVolumeSlider");
+            if (_seVolumeSlider == null)
+            {
+                _seVolumeSlider = CreateCountSlider(panel, "SeVolumeSlider", new Vector2(140f, -180f), 0, 1);
+                _seVolumeSlider.wholeNumbers = false;
+                CreateTMP(panel, "SeVolumeText", $"SE音量: {Mathf.RoundToInt(_seVolume * 100f)}", 20, new Vector2(-120f, -180f));
+            }
+
+            _professorSlider = FindChildComponent<Slider>("SettingsPanel/ProfessorSlider");
+            if (_professorSlider == null)
+            {
+                _professorSlider = CreateCountSlider(panel, "ProfessorSlider", new Vector2(140f, -230f), 0, 3);
+                CreateTMP(panel, "ProfessorText", $"指導教員: {_professor.DisplayName()}", 20, new Vector2(-120f, -230f));
             }
 
             if (panel.Find("TotalCountText") == null)
@@ -275,21 +310,54 @@ namespace Sugoroku.UI
                     RefreshSettingsLabels();
                 });
             }
+
+            if (_bgmVolumeSlider != null)
+            {
+                _bgmVolumeSlider.value = _bgmVolume;
+                _bgmVolumeSlider.onValueChanged.RemoveAllListeners();
+                _bgmVolumeSlider.onValueChanged.AddListener(v =>
+                {
+                    _bgmVolume = v;
+                    GameSession.BgmVolume = v;
+                    GameSession.SaveSettings();
+                    GameAudioController.Instance?.SetBgmVolume(v);
+                    RefreshSettingsLabels();
+                });
+            }
+
+            if (_seVolumeSlider != null)
+            {
+                _seVolumeSlider.value = _seVolume;
+                _seVolumeSlider.onValueChanged.RemoveAllListeners();
+                _seVolumeSlider.onValueChanged.AddListener(v =>
+                {
+                    _seVolume = v;
+                    GameSession.SeVolume = v;
+                    GameSession.SaveSettings();
+                    GameAudioController.Instance?.SetSeVolume(v);
+                    RefreshSettingsLabels();
+                });
+            }
+
+            if (_professorSlider != null)
+            {
+                _professorSlider.value = (int)_professor;
+                _professorSlider.onValueChanged.RemoveAllListeners();
+                _professorSlider.onValueChanged.AddListener(v =>
+                {
+                    _professor = (ProfessorType)(int)v;
+                    GameSession.SelectedProfessor = _professor;
+                    GameSession.SaveSettings();
+                    RefreshSettingsLabels();
+                });
+            }
         }
 
-        private static int BoardCellsToSlider(int cells) => cells switch
-        {
-            16 => 0,
-            24 => 2,
-            _  => 1
-        };
+        private static int BoardCellsToSlider(int cells) =>
+            cells == (int)BoardLengthOption.ExtraLong ? 1 : 0;
 
-        private static int SliderToBoardCells(int slider) => slider switch
-        {
-            0 => (int)BoardLengthOption.Short,
-            2 => (int)BoardLengthOption.Long,
-            _ => (int)BoardLengthOption.Standard
-        };
+        private static int SliderToBoardCells(int slider) =>
+            slider == 1 ? (int)BoardLengthOption.ExtraLong : (int)BoardLengthOption.Standard;
 
         private void ClampCounts()
         {
@@ -310,9 +378,12 @@ namespace Sugoroku.UI
         {
             SetText("SettingsPanel/HumanCountText", $"人間プレイヤー: {_humanCount}");
             SetText("SettingsPanel/CpuCountText",   $"CPU: {_cpuCount}");
-            SetText("SettingsPanel/BoardLengthText", $"マス数: {DifficultyRules.GetBoardLengthLabel(_boardCells)}");
+            SetText("SettingsPanel/BoardLengthText", $"コース: {DifficultyRules.GetBoardLengthLabel(_boardCells)}");
             SetText("SettingsPanel/DifficultyText", $"難易度: {DifficultyRules.GetLabel(_difficulty)}");
             SetText("SettingsPanel/TotalCountText", $"合計: {_humanCount + _cpuCount} 人（最大 {GameConfig.MaxPlayers}）");
+            SetText("SettingsPanel/BgmVolumeText", $"BGM音量: {Mathf.RoundToInt(_bgmVolume * 100f)}");
+            SetText("SettingsPanel/SeVolumeText", $"SE音量: {Mathf.RoundToInt(_seVolume * 100f)}");
+            SetText("SettingsPanel/ProfessorText", $"指導教員: {_professor.DisplayName()}");
         }
 
         private void ApplySessionSettings()
@@ -351,6 +422,39 @@ namespace Sugoroku.UI
             if (_titlePanel        != null) _titlePanel.SetActive(_titlePanel        == target);
             if (_settingsPanel     != null) _settingsPanel.SetActive(_settingsPanel  == target);
             if (_achievementsPanel != null) _achievementsPanel.SetActive(_achievementsPanel == target);
+        }
+
+        private void ApplySafeLayout()
+        {
+            LayoutTitleMenuButton("StartButton", 96f);
+            LayoutTitleMenuButton("DailyChallengeButton", 28f);
+            LayoutTitleMenuButton("SettingsButton", -40f);
+            LayoutTitleMenuButton("AchievementsButton", -108f);
+
+            LayoutModalPanel(_settingsPanel?.transform);
+            LayoutModalPanel(_achievementsPanel?.transform);
+            UiSafeLayout.DisableDecorativeRaycasts(transform);
+        }
+
+        private void LayoutTitleMenuButton(string name, float y)
+        {
+            var button = _titlePanel?.transform.Find(name)?.GetComponent<RectTransform>();
+            if (button == null) return;
+            button.anchorMin = button.anchorMax = new Vector2(0.5f, 0.5f);
+            button.pivot = new Vector2(0.5f, 0.5f);
+            button.anchoredPosition = new Vector2(0f, y);
+            button.sizeDelta = new Vector2(360f, 56f);
+        }
+
+        private static void LayoutModalPanel(Transform panel)
+        {
+            if (panel is not RectTransform panelRt) return;
+            panelRt.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
+            panelRt.anchoredPosition = Vector2.zero;
+            panelRt.sizeDelta = new Vector2(1080f, 860f);
+            UiSafeLayout.LayoutCloseButton(panel, panel.Find("CloseButton"));
         }
 
         private void ApplyScreenChrome()

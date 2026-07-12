@@ -6,6 +6,7 @@ using Sugoroku.Game;
 using Sugoroku.Data;
 using Sugoroku.Network;
 using Sugoroku.Board;
+using Sugoroku.Audio;
 
 namespace Sugoroku.UI
 {
@@ -28,6 +29,7 @@ namespace Sugoroku.UI
         private Image _modalBackdrop;
         private Transform _overlayRoot;
         private TextMeshProUGUI _instructionText;
+        private Image _rareGlowPanel;
 
         public static bool HasVisibleModal
         {
@@ -129,6 +131,7 @@ namespace Sugoroku.UI
         private void ShowPreviewOnly(EventMaster ev)
         {
             EnsureAwakeAndReady();
+            SetRareGlow(false);
             UiLayerManager.ApplyEventModalOpen();
             _hasVisibleContent = true;
             ShowModalVisuals();
@@ -149,6 +152,7 @@ namespace Sugoroku.UI
         private void ShowSquarePreviewOnly(Sugoroku.Data.SquareType type, string title, string description)
         {
             EnsureAwakeAndReady();
+            SetRareGlow(false);
             UiLayerManager.ApplyEventModalOpen();
             _hasVisibleContent = true;
             ShowModalVisuals();
@@ -179,6 +183,34 @@ namespace Sugoroku.UI
             _buttons.Add(btn);
         }
 
+        private void EnsureRareGlowPanel()
+        {
+            if (_rareGlowPanel != null || _titleText == null) return;
+
+            var go = new GameObject("RareGlowPanel", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(_titleText.transform.parent, false);
+            go.transform.SetSiblingIndex(_titleText.transform.GetSiblingIndex());
+
+            var rt = (RectTransform)go.transform;
+            var titleRt = (RectTransform)_titleText.transform;
+            rt.anchorMin = titleRt.anchorMin;
+            rt.anchorMax = titleRt.anchorMax;
+            rt.pivot = titleRt.pivot;
+            rt.anchoredPosition = titleRt.anchoredPosition;
+            rt.sizeDelta = titleRt.sizeDelta + new Vector2(24f, 12f);
+
+            _rareGlowPanel = go.GetComponent<Image>();
+            _rareGlowPanel.color = new Color(1f, 0.84f, 0.2f, 0.35f);
+            _rareGlowPanel.raycastTarget = false;
+            _rareGlowPanel.gameObject.SetActive(false);
+        }
+
+        private void SetRareGlow(bool active)
+        {
+            EnsureRareGlowPanel();
+            if (_rareGlowPanel != null) _rareGlowPanel.gameObject.SetActive(active);
+        }
+
         private void ShowEvent(EventMaster ev, PlayerData player)
         {
             if (ev == null || player == null) return;
@@ -204,6 +236,11 @@ namespace Sugoroku.UI
                 _titleText.text = ev.Title;
                 JapaneseFontProvider.Apply(_titleText);
             }
+
+            bool isRareEvent = ev.IsRare;
+            SetRareGlow(isRareEvent);
+            if (isRareEvent) GameAudioController.Instance?.PlayRareEventFanfare();
+
             if (_descriptionText != null)
             {
                 _descriptionText.text = ev.Description;

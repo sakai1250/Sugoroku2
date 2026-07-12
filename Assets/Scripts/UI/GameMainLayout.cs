@@ -72,7 +72,7 @@ namespace Sugoroku.UI
             panelRt.anchorMax = new Vector2(0f, 1f);
             panelRt.pivot     = new Vector2(0f, 1f);
             panelRt.offsetMin = Vector2.zero;
-            panelRt.offsetMax = new Vector2(348f, -ResourceHudVisuals.TopBarHeight);
+            panelRt.offsetMax = new Vector2(UiSafeLayout.LeftPanelWidth, -UiSafeLayout.TopBarHeight);
 
             var hud = canvas.Find("GameHUD");
             if (hud != null)
@@ -159,10 +159,12 @@ namespace Sugoroku.UI
             var panel = EnsurePanel(canvas, "LogPanel", new Color(0.10f, 0.12f, 0.17f, 0.66f));
             GameUiChrome.ApplyAccentRail(panel, new Color(0.50f, 0.66f, 0.88f, 0.58f), 3f);
             var panelRt = panel.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0f, 0f);
-            panelRt.anchorMax = new Vector2(0.30f, 0.16f);
-            panelRt.offsetMin = new Vector2(12f, 12f);
-            panelRt.offsetMax = new Vector2(-8f, -8f);
+            panel.SetParent(canvas.Find("PlayerInfoPanel") ?? canvas, false);
+            panelRt.anchorMin = Vector2.zero;
+            panelRt.anchorMax = new Vector2(1f, 0f);
+            panelRt.pivot = Vector2.zero;
+            panelRt.offsetMin = new Vector2(UiSafeLayout.Gap, UiSafeLayout.Gap);
+            panelRt.offsetMax = new Vector2(-UiSafeLayout.Gap, 170f);
 
             log.SetParent(panel.transform, false);
             var logRt = log.GetComponent<RectTransform>();
@@ -386,7 +388,7 @@ namespace Sugoroku.UI
 
         private void LayoutActionArea(Transform canvas)
         {
-            Transform panel = canvas.Find("ActionPanel");
+            Transform panel = canvas.Find("BottomActionBar") ?? canvas.Find("ActionPanel");
             if (panel == null)
             {
                 var panelGo = new GameObject("ActionPanel", typeof(RectTransform));
@@ -397,13 +399,18 @@ namespace Sugoroku.UI
             var roll  = FindDeep(canvas, "RollButton");
             var skill = FindDeep(canvas, "SkillButton");
             var dice  = FindDeep(canvas, "DiceResult");
+            var reroll = FindDeep(canvas, "ItemButton_DiceReroll");
+            var heal = FindDeep(canvas, "ItemButton_MentalHeal");
+            var bonus = FindDeep(canvas, "ItemButton_MoneyBonus");
             if (roll == null && skill == null && dice == null) return;
 
             var panelRt = panel.GetComponent<RectTransform>();
-            panelRt.anchorMin = panelRt.anchorMax = new Vector2(1f, 0f);
-            panelRt.pivot     = new Vector2(1f, 0f);
-            panelRt.anchoredPosition = -actionPanelPadding;
-            panelRt.sizeDelta = new Vector2(264f, 204f);
+            panel.name = "BottomActionBar";
+            panelRt.anchorMin = Vector2.zero;
+            panelRt.anchorMax = new Vector2(1f, 0f);
+            panelRt.pivot = Vector2.zero;
+            panelRt.offsetMin = new Vector2(UiSafeLayout.LeftPanelWidth + UiSafeLayout.Gap, UiSafeLayout.Gap);
+            panelRt.offsetMax = new Vector2(-UiSafeLayout.Gap, UiSafeLayout.BottomBarHeight - UiSafeLayout.Gap);
             GameUiChrome.ApplySurface(panel, new Color(0.10f, 0.12f, 0.18f, 0.88f));
             GameUiChrome.ApplyAccentRail(panel, new Color(0.86f, 0.68f, 0.28f, 0.82f), 4f);
             if (!panel.TryGetComponent<CanvasGroup>(out var cg) || cg == null)
@@ -421,14 +428,14 @@ namespace Sugoroku.UI
             {
                 roll.SetParent(panel, false);
                 roll.SetAsLastSibling();
-                LayoutActionChild(roll, new Vector2(-8f, -52f), actionButtonSize);
+                LayoutActionChild(roll, new Vector2(-8f, -18f), new Vector2(246f, 60f));
                 SetupActionButton(roll, "ダイスを振る", true);
             }
             if (skill != null)
             {
                 skill.SetParent(panel, false);
                 skill.SetAsLastSibling();
-                LayoutActionChild(skill, new Vector2(-8f, -120f), actionButtonSize);
+                LayoutActionChild(skill, new Vector2(-266f, -18f), new Vector2(190f, 60f));
                 SetupActionButton(skill, "ワザ", false);
             }
 
@@ -436,7 +443,7 @@ namespace Sugoroku.UI
             {
                 dice.SetParent(panel, false);
                 dice.SetAsFirstSibling();
-                LayoutActionChild(dice, new Vector2(-8f, -10f), new Vector2(214f, 32f));
+                LayoutActionChild(dice, new Vector2(-468f, -32f), new Vector2(190f, 32f));
                 var le = dice.GetComponent<LayoutElement>() ?? dice.gameObject.AddComponent<LayoutElement>();
                 le.ignoreLayout = true;
                 var tmp = dice.GetComponent<TextMeshProUGUI>();
@@ -449,6 +456,10 @@ namespace Sugoroku.UI
 
                 LayoutDiceIcon(dice);
             }
+
+            LayoutLeftActionChild(reroll, panel, 326f);
+            LayoutLeftActionChild(heal, panel, 488f);
+            LayoutLeftActionChild(bonus, panel, 650f);
 
             if (!EventModalUI.HasVisibleModal)
                 panel.SetAsLastSibling();
@@ -468,6 +479,20 @@ namespace Sugoroku.UI
             le.ignoreLayout = true;
             le.preferredWidth = size.x;
             le.preferredHeight = size.y;
+        }
+
+        private static void LayoutLeftActionChild(Transform child, Transform panel, float x)
+        {
+            if (child == null || panel == null) return;
+            child.SetParent(panel, false);
+            var rt = child.GetComponent<RectTransform>();
+            if (rt == null) return;
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, 0f);
+            rt.sizeDelta = new Vector2(150f, 60f);
+            var le = child.GetComponent<LayoutElement>() ?? child.gameObject.AddComponent<LayoutElement>();
+            le.ignoreLayout = true;
         }
 
         private static void LayoutDiceIcon(Transform dice)
@@ -539,11 +564,15 @@ namespace Sugoroku.UI
                 labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
             }
 
+            var actionBar = canvas.Find("BottomActionBar") ?? canvas.Find("ActionPanel");
+            btn.SetParent(actionBar ?? canvas, false);
             var rt = btn.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot     = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-152f, -ResourceHudVisuals.TopBarHeight - 12f);
-            rt.sizeDelta = new Vector2(132f, 44f);
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(UiSafeLayout.Gap, 0f);
+            rt.sizeDelta = new Vector2(150f, 60f);
+            var layout = btn.GetComponent<LayoutElement>() ?? btn.gameObject.AddComponent<LayoutElement>();
+            layout.ignoreLayout = true;
 
             var img = btn.GetComponent<Image>();
             if (img != null)
@@ -563,11 +592,15 @@ namespace Sugoroku.UI
         {
             var menu = canvas.Find("MenuButton");
             if (menu == null) return;
+            var actionBar = canvas.Find("BottomActionBar") ?? canvas.Find("ActionPanel");
+            menu.SetParent(actionBar ?? canvas, false);
             var rt = menu.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot     = new Vector2(1f, 1f);
-            rt.anchoredPosition = new Vector2(-20f, -ResourceHudVisuals.TopBarHeight - 12f);
-            rt.sizeDelta = new Vector2(120f, 44f);
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 0.5f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(174f, 0f);
+            rt.sizeDelta = new Vector2(132f, 60f);
+            var layout = menu.GetComponent<LayoutElement>() ?? menu.gameObject.AddComponent<LayoutElement>();
+            layout.ignoreLayout = true;
             menu.SetAsLastSibling();
         }
 

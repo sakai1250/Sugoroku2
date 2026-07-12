@@ -56,7 +56,7 @@ namespace Sugoroku.Board
 
         public static BoardLayoutData Build(int cellCount, int seed = 0)
         {
-            cellCount = Mathf.Clamp(cellCount, 12, 28);
+            cellCount = Mathf.Clamp(cellCount, 12, 40);
             var data = new BoardLayoutData
             {
                 CellCount = cellCount,

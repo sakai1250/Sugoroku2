@@ -158,11 +158,10 @@ namespace Sugoroku.UI
         {
             if (button is not RectTransform rt) return;
 
-            rt.anchorMin = new Vector2(StageWidthFraction, 0.5f);
-            rt.anchorMax = new Vector2(1f, 0.5f);
-            rt.pivot = new Vector2(1f, 0.5f);
-            rt.offsetMin = new Vector2(TextPadLeft, -298f);
-            rt.offsetMax = new Vector2(-TextPadRight - 140f, -243f);
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-UiSafeLayout.OuterMargin, UiSafeLayout.OuterMargin);
+            rt.sizeDelta = new Vector2(300f, 56f);
         }
     }
 }

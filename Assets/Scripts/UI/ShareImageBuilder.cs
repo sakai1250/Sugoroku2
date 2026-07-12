@@ -114,6 +114,30 @@ namespace Sugoroku.UI
                 24f, new Vector2(0f, -190f), new Vector2(CardSize - 140f, 90f), new Color(0.78f, 0.80f, 0.86f));
             stats.textWrappingMode = TextWrappingModes.Normal;
 
+            if (player.History != null && player.History.Count >= 2)
+            {
+                var chartGo = new GameObject("StatHistoryChart", typeof(RectTransform), typeof(Image));
+                chartGo.transform.SetParent(root, false);
+                var chartRt = (RectTransform)chartGo.transform;
+                chartRt.anchorMin = chartRt.anchorMax = new Vector2(0.5f, 0.5f);
+                chartRt.pivot = new Vector2(0.5f, 0.5f);
+                chartRt.anchoredPosition = new Vector2(0f, -290f);
+                chartRt.sizeDelta = new Vector2(CardSize - 160f, 130f);
+
+                var chartBg = chartGo.GetComponent<Image>();
+                chartBg.color = new Color(1f, 1f, 1f, 0.06f);
+
+                var plotGo = new GameObject("PlotArea", typeof(RectTransform));
+                plotGo.transform.SetParent(chartRt, false);
+                var plotRt = (RectTransform)plotGo.transform;
+                plotRt.anchorMin = Vector2.zero;
+                plotRt.anchorMax = Vector2.one;
+                plotRt.offsetMin = new Vector2(16f, 12f);
+                plotRt.offsetMax = new Vector2(-16f, -12f);
+
+                StatHistoryChartView.Draw(plotRt, player.History, player.MaxMental);
+            }
+
             CreateLabel(root, "Footer", "#すごろく研究者人生", 24f,
                 new Vector2(0f, -CardSize / 2f + 50f), new Vector2(CardSize - 120f, 40f),
                 new Color(0.6f, 0.7f, 0.9f));

@@ -9,8 +9,9 @@ namespace Sugoroku.Data
 
     public enum BoardLengthOption
     {
-        Short    = 16,
-        Standard = 20,
-        Long     = 24
+        Short     = 16,
+        Standard  = 20,
+        Long      = 24,
+        ExtraLong = 40
     }
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Sugoroku.Data;
 using Sugoroku.Game;
+using Sugoroku.UI;
 
 namespace Sugoroku.Board
 {
@@ -46,6 +47,7 @@ namespace Sugoroku.Board
             Instance = this;
 
             if (_camera == null) _camera = GetComponent<Camera>();
+            if (_camera != null) _camera.rect = UiSafeLayout.BoardViewportRect;
             if (_boardManager == null) _boardManager = FindFirstObjectByType<BoardManager>();
             _framedPosition = transform.position;
             _baseRotation = transform.rotation;

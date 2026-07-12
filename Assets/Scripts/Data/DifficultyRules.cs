@@ -54,9 +54,10 @@ namespace Sugoroku.Data
 
         public static string GetBoardLengthLabel(int cellCount) => cellCount switch
         {
+            40 => "ロングコース版（40マス）",
             16 => "短め（16マス）",
             24 => "長め（24マス）",
-            _  => "標準（20マス）"
+            _  => "簡易版（20マス）"
         };
     }
 }

@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using Sugoroku.Data;
+using Sugoroku.Audio;
 
 namespace Sugoroku.UI
 {
@@ -21,6 +22,7 @@ namespace Sugoroku.UI
 
         private void Start()
         {
+            GameAudioController.Instance?.PlayResultBgm();
             _titleText   ??= FindTmp("ResultTitle");
             _bodyText    ??= FindTmp("ResultBody");
             _titleButton ??= FindBtn("TitleButton");
@@ -28,6 +30,7 @@ namespace Sugoroku.UI
             if (_titleButton != null) _titleButton.onClick.AddListener(() => SceneManager.LoadScene("TitleScene"));
             ShowResults();
             EnsureShareButtons();
+            EnsureStatHistoryChart();
         }
 
         private void ShowResults()
@@ -134,6 +137,53 @@ namespace Sugoroku.UI
 
             CreateShareButton(row.transform, "画像を保存", SaveShareImage);
             CreateShareButton(row.transform, "Xでシェア", OpenShareIntent);
+        }
+
+        /// <summary>IF/メンタルの推移チャートを1枚追加する。履歴が2件未満なら何も表示しない。</summary>
+        private void EnsureStatHistoryChart()
+        {
+            if (_heroPlayer.History == null || _heroPlayer.History.Count < 2) return;
+
+            var existing = transform.Find("StatHistoryChart");
+            if (existing != null) Destroy(existing.gameObject);
+
+            var chartGo = new GameObject("StatHistoryChart", typeof(RectTransform), typeof(Image));
+            chartGo.transform.SetParent(transform, false);
+            var chartRt = (RectTransform)chartGo.transform;
+            chartRt.anchorMin = new Vector2(1f, 0.5f);
+            chartRt.anchorMax = new Vector2(1f, 0.5f);
+            chartRt.pivot = new Vector2(1f, 0.5f);
+            chartRt.anchoredPosition = new Vector2(-36f, -138f);
+            chartRt.sizeDelta = new Vector2(350f, 160f);
+
+            var bg = chartGo.GetComponent<Image>();
+            bg.color = new Color(0.08f, 0.10f, 0.15f, 0.92f);
+            bg.raycastTarget = false;
+
+            var labelGo = new GameObject("ChartLabel", typeof(RectTransform));
+            labelGo.transform.SetParent(chartRt, false);
+            var label = labelGo.AddComponent<TextMeshProUGUI>();
+            label.text = "IF・メンタルの推移";
+            label.fontSize = 16f;
+            label.color = new Color(0.85f, 0.87f, 0.92f);
+            label.alignment = TextAlignmentOptions.TopLeft;
+            var labelRt = label.rectTransform;
+            labelRt.anchorMin = new Vector2(0f, 1f);
+            labelRt.anchorMax = new Vector2(1f, 1f);
+            labelRt.pivot = new Vector2(0.5f, 1f);
+            labelRt.anchoredPosition = new Vector2(0f, -6f);
+            labelRt.sizeDelta = new Vector2(-16f, 24f);
+
+            var plotGo = new GameObject("PlotArea", typeof(RectTransform));
+            plotGo.transform.SetParent(chartRt, false);
+            var plotRt = (RectTransform)plotGo.transform;
+            plotRt.anchorMin = Vector2.zero;
+            plotRt.anchorMax = Vector2.one;
+            plotRt.offsetMin = new Vector2(12f, 12f);
+            plotRt.offsetMax = new Vector2(-12f, -32f);
+
+            StatHistoryChartView.Draw(plotRt, _heroPlayer.History, _heroPlayer.MaxMental);
+            ResultSceneLayout.BringReadableContentToFront(transform);
         }
 
         private Button CreateShareButton(Transform parent, string label, UnityEngine.Events.UnityAction onClick)

@@ -7,6 +7,7 @@ namespace Sugoroku.Data
     {
         private const string KeyPrefix      = "ach_";
         private const string ClearKeyPrefix = "ach_clear_";
+        private const string CareerSeenKeyPrefix = "career_seen_";
 
         public static event System.Action<AchievementId> OnUnlocked;
 
@@ -41,6 +42,15 @@ namespace Sugoroku.Data
                 if (!IsCharacterCleared(c)) { allCleared = false; break; }
             }
             if (allCleared) Unlock(AchievementId.ClearAllCharacters);
+        }
+
+        public static bool IsCareerOutcomeSeen(CharacterType character, string rank) =>
+            PlayerPrefs.GetInt(CareerSeenKeyPrefix + character + "_" + rank, 0) != 0;
+
+        public static void MarkCareerOutcomeSeen(CharacterType character, string rank)
+        {
+            PlayerPrefs.SetInt(CareerSeenKeyPrefix + character + "_" + rank, 1);
+            PlayerPrefs.Save();
         }
 
         public static int GetDailyBestScore(int dailySeed) =>

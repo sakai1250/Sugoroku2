@@ -26,7 +26,12 @@ namespace Sugoroku.Board
             int row      = index / Columns;
             int posInRow = index % Columns;
             int col      = (row % 2 == 0) ? posInRow : (Columns - 1 - posInRow);
-            int rowY     = Rows - 1 - row;
+
+            // 分岐レーン専用帯（BoardNavigation.BranchBandCount行分）を
+            // フォークの行の直後に確保するため、それより後ろの行を押し下げる。
+            int forkRow = BoardLayoutGenerator.Current.ForkIndex / Columns;
+            int pushedRows = row > forkRow ? BoardNavigation.BranchBandCount : 0;
+            int rowY = Rows - 1 - row - pushedRows;
 
             return new Vector3(col * spacingX, rowY * spacingY, 0f);
         }

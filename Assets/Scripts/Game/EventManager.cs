@@ -13,6 +13,7 @@ namespace Sugoroku.Game
 
         private List<EventMaster> _allEvents = new();
         private List<EventMaster> _pool      = new();
+        private List<EventMaster> _rarePool  = new();
         private Dictionary<string, EventMaster> _byId = new();
 
         public event System.Action<EventMaster, PlayerData> OnEventTriggered;
@@ -62,12 +63,19 @@ namespace Sugoroku.Game
             ValidateRobustness();
 
             RefillPool();
+            RefillRarePool();
         }
 
         private void RefillPool()
         {
-            _pool = new List<EventMaster>(_allEvents);
+            _pool = _allEvents.Where(e => e != null && !e.IsRare).ToList();
             Shuffle(_pool);
+        }
+
+        private void RefillRarePool()
+        {
+            _rarePool = _allEvents.Where(e => e != null && e.IsRare).ToList();
+            Shuffle(_rarePool);
         }
 
         public EventMaster GetById(string eventId)
@@ -78,13 +86,28 @@ namespace Sugoroku.Game
 
         public EventMaster DrawEvent() => DrawEventOnAuthority();
 
-        /// <summary>§7.3 — プール抽選（StateAuthority からのみ呼ぶ）。</summary>
+        /// <summary>§7.3 — プール抽選（StateAuthority からのみ呼ぶ）。抽選ごとに低確率で超レアプールから引く。</summary>
         public EventMaster DrawEventOnAuthority()
         {
+            if (_rarePool.Count > 0 && GameRng.Value01() < GameConfig.RareEventChance)
+            {
+                var rare = DrawFromRarePool();
+                if (rare != null) return rare;
+            }
+
             if (_pool.Count == 0) RefillPool();
             if (_pool.Count == 0) return null;
             var ev = _pool[0];
             _pool.RemoveAt(0);
+            return ev;
+        }
+
+        private EventMaster DrawFromRarePool()
+        {
+            if (_rarePool.Count == 0) RefillRarePool();
+            if (_rarePool.Count == 0) return null;
+            var ev = _rarePool[0];
+            _rarePool.RemoveAt(0);
             return ev;
         }
 
@@ -124,6 +147,9 @@ namespace Sugoroku.Game
             var (money, ifScore, mental, virtue) = CharacterTagAffinity.Apply(
                 player.Character, _lastEventTags,
                 choice.MoneyChange, choice.IfScoreChange, choice.MentalChange, choice.VirtueChange);
+
+            (money, ifScore, mental, virtue) = ProfessorEffectRules.Apply(
+                GameSession.SelectedProfessor, money, ifScore, mental, virtue);
 
             yield return StatChangeSequencer.Apply(player, money, ifScore, mental, virtue);
 

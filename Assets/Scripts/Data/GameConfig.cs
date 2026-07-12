@@ -39,6 +39,14 @@ namespace Sugoroku.Data
         // 徳による救済（全選択肢が条件未達のとき）
         public const int VirtueRescueThreshold = 20;
 
+        /// <summary>超レアイベントの抽選確率(0〜1)。通常イベント抽選の前に毎回判定する。</summary>
+        public const float RareEventChance = 0.03f;
+
+        /// <summary>バイトマス通過時のアイテム拾得確率(0〜1)。</summary>
+        public const float ItemPickupChance = 0.25f;
+        public const int ItemMentalHealAmount = 15;
+        public const int ItemMoneyBonusAmount = 10;
+
         /// <summary>中間発表: 1人あたりこの個人ターン数ごとに首位ボーナス/最下位デバフを実施。</summary>
         public const int MidGameCheckInterval = 10;
 

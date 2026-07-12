@@ -25,6 +25,7 @@ namespace Sugoroku.UI
             _scoreBreakdownText ??= transform.Find("ScoreBreakdownText")?.GetComponent<TextMeshProUGUI>();
             _resumeButton ??= transform.Find("ResumeButton")?.GetComponent<Button>();
             _titleButton ??= transform.Find("TitleButton")?.GetComponent<Button>();
+            ApplySafeLayout();
             ApplyChrome();
             if (_panel != null) _panel.SetActive(false);
             _resumeButton?.onClick.AddListener(Close);
@@ -92,6 +93,27 @@ namespace Sugoroku.UI
                 GameUiChrome.ApplyReadable(_scoreBreakdownText, GameUiChrome.MutedText);
             if (_resumeButton != null) GameUiChrome.ApplyButton(_resumeButton, primary: true);
             if (_titleButton != null) GameUiChrome.ApplyButton(_titleButton, primary: false);
+        }
+
+        private void ApplySafeLayout()
+        {
+            if (_panel is not { } panel || panel.transform is not RectTransform panelRt) return;
+            panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRt.pivot = new Vector2(0.5f, 0.5f);
+            panelRt.anchoredPosition = Vector2.zero;
+            panelRt.sizeDelta = new Vector2(920f, 760f);
+            PlaceFooterButton(_titleButton, -170f);
+            PlaceFooterButton(_resumeButton, 170f);
+        }
+
+        private static void PlaceFooterButton(Button button, float x)
+        {
+            if (button == null) return;
+            var rt = button.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.anchoredPosition = new Vector2(x, UiSafeLayout.OuterMargin);
+            rt.sizeDelta = new Vector2(300f, 56f);
         }
     }
 }

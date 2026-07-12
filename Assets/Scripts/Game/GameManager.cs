@@ -7,6 +7,7 @@ using Sugoroku.Data;
 using Sugoroku.Board;
 using Sugoroku.Visual;
 using Sugoroku.Network;
+using Sugoroku.Audio;
 
 namespace Sugoroku.Game
 {
@@ -67,6 +68,7 @@ namespace Sugoroku.Game
 
         private void InitGame()
         {
+            GameAudioController.Instance?.PlayGameBgm();
             _claimedJournalIndices.Clear();
             _turnCounter = 0;
             BoardLayoutGenerator.Invalidate();
@@ -291,6 +293,30 @@ namespace Sugoroku.Game
                     break;
             }
             DiceRoller.Instance.Roll();
+        }
+
+        public void UseDiceRerollItem(PlayerData player)
+        {
+            if (player == null || player.ItemDiceRerollCount <= 0) return;
+            player.ItemDiceRerollCount--;
+            player.HasExtraRoll = true;
+            AddLog($"[アイテム] {player.Name}「もう一振り券」使用！");
+        }
+
+        public void UseMentalHealItem(PlayerData player)
+        {
+            if (player == null || player.ItemMentalHealCount <= 0) return;
+            player.ItemMentalHealCount--;
+            player.ApplyStatChange(0, 0, GameConfig.ItemMentalHealAmount, 0);
+            AddLog($"[アイテム] {player.Name}「気分転換ドリンク」使用！");
+        }
+
+        public void UseMoneyBonusItem(PlayerData player)
+        {
+            if (player == null || player.ItemMoneyBonusCount <= 0) return;
+            player.ItemMoneyBonusCount--;
+            player.ApplyStatChange(GameConfig.ItemMoneyBonusAmount, 0, 0, 0);
+            AddLog($"[アイテム] {player.Name}「臨時収入」使用！");
         }
 
         private bool IsAllFinished() => _players.All(p => p.IsFinished);

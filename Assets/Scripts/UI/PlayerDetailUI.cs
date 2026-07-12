@@ -32,6 +32,8 @@ namespace Sugoroku.UI
             _statusText ??= transform.Find("DetailStatusText")?.GetComponent<TextMeshProUGUI>();
             _scoreText ??= transform.Find("DetailScoreText")?.GetComponent<TextMeshProUGUI>();
             _closeButton ??= transform.Find("CloseButton")?.GetComponent<Button>();
+            if (_panel != null && _closeButton != null)
+                UiSafeLayout.LayoutCloseButton(_panel.transform, _closeButton.transform);
         }
 
         public void Show(PlayerData player)

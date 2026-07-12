@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Sugoroku.Data
 {
     /// <summary>シーン間で受け渡すプレイ設定・結果。</summary>
@@ -5,6 +7,9 @@ namespace Sugoroku.Data
     {
         const string PrefBoardCells   = "sugoroku_board_cells";
         const string PrefDifficulty   = "sugoroku_difficulty";
+        const string PrefBgmVolume    = "sugoroku_bgm_volume";
+        const string PrefSeVolume     = "sugoroku_se_volume";
+        const string PrefProfessor    = "sugoroku_professor";
 
         public static int           HumanCount     = 1;
         public static int           CpuCount       = 1;
@@ -13,6 +18,10 @@ namespace Sugoroku.Data
 
         public static int            BoardCellCount = (int)BoardLengthOption.Standard;
         public static GameDifficulty Difficulty     = GameDifficulty.Normal;
+
+        public static float BgmVolume = 0.7f;
+        public static float SeVolume  = 1.0f;
+        public static ProfessorType SelectedProfessor = ProfessorType.None;
 
         public static GameOverReason LastGameOverReason = GameOverReason.None;
         public static PlayerSnapshot[] LastPlayers;
@@ -26,7 +35,7 @@ namespace Sugoroku.Data
         public static void LoadSettings()
         {
             BoardCellCount = UnityEngine.PlayerPrefs.GetInt(PrefBoardCells, (int)BoardLengthOption.Standard);
-            if (BoardCellCount != 16 && BoardCellCount != 20 && BoardCellCount != 24)
+            if (BoardCellCount != 16 && BoardCellCount != 20 && BoardCellCount != 24 && BoardCellCount != 40)
                 BoardCellCount = (int)BoardLengthOption.Standard;
 
             int diff = UnityEngine.PlayerPrefs.GetInt(PrefDifficulty, (int)GameDifficulty.Normal);
@@ -36,12 +45,23 @@ namespace Sugoroku.Data
                 (int)GameDifficulty.Hard   => GameDifficulty.Hard,
                 _                          => GameDifficulty.Normal
             };
+
+            BgmVolume = UnityEngine.Mathf.Clamp01(UnityEngine.PlayerPrefs.GetFloat(PrefBgmVolume, 0.7f));
+            SeVolume  = UnityEngine.Mathf.Clamp01(UnityEngine.PlayerPrefs.GetFloat(PrefSeVolume, 1.0f));
+
+            int professor = UnityEngine.PlayerPrefs.GetInt(PrefProfessor, (int)ProfessorType.None);
+            SelectedProfessor = System.Enum.IsDefined(typeof(ProfessorType), professor)
+                ? (ProfessorType)professor
+                : ProfessorType.None;
         }
 
         public static void SaveSettings()
         {
             UnityEngine.PlayerPrefs.SetInt(PrefBoardCells, BoardCellCount);
             UnityEngine.PlayerPrefs.SetInt(PrefDifficulty, (int)Difficulty);
+            UnityEngine.PlayerPrefs.SetFloat(PrefBgmVolume, BgmVolume);
+            UnityEngine.PlayerPrefs.SetFloat(PrefSeVolume, SeVolume);
+            UnityEngine.PlayerPrefs.SetInt(PrefProfessor, (int)SelectedProfessor);
             UnityEngine.PlayerPrefs.Save();
         }
 
@@ -109,6 +129,7 @@ namespace Sugoroku.Data
         public PlayerStatus  Status;
         public int           FinishRank;
         public bool          SurvivedBankruptcyScare;
+        public List<StatSnapshot> History;
 
         public static PlayerSnapshot From(PlayerData p) => new()
         {
@@ -123,7 +144,8 @@ namespace Sugoroku.Data
             BoardPosition = p.BoardPosition,
             Status        = p.Status,
             FinishRank    = p.FinishRank,
-            SurvivedBankruptcyScare = p.SurvivedBankruptcyScare
+            SurvivedBankruptcyScare = p.SurvivedBankruptcyScare,
+            History       = p.History
         };
 
         public int CalculateScore() => ScoreCalculator.Total(this);

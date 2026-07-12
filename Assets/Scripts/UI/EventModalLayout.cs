@@ -28,6 +28,7 @@ namespace Sugoroku.UI
             EnsureHeader(modalRoot, ev);
             ApplyDescriptionStyle(modalRoot);
             EnsureChoiceList(modalRoot);
+            UiSafeLayout.DisableDecorativeRaycasts(modalRoot);
         }
 
         private static void EnsureHeader(Transform root, EventMaster ev)
@@ -51,7 +52,7 @@ namespace Sugoroku.UI
                 hrt.anchorMax = new Vector2(0.5f, 1f);
                 hrt.pivot = new Vector2(0.5f, 1f);
                 hrt.anchoredPosition = new Vector2(0f, 200f);
-                hrt.sizeDelta = new Vector2(720f, 44f);
+                hrt.sizeDelta = new Vector2(656f, 44f);
 
                 var title = root.Find("ModalTitle");
                 var tags  = root.Find("ModalTags");
@@ -131,7 +132,7 @@ namespace Sugoroku.UI
             var rt = desc.rectTransform;
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(700f, 100f);
+            rt.sizeDelta = new Vector2(700f, 112f);
             rt.anchoredPosition = new Vector2(0f, 120f);
         }
 
@@ -152,8 +153,8 @@ namespace Sugoroku.UI
             var rt = parent.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, -140f);
-            rt.sizeDelta = new Vector2(700f, 320f);
+            rt.anchoredPosition = new Vector2(0f, -150f);
+            rt.sizeDelta = new Vector2(700f, 300f);
             parent.SetAsLastSibling();
         }
     }

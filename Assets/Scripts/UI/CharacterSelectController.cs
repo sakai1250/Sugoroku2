@@ -195,7 +195,7 @@ namespace Sugoroku.UI
             _cardParent ??= EnsureCardParent();
             _cardPreferredSize = new Vector2(142f, 226f);
 
-            PlaceRect(_cardParent, new Vector2(-405f, 34f), new Vector2(830f, 266f));
+            PlaceRect(_cardParent, new Vector2(-405f, 62f), new Vector2(830f, 300f));
             if (_cardParent != null)
             {
                 var h = _cardParent.GetComponent<HorizontalLayoutGroup>() ?? _cardParent.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -207,15 +207,15 @@ namespace Sugoroku.UI
                 h.childForceExpandHeight = false;
             }
 
-            PlaceButton(_prevButton, new Vector2(-865f, 34f), new Vector2(68f, 68f), HudTextStyle.Scale(22f));
-            PlaceButton(_nextButton, new Vector2(55f, 34f), new Vector2(68f, 68f), HudTextStyle.Scale(22f));
-            PlaceRect(_pagerPips, new Vector2(-405f, -106f), new Vector2(330f, 36f));
-            PlaceButton(_backButton, new Vector2(-840f, 462f), new Vector2(160f, 50f), HudTextStyle.Scale(15f));
-            PlaceButton(_confirmButton, new Vector2(430f, -338f), new Vector2(300f, 62f), HudTextStyle.Scale(16f));
+            PlaceButton(_backButton, new Vector2(-790f, -466f), new Vector2(180f, 58f), HudTextStyle.Scale(15f));
+            PlaceButton(_prevButton, new Vector2(-560f, -466f), new Vector2(180f, 58f), HudTextStyle.Scale(18f));
+            PlaceRect(_pagerPips, new Vector2(-310f, -466f), new Vector2(260f, 36f));
+            PlaceButton(_nextButton, new Vector2(-60f, -466f), new Vector2(180f, 58f), HudTextStyle.Scale(18f));
+            PlaceButton(_confirmButton, new Vector2(530f, -466f), new Vector2(340f, 58f), HudTextStyle.Scale(16f));
 
-            PlaceText(_screenTitle, new Vector2(0f, 462f), new Vector2(760f, 52f), HudTextStyle.Scale(24f),
+            PlaceText(_screenTitle, new Vector2(0f, 480f), new Vector2(760f, 52f), HudTextStyle.Scale(24f),
                 TextAlignmentOptions.Center);
-            PlaceRect(_playerSlotBadge, new Vector2(-456f, 462f), new Vector2(154f, 46f));
+            PlaceRect(_playerSlotBadge, new Vector2(-790f, 480f), new Vector2(154f, 46f));
 
             PlaceRect(_focusPlaque, new Vector2(430f, 352f), new Vector2(390f, 44f));
             PlaceImage(_portraitImage, new Vector2(430f, 250f), new Vector2(168f, 168f));

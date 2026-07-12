@@ -34,6 +34,13 @@ namespace Sugoroku.UI
         [SerializeField] private TextMeshProUGUI _skillButtonText;
         [SerializeField] private Button          _menuButton;
 
+        private Button _itemDiceRerollButton;
+        private Button _itemMentalHealButton;
+        private Button _itemMoneyBonusButton;
+        private TextMeshProUGUI _itemDiceRerollText;
+        private TextMeshProUGUI _itemMentalHealText;
+        private TextMeshProUGUI _itemMoneyBonusText;
+
         [Header("ポーズ/詳細")]
         [SerializeField] private PauseMenuUI     _pauseMenu;
         [SerializeField] private TextMeshProUGUI _logText;
@@ -156,6 +163,84 @@ namespace Sugoroku.UI
 
             if (_skillButtonText == null && _skillButton != null)
                 _skillButtonText = _skillButton.GetComponentInChildren<TextMeshProUGUI>(true);
+
+            EnsureItemButtons();
+        }
+
+        private void EnsureItemButtons()
+        {
+            if (_itemDiceRerollButton == null)
+            {
+                (_itemDiceRerollButton, _itemDiceRerollText) =
+                    FindOrCreateItemButton("ItemButton_DiceReroll", new Vector2(220f, -260f));
+                _itemDiceRerollButton.onClick.RemoveAllListeners();
+                _itemDiceRerollButton.onClick.AddListener(() =>
+                {
+                    var p = GameManager.Instance?.GetCurrentPlayer();
+                    if (p != null && !p.IsCpu) GameManager.Instance.UseDiceRerollItem(p);
+                    RefreshAll();
+                });
+            }
+
+            if (_itemMentalHealButton == null)
+            {
+                (_itemMentalHealButton, _itemMentalHealText) =
+                    FindOrCreateItemButton("ItemButton_MentalHeal", new Vector2(220f, -320f));
+                _itemMentalHealButton.onClick.RemoveAllListeners();
+                _itemMentalHealButton.onClick.AddListener(() =>
+                {
+                    var p = GameManager.Instance?.GetCurrentPlayer();
+                    if (p != null && !p.IsCpu) GameManager.Instance.UseMentalHealItem(p);
+                    RefreshAll();
+                });
+            }
+
+            if (_itemMoneyBonusButton == null)
+            {
+                (_itemMoneyBonusButton, _itemMoneyBonusText) =
+                    FindOrCreateItemButton("ItemButton_MoneyBonus", new Vector2(220f, -380f));
+                _itemMoneyBonusButton.onClick.RemoveAllListeners();
+                _itemMoneyBonusButton.onClick.AddListener(() =>
+                {
+                    var p = GameManager.Instance?.GetCurrentPlayer();
+                    if (p != null && !p.IsCpu) GameManager.Instance.UseMoneyBonusItem(p);
+                    RefreshAll();
+                });
+            }
+        }
+
+        private (Button, TextMeshProUGUI) FindOrCreateItemButton(string name, Vector2 pos)
+        {
+            var existingGo = UiBindingUtility.FindObject(name);
+            if (existingGo != null)
+            {
+                var existingBtn = existingGo.GetComponent<Button>() ?? existingGo.AddComponent<Button>();
+                var existingText = existingGo.GetComponentInChildren<TextMeshProUGUI>(true);
+                return (existingBtn, existingText);
+            }
+
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(transform, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = new Vector2(280f, 55f);
+
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var tmp = labelGo.AddComponent<TextMeshProUGUI>();
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 18f;
+            var labelRt = tmp.rectTransform;
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+            JapaneseFontProvider.Apply(tmp);
+
+            var btn = go.GetComponent<Button>();
+            GameUiChrome.ApplyButton(btn, primary: false);
+            return (btn, tmp);
         }
 
         private void DisableDecorativeRaycasts()
@@ -286,6 +371,9 @@ namespace Sugoroku.UI
             bool canAct = state == TurnState.WaitAction && player != null && !player.IsCpu && !rolling;
             if (_rollButton  != null) _rollButton.interactable  = canAct;
             if (_skillButton != null) _skillButton.interactable = canAct && !player.SkillUsedThisTurn;
+            if (_itemDiceRerollButton != null) _itemDiceRerollButton.interactable = canAct && player.ItemDiceRerollCount > 0;
+            if (_itemMentalHealButton != null) _itemMentalHealButton.interactable = canAct && player.ItemMentalHealCount > 0;
+            if (_itemMoneyBonusButton != null) _itemMoneyBonusButton.interactable = canAct && player.ItemMoneyBonusCount > 0;
         }
 
         private void SetupDiceHudAnimator()
@@ -364,6 +452,9 @@ namespace Sugoroku.UI
             if (_skipTurnsText != null) _skipTurnsText.text = player.SkipTurns > 0 ? $"休み×{player.SkipTurns}" : "";
             if (_ignoreEventsText != null) _ignoreEventsText.text = player.IgnoreNextEvents > 0 ? $"回避{player.IgnoreNextEvents}" : "";
             if (_skillButtonText != null) _skillButtonText.text = $"ワザ: {player.Character.SkillName()}";
+            if (_itemDiceRerollText != null) _itemDiceRerollText.text = $"もう一振り券 ×{player.ItemDiceRerollCount}";
+            if (_itemMentalHealText != null) _itemMentalHealText.text = $"気分転換ドリンク ×{player.ItemMentalHealCount}";
+            if (_itemMoneyBonusText != null) _itemMoneyBonusText.text = $"臨時収入 ×{player.ItemMoneyBonusCount}";
         }
 
         public void AnimateStatChange(PlayerData player, int money, int ifScore, int mental, int virtue)

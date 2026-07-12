@@ -235,6 +235,7 @@ namespace Sugoroku.Game
                 case SquareType.PartTime:
                     player.ApplyStatChange(node?.BonusMoney ?? 8, 0, 0, 0);
                     GameManager.Instance.ShowSquareEffect(player, squareType);
+                    TryGrantRandomItem(player);
                     EndTurn();
                     break;
 
@@ -259,6 +260,33 @@ namespace Sugoroku.Game
             }
         }
 
+        /// <summary>バイトマス通過時、一定確率で3種のアイテムからランダムに1つ拾得する。</summary>
+        private void TryGrantRandomItem(PlayerData player)
+        {
+            if (GameRng.Value01() >= GameConfig.ItemPickupChance) return;
+
+            int roll = GameRng.Range(0, 2);
+            string itemName;
+            switch (roll)
+            {
+                case 0:
+                    player.ItemDiceRerollCount++;
+                    itemName = "もう一振り券";
+                    break;
+                case 1:
+                    player.ItemMentalHealCount++;
+                    itemName = "気分転換ドリンク";
+                    break;
+                default:
+                    player.ItemMoneyBonusCount++;
+                    itemName = "臨時収入";
+                    break;
+            }
+
+            Sugoroku.UI.GameStatusBanner.Show(
+                $"{PlayerIdentity.FormatHudLabel(player)} — アイテム「{itemName}」を拾った！");
+        }
+
         public void EndTurn()
         {
             if (GameManager.Instance == null) return;
@@ -271,6 +299,12 @@ namespace Sugoroku.Game
                 player.HasExtraRoll = false;
                 StartCoroutine(StartExtraRoll(player));
                 return;
+            }
+
+            if (player != null)
+            {
+                player.TurnsTaken++;
+                player.History.Add(new StatSnapshot(player.TurnsTaken, player.IfScore, player.Mental));
             }
 
             GameManager.Instance.AdvanceTurn();

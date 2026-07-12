@@ -47,21 +47,14 @@ namespace Sugoroku.Data
         {
             int score = ScoreCalculator.Total(player);
             string rank = ResolveRank(player);
+            var entry = CareerOutcomeCatalog.Resolve(player.Character, rank);
             return new GraduationOutcome(
                 rank,
-                ScoreCalculator.GetCareerForRank(rank),
-                GetSubtitle(rank),
+                entry.CareerPath,
+                entry.Subtitle,
                 GetAccentColor(rank),
                 score);
         }
-
-        public static string GetSubtitle(string rank) => rank switch
-        {
-            "S" => "学界の頂点——次はあなたがちゃぶ台返しする番",
-            "A" => "学会より年次考課の方が現実的",
-            "B" => "博士進学は『一旦保留』で社会へ",
-            _   => "ポスドク修羅は遠い——実家の店を継ぐ"
-        };
 
         public static Color GetAccentColor(string rank) => rank switch
         {

@@ -46,8 +46,12 @@ namespace Sugoroku.Data
         public string         Title;
         public string         Description;
         public EventChoice[]  Choices;
+        /// <summary>"Rare" のときのみ超レアイベント抽選プールの対象になる。未指定は通常イベント扱い。</summary>
+        public string         Rarity;
 
         public int ChoiceCount => Choices?.Length ?? 0;
+
+        public bool IsRare => Rarity == "Rare";
 
         public EventChoice GetChoice(int index) =>
             Choices != null && index >= 0 && index < Choices.Length ? Choices[index] : null;

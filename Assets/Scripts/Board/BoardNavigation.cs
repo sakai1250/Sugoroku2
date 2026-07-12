@@ -6,24 +6,8 @@ namespace Sugoroku.Board
     /// <summary>論理マス位置と物理ウェイポイント（分岐レーン）の対応。</summary>
     public static class BoardNavigation
     {
-        public const float BranchLaneOffsetRatio = 1.4f;
-        const float BranchLaneMargin = 0.55f;
-
-        /// <summary>レーン中心線の本線からのオフセット（カード高さを考慮）。</summary>
-        public static float ComputeLaneOffset(float spacingY)
-        {
-            float cardHalf = MassTextCardPrefabFactory.CardWorldHeight * 0.5f + BranchLaneMargin;
-            return Mathf.Max(spacingY * BranchLaneOffsetRatio, cardHalf * 2.2f);
-        }
-
-        public static Vector3 GetBranchLanePerpendicular(Vector3 forkPos, Vector3 mergePos)
-        {
-            var along = mergePos - forkPos;
-            if (along.sqrMagnitude < 0.001f)
-                return Vector3.up;
-            var alongNorm = along.normalized;
-            return new Vector3(-alongNorm.y, alongNorm.x, 0f);
-        }
+        /// <summary>フォークの行の直下に確保する分岐レーン専用帯の本数（研究室・バイトの2本）。</summary>
+        public const int BranchBandCount = 2;
 
         public static int LogicalCellCount => BoardLayoutGenerator.Current.CellCount;
 
@@ -97,18 +81,17 @@ namespace Sugoroku.Board
                 return SnakeBoardLayout.GetGridWorldPosition(logical, spacingX, spacingY);
 
             var d = BoardLayoutGenerator.Current;
-            var forkPos  = SnakeBoardLayout.GetGridWorldPosition(d.ForkIndex, spacingX, spacingY);
-            var mergePos = SnakeBoardLayout.GetGridWorldPosition(MergeLogicalIndex, spacingX, spacingY);
-            int step = logical - d.BranchRangeStart;
-            int len  = BranchLength;
+            var forkPos = SnakeBoardLayout.GetGridWorldPosition(d.ForkIndex, spacingX, spacingY);
 
-            // フォークと合流点の間にレーンを均等配置（本線グリッドと重ならない）
-            float t = (step + 1f) / (len + 1f);
-            var trackCenter = Vector3.Lerp(forkPos, mergePos, t);
-            var perp = GetBranchLanePerpendicular(forkPos, mergePos);
-            float laneOffset = ComputeLaneOffset(spacingY);
-            float side = branch == BranchRoute.Lab ? laneOffset : -laneOffset;
-            return trackCenter + perp * side;
+            // フォークの行が進んでいた向きへ、専用帯（研究室=1帯目、バイト=2帯目）を
+            // 本線グリッドの下に確保して等間隔に配置する。本線とは重ならない。
+            float direction = (d.ForkIndex / d.Columns) % 2 == 0 ? 1f : -1f;
+            int step = logical - d.BranchRangeStart;
+            int band = branch == BranchRoute.Lab ? 1 : 2;
+
+            float x = forkPos.x + direction * spacingX * (step + 1);
+            float y = forkPos.y - band * spacingY;
+            return new Vector3(x, y, 0f);
         }
 
         public static SquareType GetSquareType(int logical, BranchRoute lane)
