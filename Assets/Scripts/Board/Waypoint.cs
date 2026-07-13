@@ -94,6 +94,13 @@ namespace Sugoroku.Board
         public void RequestVisualUpdate() => RefreshPresentation();
         public void UpdateVisual() => RefreshPresentation();
 
+        /// <summary>分岐ルート（分岐点・両レーン）を水色のソリッドカードにする。</summary>
+        public void ApplyBranchRouteStyle()
+        {
+            if (_cardView == null) _cardView = GetComponentInChildren<MassTextCardView>(true);
+            if (_cardView != null) _cardView.SetBranchRouteStyle(true);
+        }
+
         private void ApplyPresentation()
         {
             _cardView = GetComponentInChildren<MassTextCardView>(true);

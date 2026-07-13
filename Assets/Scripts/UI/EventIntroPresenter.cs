@@ -8,32 +8,83 @@ using Sugoroku.Game;
 
 namespace Sugoroku.UI
 {
-    /// <summary>イベントマス到達時の「イベント開始」演出（大きなイラスト＋タイトル）。</summary>
+    /// <summary>カットイン演出（大きなイラスト＋タイトル）の共通プレゼンタ。</summary>
     public static class EventIntroPresenter
     {
         private const float IntroDuration = 1.35f;
+        private const float InFraction    = 0.30f; // 全体尺のうち入場に使う割合
+        private const float OutStart      = 0.72f; // 退場開始タイミング
 
+        /// <summary>カットイン1枚分のリクエスト。</summary>
+        private struct CutInRequest
+        {
+            public string     Badge;
+            public string     Who;
+            public string     Title;
+            public Sprite     Hero;
+            public CutInStyle Style;
+            public float      Duration;
+            public bool       Flash;   // 全画面フラッシュ（超レア用）
+        }
+
+        /// <summary>イベントマス到達時のカットイン。ev.IsRare のときは超レア専用の濃い演出。</summary>
         public static IEnumerator Play(EventMaster ev, PlayerData player)
         {
             if (ev == null) yield break;
 
+            var category = EventMasuArt.ResolveCategory(SquareType.Event, ev.Tags);
+            var req = new CutInRequest
+            {
+                Badge    = ev.IsRare ? "★★ 超レアイベント!! ★★" : "★ イベント発生!",
+                Who      = player != null ? PlayerIdentity.FormatHudLabel(player) : "",
+                Title    = ev.Title ?? "",
+                Hero     = EventMasuArt.GetHeroSprite(category),
+                Style    = ev.IsRare ? CutInStyle.Spin : CutInStyleMap.PickEvent(ev),
+                Duration = ev.IsRare ? IntroDuration * 1.35f : IntroDuration,
+                Flash    = ev.IsRare,
+            };
+
+            yield return PlayCard(req, player);
+        }
+
+        /// <summary>中間発表など、イラストなしのテキスト専用カットイン。</summary>
+        public static IEnumerator PlayAnnouncement(string badge, string title, CutInStyle style, bool strong)
+        {
+            var req = new CutInRequest
+            {
+                Badge    = badge ?? "",
+                Who      = "",
+                Title    = title ?? "",
+                Hero     = null,
+                Style    = style,
+                Duration = strong ? IntroDuration * 1.2f : IntroDuration,
+                Flash    = strong,
+            };
+
+            yield return PlayCard(req, null);
+        }
+
+        private static IEnumerator PlayCard(CutInRequest req, PlayerData player)
+        {
             var canvas = FindGameUiCanvas();
             if (canvas == null) yield break;
-
-            var category = EventMasuArt.ResolveCategory(SquareType.Event, ev.Tags);
-            var heroSprite = EventMasuArt.GetHeroSprite(category);
 
             var root = new GameObject("EventIntroOverlay", typeof(RectTransform));
             root.transform.SetParent(canvas.transform, false);
             root.transform.SetAsLastSibling();
 
             var rootRt = root.GetComponent<RectTransform>();
-            rootRt.anchorMin = Vector2.zero;
-            rootRt.anchorMax = Vector2.one;
-            rootRt.offsetMin = rootRt.offsetMax = Vector2.zero;
+            Stretch(rootRt);
 
             var backdrop = CreateImage(root.transform, "Backdrop", new Color(0f, 0f, 0f, 0f));
             Stretch(backdrop.rectTransform);
+
+            Image flash = null;
+            if (req.Flash)
+            {
+                flash = CreateImage(root.transform, "Flash", new Color(1f, 1f, 1f, 0f));
+                Stretch(flash.rectTransform);
+            }
 
             var card = new GameObject("IntroCard", typeof(RectTransform));
             card.transform.SetParent(root.transform, false);
@@ -42,12 +93,13 @@ namespace Sugoroku.UI
             cardRt.pivot = new Vector2(0.5f, 0.5f);
             cardRt.sizeDelta = new Vector2(760f, 520f);
             cardRt.anchoredPosition = Vector2.zero;
+            var cardGroup = card.AddComponent<CanvasGroup>();
+            cardGroup.alpha = 0f;
 
-            var cardBg = CreateImage(card.transform, "CardBg", new Color(0.08f, 0.10f, 0.16f, 0f));
-            Stretch(cardBg.rectTransform);
+            CreateImage(card.transform, "CardBg", new Color(0.08f, 0.10f, 0.16f, 0f));
             GameUiChrome.ApplySurface(card.transform, new Color(0.08f, 0.10f, 0.16f, 0.96f));
 
-            var badge = CreateTmp(card.transform, "Badge", "★ イベント発生!", HudTextStyle.JuiceStatusFontSize, TextAlignmentOptions.Center);
+            var badge = CreateTmp(card.transform, "Badge", req.Badge, HudTextStyle.JuiceStatusFontSize, TextAlignmentOptions.Center);
             var badgeRt = badge.rectTransform;
             badgeRt.anchorMin = badgeRt.anchorMax = new Vector2(0.5f, 1f);
             badgeRt.pivot = new Vector2(0.5f, 1f);
@@ -65,10 +117,10 @@ namespace Sugoroku.UI
             artRt.sizeDelta = new Vector2(680f, 300f);
             artFrame.AddComponent<RectMask2D>();
 
-            if (heroSprite != null)
+            if (req.Hero != null)
             {
                 var art = CreateImage(artFrame.transform, "HeroArt", Color.white);
-                ConfigureFittedArt(art, heroSprite);
+                ConfigureFittedArt(art, req.Hero);
             }
             else
             {
@@ -76,8 +128,7 @@ namespace Sugoroku.UI
                 Stretch(placeholder.rectTransform);
             }
 
-            string who = player != null ? PlayerIdentity.FormatHudLabel(player) : "";
-            var whoTmp = CreateTmp(card.transform, "Who", who, 16f, TextAlignmentOptions.Center);
+            var whoTmp = CreateTmp(card.transform, "Who", req.Who, 16f, TextAlignmentOptions.Center);
             var whoRt = whoTmp.rectTransform;
             whoRt.anchorMin = whoRt.anchorMax = new Vector2(0.5f, 0f);
             whoRt.pivot = new Vector2(0.5f, 0f);
@@ -85,7 +136,7 @@ namespace Sugoroku.UI
             whoRt.sizeDelta = new Vector2(680f, 28f);
             HudTextStyle.ApplyReadable(whoTmp, HudTextStyle.Scale(16f), new Color(0.82f, 0.88f, 1f), false);
 
-            var titleTmp = CreateTmp(card.transform, "Title", ev.Title ?? "", 28f, TextAlignmentOptions.Center);
+            var titleTmp = CreateTmp(card.transform, "Title", req.Title, 28f, TextAlignmentOptions.Center);
             var titleRt = titleTmp.rectTransform;
             titleRt.anchorMin = titleRt.anchorMax = new Vector2(0.5f, 0f);
             titleRt.pivot = new Vector2(0.5f, 0f);
@@ -93,23 +144,36 @@ namespace Sugoroku.UI
             titleRt.sizeDelta = new Vector2(680f, 40f);
             HudTextStyle.ApplyReadable(titleTmp, HudTextStyle.Scale(28f), Color.white, true);
 
-            BoardCameraController.ShakeInstance(0.06f, 0.16f);
+            var (shakeAmp, shakeDur) = CutInStyleMap.Impact(req.Style);
+            if (req.Flash) shakeAmp *= 1.6f;
+            BoardCameraController.ShakeInstance(shakeAmp, shakeDur);
             PulseMasuAtPlayer(player);
 
-            float duration = GameConfig.AnimationDuration(IntroDuration);
+            float duration = GameConfig.AnimationDuration(req.Duration);
             float elapsed = 0f;
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.Min(t * 3f, 1f));
-                float fadeOut = t > 0.72f ? 1f - Mathf.InverseLerp(0.72f, 1f, t) : 1f;
-                float alpha = fadeIn * fadeOut;
-                float scale = Mathf.Lerp(0.82f, 1f, JuiceMath.EaseOutQuad(Mathf.Min(t * 2.5f, 1f)));
 
-                backdrop.color = new Color(0f, 0f, 0f, 0.72f * alpha);
-                cardBg.color = new Color(0.08f, 0.10f, 0.16f, 0.96f * alpha);
-                cardRt.localScale = Vector3.one * scale;
+                float tIn = Mathf.Clamp01(t / InFraction);
+                float tOut = t > OutStart ? Mathf.InverseLerp(OutStart, 1f, t) : 0f;
+                var (offset, scale, rot) = CutInMotion.Evaluate(req.Style, tIn, tOut);
+
+                float fadeIn = Mathf.SmoothStep(0f, 1f, Mathf.Min(t / (InFraction * 0.7f), 1f));
+                float fadeOut = t > OutStart ? 1f - Mathf.InverseLerp(OutStart, 1f, t) : 1f;
+                float alpha = fadeIn * fadeOut;
+
+                cardRt.anchoredPosition = offset;
+                cardRt.localScale = new Vector3(scale.x, scale.y, 1f);
+                cardRt.localEulerAngles = new Vector3(0f, 0f, rot);
+                cardGroup.alpha = alpha;
+                backdrop.color = new Color(0f, 0f, 0f, 0.72f * Mathf.Min(alpha * 1.2f, 1f));
+                if (flash != null)
+                {
+                    float flashA = Mathf.Max(0f, 0.85f - t * 4f); // 冒頭で白フラッシュ→素早く消える
+                    flash.color = new Color(1f, 1f, 1f, flashA);
+                }
                 yield return null;
             }
 

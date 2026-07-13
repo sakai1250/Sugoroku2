@@ -147,7 +147,7 @@ namespace Sugoroku.UI
             _mentalSlider ??= UiBindingUtility.FindComponent<Slider>("MentalSlider");
 
             _playerNameText ??= FindAny("PlayerNameText");
-            _turnStateText  ??= FindAny("TurnStateText");
+            _turnStateText  ??= FindAny("HudText");
             _goalDistanceText ??= FindAny("GoalDistanceText");
             _tuitionDistanceText ??= FindAny("TuitionDistanceText");
             _skipTurnsText ??= FindAny("SkipTurnsText");

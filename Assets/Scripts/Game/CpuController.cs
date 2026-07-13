@@ -89,7 +89,7 @@ namespace Sugoroku.Game
                             selectable.Add(i);
                     }
                     if (selectable.Count > 0)
-                        return selectable[GameRng.Range(0, selectable.Count)];
+                        return selectable[GameRng.Range(0, selectable.Count - 1)];
                 }
                 return best;
             }

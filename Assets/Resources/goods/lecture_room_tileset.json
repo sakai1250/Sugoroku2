@@ -1,0 +1,946 @@
+{
+  "format": "unity-sprite-sheet-v1",
+  "image": "教室_講義室アセットシート.png",
+  "coordinateOrigin": "top-left",
+  "pixelsPerUnit": 32,
+  "filterMode": "Point",
+  "compression": "Uncompressed",
+  "sprites": [
+    {
+      "name": "class_wall_corner_left",
+      "x": 25,
+      "y": 15,
+      "width": 110,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_plain",
+      "x": 150,
+      "y": 15,
+      "width": 115,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_inner_corner",
+      "x": 275,
+      "y": 15,
+      "width": 110,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_plain_2",
+      "x": 395,
+      "y": 15,
+      "width": 110,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_recess",
+      "x": 520,
+      "y": 15,
+      "width": 170,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_opening",
+      "x": 705,
+      "y": 15,
+      "width": 105,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_door_1",
+      "x": 825,
+      "y": 15,
+      "width": 120,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_door_2",
+      "x": 955,
+      "y": 15,
+      "width": 120,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_open_door",
+      "x": 1085,
+      "y": 15,
+      "width": 110,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_window_large",
+      "x": 1205,
+      "y": 15,
+      "width": 245,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_narrow",
+      "x": 1460,
+      "y": 15,
+      "width": 45,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_floor_tile_white",
+      "x": 25,
+      "y": 165,
+      "width": 130,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_floor_tile_gray",
+      "x": 170,
+      "y": 165,
+      "width": 130,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_floor_tile_beige",
+      "x": 315,
+      "y": 165,
+      "width": 130,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_floor_blue",
+      "x": 455,
+      "y": 165,
+      "width": 115,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_floor_dark",
+      "x": 585,
+      "y": 165,
+      "width": 115,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_stair_tile",
+      "x": 710,
+      "y": 165,
+      "width": 80,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_blackboard_small",
+      "x": 810,
+      "y": 165,
+      "width": 110,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_blackboard_large",
+      "x": 925,
+      "y": 165,
+      "width": 230,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_whiteboard",
+      "x": 1160,
+      "y": 165,
+      "width": 155,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_projection_screen",
+      "x": 1320,
+      "y": 165,
+      "width": 190,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_podium",
+      "x": 180,
+      "y": 305,
+      "width": 115,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_teacher_desk_pc",
+      "x": 335,
+      "y": 305,
+      "width": 205,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_teacher_desk_laptop",
+      "x": 560,
+      "y": 305,
+      "width": 155,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_projector",
+      "x": 815,
+      "y": 305,
+      "width": 95,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_speakers",
+      "x": 945,
+      "y": 305,
+      "width": 80,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_microphone_stand",
+      "x": 1070,
+      "y": 305,
+      "width": 70,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_pointer",
+      "x": 1160,
+      "y": 305,
+      "width": 70,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_light_fixture",
+      "x": 1265,
+      "y": 305,
+      "width": 150,
+      "height": 160,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_av_rack",
+      "x": 920,
+      "y": 395,
+      "width": 85,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_floor_mic",
+      "x": 1025,
+      "y": 395,
+      "width": 55,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_notice_board",
+      "x": 1160,
+      "y": 395,
+      "width": 135,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_clock",
+      "x": 1325,
+      "y": 395,
+      "width": 75,
+      "height": 130,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_single_1",
+      "x": 30,
+      "y": 505,
+      "width": 95,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_single_2",
+      "x": 150,
+      "y": 505,
+      "width": 100,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_long_1",
+      "x": 285,
+      "y": 505,
+      "width": 185,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_long_2",
+      "x": 515,
+      "y": 505,
+      "width": 230,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_stairs_lower",
+      "x": 780,
+      "y": 505,
+      "width": 110,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_seat_row_4",
+      "x": 900,
+      "y": 505,
+      "width": 210,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_seat_row_6",
+      "x": 1140,
+      "y": 505,
+      "width": 320,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_office",
+      "x": 45,
+      "y": 600,
+      "width": 70,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_single_3",
+      "x": 155,
+      "y": 600,
+      "width": 100,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_long_3",
+      "x": 285,
+      "y": 600,
+      "width": 185,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_desk_long_4",
+      "x": 510,
+      "y": 600,
+      "width": 240,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_seat_row_4_2",
+      "x": 900,
+      "y": 600,
+      "width": 210,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_seat_row_6_2",
+      "x": 1140,
+      "y": 600,
+      "width": 320,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_office_2",
+      "x": 45,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_1",
+      "x": 165,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_2",
+      "x": 300,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_3",
+      "x": 395,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_group_1",
+      "x": 525,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_group_2",
+      "x": 610,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_chair_group_3",
+      "x": 695,
+      "y": 695,
+      "width": 70,
+      "height": 85,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_bookshelf",
+      "x": 35,
+      "y": 790,
+      "width": 180,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_coat_rack",
+      "x": 220,
+      "y": 790,
+      "width": 55,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_recycle_bin",
+      "x": 300,
+      "y": 790,
+      "width": 80,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_trash_brown",
+      "x": 385,
+      "y": 790,
+      "width": 55,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_trash_gray_1",
+      "x": 455,
+      "y": 790,
+      "width": 55,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_trash_gray_2",
+      "x": 520,
+      "y": 790,
+      "width": 55,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_control",
+      "x": 610,
+      "y": 790,
+      "width": 55,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_camera",
+      "x": 715,
+      "y": 790,
+      "width": 90,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_panel",
+      "x": 825,
+      "y": 790,
+      "width": 60,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_plant_1",
+      "x": 915,
+      "y": 790,
+      "width": 60,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_plant_2",
+      "x": 995,
+      "y": 790,
+      "width": 70,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_plant_3",
+      "x": 1085,
+      "y": 790,
+      "width": 60,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_plant_4",
+      "x": 1160,
+      "y": 790,
+      "width": 60,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_picture",
+      "x": 1245,
+      "y": 790,
+      "width": 65,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_radiator",
+      "x": 1335,
+      "y": 790,
+      "width": 130,
+      "height": 135,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_1",
+      "x": 30,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_2",
+      "x": 120,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_3",
+      "x": 210,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_4",
+      "x": 300,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_5",
+      "x": 390,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_6",
+      "x": 480,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_7",
+      "x": 570,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_8",
+      "x": 660,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_9",
+      "x": 750,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_10",
+      "x": 840,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_11",
+      "x": 930,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_12",
+      "x": 1020,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_13",
+      "x": 1110,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_14",
+      "x": 1200,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_wall_base_15",
+      "x": 1290,
+      "y": 950,
+      "width": 80,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_ceiling_light",
+      "x": 1375,
+      "y": 950,
+      "width": 125,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "class_round_light",
+      "x": 1490,
+      "y": 950,
+      "width": 35,
+      "height": 55,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "note": "Generated from a presentation-style asset sheet. Rectangles are practical first-pass crops and may need minor adjustment in Unity Sprite Editor."
+}

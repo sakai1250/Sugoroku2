@@ -1,0 +1,1144 @@
+{
+  "format": "unity-sprite-sheet-v1",
+  "image": "居酒屋の内装アセットシート.png",
+  "coordinateOrigin": "top-left",
+  "pixelsPerUnit": 32,
+  "filterMode": "Point",
+  "compression": "Uncompressed",
+  "sprites": [
+    {
+      "name": "izakaya_floor_vertical",
+      "x": 15,
+      "y": 15,
+      "width": 125,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_floor_horizontal",
+      "x": 150,
+      "y": 15,
+      "width": 130,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_tatami",
+      "x": 300,
+      "y": 15,
+      "width": 135,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wall_narrow",
+      "x": 450,
+      "y": 15,
+      "width": 75,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wood_column",
+      "x": 525,
+      "y": 15,
+      "width": 65,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wall_wide_1",
+      "x": 600,
+      "y": 15,
+      "width": 225,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wall_wide_2",
+      "x": 835,
+      "y": 15,
+      "width": 225,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wall_narrow_2",
+      "x": 1090,
+      "y": 15,
+      "width": 85,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_noren_blue",
+      "x": 1190,
+      "y": 15,
+      "width": 330,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_floor_plank_1",
+      "x": 15,
+      "y": 140,
+      "width": 125,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_floor_plank_2",
+      "x": 150,
+      "y": 140,
+      "width": 280,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_shelf_empty",
+      "x": 445,
+      "y": 140,
+      "width": 180,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sliding_door_1",
+      "x": 620,
+      "y": 140,
+      "width": 145,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sliding_door_2",
+      "x": 780,
+      "y": 140,
+      "width": 115,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_cabinet_door",
+      "x": 905,
+      "y": 140,
+      "width": 130,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_lattice_1",
+      "x": 1050,
+      "y": 140,
+      "width": 100,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_lattice_2",
+      "x": 1160,
+      "y": 140,
+      "width": 105,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_lattice_large",
+      "x": 1275,
+      "y": 140,
+      "width": 165,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wall_lamp",
+      "x": 1450,
+      "y": 140,
+      "width": 55,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_counter_short",
+      "x": 15,
+      "y": 265,
+      "width": 315,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_counter_end",
+      "x": 340,
+      "y": 265,
+      "width": 70,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_counter_long",
+      "x": 430,
+      "y": 265,
+      "width": 365,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_counter_corner",
+      "x": 805,
+      "y": 265,
+      "width": 265,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_menu_board_1",
+      "x": 1085,
+      "y": 265,
+      "width": 100,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_menu_board_2",
+      "x": 1190,
+      "y": 265,
+      "width": 100,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_menu_board_3",
+      "x": 1295,
+      "y": 265,
+      "width": 100,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_wall_panel",
+      "x": 1400,
+      "y": 265,
+      "width": 115,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_table_chairs_1",
+      "x": 15,
+      "y": 385,
+      "width": 210,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_table_chairs_2",
+      "x": 235,
+      "y": 385,
+      "width": 220,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_booth_1",
+      "x": 470,
+      "y": 385,
+      "width": 165,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_booth_2",
+      "x": 650,
+      "y": 385,
+      "width": 165,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_tatami_table",
+      "x": 840,
+      "y": 385,
+      "width": 220,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_lantern_red",
+      "x": 1080,
+      "y": 385,
+      "width": 50,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_lantern_white",
+      "x": 1135,
+      "y": 385,
+      "width": 50,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_lantern_orange",
+      "x": 1190,
+      "y": 385,
+      "width": 50,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bottle_white",
+      "x": 1245,
+      "y": 385,
+      "width": 55,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bottle_1",
+      "x": 1300,
+      "y": 385,
+      "width": 45,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bottle_2",
+      "x": 1345,
+      "y": 385,
+      "width": 45,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bottle_3",
+      "x": 1390,
+      "y": 385,
+      "width": 45,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bottle_4",
+      "x": 1435,
+      "y": 385,
+      "width": 45,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bottle_5",
+      "x": 1480,
+      "y": 385,
+      "width": 45,
+      "height": 170,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plate_white",
+      "x": 15,
+      "y": 550,
+      "width": 60,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plate_blue",
+      "x": 80,
+      "y": 550,
+      "width": 60,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bowl_black",
+      "x": 145,
+      "y": 550,
+      "width": 60,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plate_rect",
+      "x": 210,
+      "y": 550,
+      "width": 60,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sauce_dish_1",
+      "x": 275,
+      "y": 550,
+      "width": 55,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sauce_dish_2",
+      "x": 335,
+      "y": 550,
+      "width": 55,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_tray",
+      "x": 395,
+      "y": 550,
+      "width": 55,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_chopsticks",
+      "x": 455,
+      "y": 550,
+      "width": 70,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sauce_dish_3",
+      "x": 530,
+      "y": 550,
+      "width": 45,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sauce_dish_4",
+      "x": 580,
+      "y": 550,
+      "width": 45,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_chopsticks_pair",
+      "x": 635,
+      "y": 550,
+      "width": 85,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_cash_register",
+      "x": 735,
+      "y": 550,
+      "width": 70,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_fridge_small",
+      "x": 825,
+      "y": 550,
+      "width": 95,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_fridge_large",
+      "x": 925,
+      "y": 550,
+      "width": 120,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sink",
+      "x": 1055,
+      "y": 550,
+      "width": 115,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_kitchen_shelf",
+      "x": 1180,
+      "y": 550,
+      "width": 335,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_tray_round_1",
+      "x": 15,
+      "y": 655,
+      "width": 85,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_tray_round_2",
+      "x": 105,
+      "y": 655,
+      "width": 85,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_condiment_jar",
+      "x": 205,
+      "y": 655,
+      "width": 50,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_chopstick_holder",
+      "x": 260,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_spice_jar",
+      "x": 310,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_skewer_1",
+      "x": 360,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_skewer_2",
+      "x": 405,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_skewer_3",
+      "x": 450,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_skewer_4",
+      "x": 495,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_skewer_5",
+      "x": 540,
+      "y": 655,
+      "width": 45,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_grilled_fish",
+      "x": 590,
+      "y": 655,
+      "width": 105,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_edamame",
+      "x": 705,
+      "y": 655,
+      "width": 95,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_pos_terminal",
+      "x": 810,
+      "y": 655,
+      "width": 80,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_fridge_1",
+      "x": 900,
+      "y": 655,
+      "width": 95,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_fridge_2",
+      "x": 1000,
+      "y": 655,
+      "width": 120,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_sink_2",
+      "x": 1130,
+      "y": 655,
+      "width": 120,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_storage_rack",
+      "x": 1270,
+      "y": 655,
+      "width": 245,
+      "height": 100,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plant_1",
+      "x": 15,
+      "y": 750,
+      "width": 60,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plant_2",
+      "x": 80,
+      "y": 750,
+      "width": 70,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plant_3",
+      "x": 155,
+      "y": 750,
+      "width": 70,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_bonsai",
+      "x": 230,
+      "y": 750,
+      "width": 70,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plant_4",
+      "x": 305,
+      "y": 750,
+      "width": 70,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_plant_5",
+      "x": 380,
+      "y": 750,
+      "width": 70,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_grill",
+      "x": 470,
+      "y": 750,
+      "width": 130,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_cabinet_counter",
+      "x": 605,
+      "y": 750,
+      "width": 170,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_pots_shelf",
+      "x": 790,
+      "y": 750,
+      "width": 150,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_crate_red",
+      "x": 955,
+      "y": 750,
+      "width": 100,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_crate_yellow",
+      "x": 1060,
+      "y": 750,
+      "width": 100,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_keg",
+      "x": 1165,
+      "y": 750,
+      "width": 65,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_locker",
+      "x": 1240,
+      "y": 750,
+      "width": 90,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_shoe_shelf",
+      "x": 1335,
+      "y": 750,
+      "width": 180,
+      "height": 105,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_manekineko",
+      "x": 15,
+      "y": 880,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_daruma",
+      "x": 90,
+      "y": 880,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_tanuki",
+      "x": 165,
+      "y": 880,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_vase_small",
+      "x": 245,
+      "y": 880,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_vase_tall",
+      "x": 305,
+      "y": 880,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_scroll",
+      "x": 370,
+      "y": 880,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_coat_hangers",
+      "x": 445,
+      "y": 880,
+      "width": 270,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_umbrella_stand",
+      "x": 730,
+      "y": 880,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_floor_mat",
+      "x": 820,
+      "y": 880,
+      "width": 155,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_trash_black",
+      "x": 995,
+      "y": 880,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_trash_white",
+      "x": 1060,
+      "y": 880,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_trash_gray",
+      "x": 1125,
+      "y": 880,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_trash_green",
+      "x": 1190,
+      "y": 880,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_trash_blue",
+      "x": 1255,
+      "y": 880,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "izakaya_floor_lamp",
+      "x": 1390,
+      "y": 880,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "note": "Generated from a presentation-style asset sheet. Rectangles are practical first-pass crops and may need minor adjustment in Unity Sprite Editor."
+}

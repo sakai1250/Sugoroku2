@@ -1,0 +1,1232 @@
+{
+  "format": "unity-sprite-sheet-v1",
+  "image": "会議ホールのピクセルアート素材.png",
+  "coordinateOrigin": "top-left",
+  "pixelsPerUnit": 32,
+  "filterMode": "Point",
+  "compression": "Uncompressed",
+  "sprites": [
+    {
+      "name": "hall_wall_plain_wide",
+      "x": 18,
+      "y": 18,
+      "width": 205,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_plain",
+      "x": 225,
+      "y": 18,
+      "width": 130,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_double_door",
+      "x": 358,
+      "y": 18,
+      "width": 145,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_glass_door",
+      "x": 510,
+      "y": 18,
+      "width": 145,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_opening",
+      "x": 658,
+      "y": 18,
+      "width": 130,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_door",
+      "x": 790,
+      "y": 18,
+      "width": 150,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_narrow_opening",
+      "x": 944,
+      "y": 18,
+      "width": 95,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_window",
+      "x": 1045,
+      "y": 18,
+      "width": 115,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_panel",
+      "x": 1172,
+      "y": 18,
+      "width": 65,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_wall_large_window",
+      "x": 1247,
+      "y": 18,
+      "width": 275,
+      "height": 115,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_red",
+      "x": 18,
+      "y": 140,
+      "width": 108,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_gray",
+      "x": 125,
+      "y": 140,
+      "width": 108,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_wood",
+      "x": 233,
+      "y": 140,
+      "width": 108,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_dark",
+      "x": 342,
+      "y": 140,
+      "width": 108,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_straight_1",
+      "x": 462,
+      "y": 140,
+      "width": 70,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_straight_2",
+      "x": 538,
+      "y": 140,
+      "width": 70,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_straight_3",
+      "x": 613,
+      "y": 140,
+      "width": 70,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_straight_4",
+      "x": 687,
+      "y": 140,
+      "width": 78,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_curve_left",
+      "x": 773,
+      "y": 140,
+      "width": 100,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_curve_right",
+      "x": 868,
+      "y": 140,
+      "width": 70,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_stage_left",
+      "x": 946,
+      "y": 140,
+      "width": 260,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_stage_center",
+      "x": 1213,
+      "y": 140,
+      "width": 305,
+      "height": 120,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_projection_screen",
+      "x": 17,
+      "y": 273,
+      "width": 320,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_podium_small",
+      "x": 345,
+      "y": 273,
+      "width": 45,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_av_stand",
+      "x": 395,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_podium_mic",
+      "x": 455,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_lectern_modern",
+      "x": 520,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_control_desk",
+      "x": 580,
+      "y": 273,
+      "width": 125,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_speaker_1",
+      "x": 720,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_speaker_2",
+      "x": 780,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_speaker_3",
+      "x": 840,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_floor_speaker_4",
+      "x": 900,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_tall_speaker",
+      "x": 960,
+      "y": 273,
+      "width": 45,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_stage_steps",
+      "x": 1025,
+      "y": 273,
+      "width": 165,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_planter_long",
+      "x": 1205,
+      "y": 273,
+      "width": 75,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_1",
+      "x": 1290,
+      "y": 273,
+      "width": 45,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_2",
+      "x": 1340,
+      "y": 273,
+      "width": 45,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_3",
+      "x": 1390,
+      "y": 273,
+      "width": 45,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_4",
+      "x": 1450,
+      "y": 273,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_red_seats_row_long",
+      "x": 15,
+      "y": 405,
+      "width": 335,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_red_seats_row_short",
+      "x": 360,
+      "y": 405,
+      "width": 235,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_red_seats_curve",
+      "x": 610,
+      "y": 405,
+      "width": 250,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_red_seats_row_long_2",
+      "x": 15,
+      "y": 475,
+      "width": 335,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_red_seats_row_short_2",
+      "x": 360,
+      "y": 475,
+      "width": 235,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_red_seats_curve_2",
+      "x": 610,
+      "y": 475,
+      "width": 250,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_light_single",
+      "x": 885,
+      "y": 475,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_light_rig_3",
+      "x": 945,
+      "y": 475,
+      "width": 200,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_light_rig_1",
+      "x": 1085,
+      "y": 475,
+      "width": 70,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_truss_vertical",
+      "x": 1170,
+      "y": 475,
+      "width": 35,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_truss_horizontal",
+      "x": 1215,
+      "y": 475,
+      "width": 180,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_truss_joint_1",
+      "x": 1400,
+      "y": 475,
+      "width": 35,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_truss_joint_2",
+      "x": 1450,
+      "y": 475,
+      "width": 35,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_blue_seats_row_long",
+      "x": 15,
+      "y": 535,
+      "width": 335,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_blue_seats_row_short",
+      "x": 360,
+      "y": 535,
+      "width": 235,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_black_seats_curve",
+      "x": 610,
+      "y": 535,
+      "width": 250,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_end_1",
+      "x": 885,
+      "y": 535,
+      "width": 60,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_runner",
+      "x": 945,
+      "y": 535,
+      "width": 205,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_end_2",
+      "x": 1155,
+      "y": 535,
+      "width": 60,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_carpet_large",
+      "x": 1225,
+      "y": 535,
+      "width": 270,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_blue_seats_row_long_2",
+      "x": 15,
+      "y": 595,
+      "width": 335,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_blue_seats_row_short_2",
+      "x": 360,
+      "y": 595,
+      "width": 235,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_black_seats_curve_2",
+      "x": 610,
+      "y": 595,
+      "width": 250,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_poster_board_1",
+      "x": 890,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_poster_board_2",
+      "x": 945,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_poster_board_3",
+      "x": 1000,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_poster_board_4",
+      "x": 1055,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_poster_board_5",
+      "x": 1110,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_banner_blue",
+      "x": 1165,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_banner_purple",
+      "x": 1225,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_banner_green",
+      "x": 1285,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_banner_orange",
+      "x": 1345,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_banner_red",
+      "x": 1405,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_banner_white",
+      "x": 1465,
+      "y": 595,
+      "width": 55,
+      "height": 70,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_stairs_wide",
+      "x": 15,
+      "y": 675,
+      "width": 120,
+      "height": 90,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_stairs_narrow",
+      "x": 140,
+      "y": 675,
+      "width": 70,
+      "height": 90,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_stairs_railing",
+      "x": 220,
+      "y": 675,
+      "width": 90,
+      "height": 90,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_registration_desk_1",
+      "x": 330,
+      "y": 675,
+      "width": 225,
+      "height": 90,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_registration_desk_2",
+      "x": 565,
+      "y": 675,
+      "width": 225,
+      "height": 90,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_registration_desk_curve",
+      "x": 770,
+      "y": 675,
+      "width": 110,
+      "height": 90,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_rope_barrier_1",
+      "x": 15,
+      "y": 760,
+      "width": 135,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_rope_barrier_2",
+      "x": 155,
+      "y": 760,
+      "width": 150,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_rope_barrier_3",
+      "x": 320,
+      "y": 760,
+      "width": 245,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_posts_set",
+      "x": 615,
+      "y": 760,
+      "width": 185,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_sign_stand_1",
+      "x": 820,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_sign_stand_2",
+      "x": 875,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_round",
+      "x": 930,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_recycle_bin",
+      "x": 995,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_covered",
+      "x": 1055,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_tall_1",
+      "x": 1115,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_tall_2",
+      "x": 1175,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_tall_3",
+      "x": 1235,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_orange",
+      "x": 1295,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_blue",
+      "x": 1355,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_trash_green",
+      "x": 1415,
+      "y": 760,
+      "width": 55,
+      "height": 95,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_sofa_2seat",
+      "x": 15,
+      "y": 865,
+      "width": 125,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_sofa_table",
+      "x": 145,
+      "y": 865,
+      "width": 120,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_chair_single",
+      "x": 265,
+      "y": 865,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_sofa_2seat_2",
+      "x": 325,
+      "y": 865,
+      "width": 120,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_chair_single_2",
+      "x": 445,
+      "y": 865,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_round_table_white",
+      "x": 495,
+      "y": 865,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_round_table_black",
+      "x": 555,
+      "y": 865,
+      "width": 55,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_5",
+      "x": 625,
+      "y": 865,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_6",
+      "x": 685,
+      "y": 865,
+      "width": 65,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_7",
+      "x": 750,
+      "y": 865,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_plant_8",
+      "x": 820,
+      "y": 865,
+      "width": 60,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_camera_1",
+      "x": 980,
+      "y": 865,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_camera_2",
+      "x": 1060,
+      "y": 865,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_camera_3",
+      "x": 1140,
+      "y": 865,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_equipment_cart",
+      "x": 1230,
+      "y": 865,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_av_desk",
+      "x": 1320,
+      "y": 865,
+      "width": 100,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "name": "hall_flower_arrangement",
+      "x": 1435,
+      "y": 865,
+      "width": 70,
+      "height": 125,
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ],
+  "note": "Generated from a presentation-style asset sheet. Rectangles are practical first-pass crops and may need minor adjustment in Unity Sprite Editor."
+}

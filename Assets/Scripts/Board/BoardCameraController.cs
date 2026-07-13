@@ -298,11 +298,21 @@ namespace Sugoroku.Board
 
             var bounds = BoardVisualUtility.CalculateWaypointBounds(waypoints, _padding);
             _camera.orthographic = true;
-            _camera.transform.position = new Vector3(bounds.center.x, bounds.center.y, _cameraZ);
 
-            float halfHeight = Mathf.Max(bounds.extents.y, 4f);
-            float halfWidth  = Mathf.Max(bounds.extents.x / Mathf.Max(_camera.aspect, 0.1f), 4f);
-            _camera.orthographicSize = Mathf.Max(halfHeight, halfWidth);
+            // 盤面を HUD セーフエリア（左パネル・上下バーを除いた中央領域）内へ収める。
+            var safe = Sugoroku.UI.UiSafeLayout.BoardViewportRect;
+            float aspect = Mathf.Max(_camera.aspect, 0.1f);
+            float sizeForHeight = bounds.extents.y / Mathf.Max(safe.height, 0.1f);
+            float sizeForWidth  = bounds.extents.x / (aspect * Mathf.Max(safe.width, 0.1f));
+            _camera.orthographicSize = Mathf.Max(Mathf.Max(sizeForHeight, sizeForWidth), 4f);
+
+            float size = _camera.orthographicSize;
+            float safeCenterX = safe.x + safe.width * 0.5f;
+            float safeCenterY = safe.y + safe.height * 0.5f;
+            float offX = (safeCenterX - 0.5f) * 2f * size * aspect;
+            float offY = (safeCenterY - 0.5f) * 2f * size;
+            _camera.transform.position = new Vector3(bounds.center.x - offX, bounds.center.y - offY, _cameraZ);
+
             _boardOrthoSize = _camera.orthographicSize;
             _boardCenter    = bounds.center;
             _framedPosition  = _camera.transform.position;

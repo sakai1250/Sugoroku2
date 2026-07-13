@@ -17,8 +17,9 @@ namespace Sugoroku.Board
         public const float CardUiWidth  = 240f;
         public const float CardUiHeight = 180f;
 
-        public static float RecommendedSpacingX => CardWorldWidth + 0.6f;
-        public static float RecommendedSpacingY => CardWorldHeight + 0.6f;
+        // カード間に接続線が見える隙間を空ける（敷き詰めず、経路が分かるようにする）。
+        public static float RecommendedSpacingX => CardWorldWidth + 0.85f;
+        public static float RecommendedSpacingY => CardWorldHeight + 0.85f;
 
         public static Waypoint CreateRuntimeInstance(Transform parent, string name)
         {

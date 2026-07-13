@@ -110,6 +110,11 @@ namespace Sugoroku.Board
         private Color   _panelColor  = new(0.42f, 0.46f, 0.56f, 0.94f);
         private Color   _accentColor = new(0.58f, 0.62f, 0.72f, 1f);
         private bool    _massArtActive;
+        private bool    _branchRouteStyle;
+
+        // 分岐ルート: event-MASU アートを残したまま薄い水色を重ねる（ルート別の絵で区別可能）。
+        private static readonly Color BranchArtTint  = new(0.74f, 0.87f, 1f, 1f);
+        private static readonly Color BranchArtFrame = new(0.12f, 0.19f, 0.28f, 1f);
 
         private void Awake()
         {
@@ -126,6 +131,14 @@ namespace Sugoroku.Board
             _hoverAmount = 0f;
             _clickPunch = 0f;
             ResetMotionTransform();
+        }
+
+        /// <summary>分岐ルート（分岐点・両レーン）を参照画像に合わせて水色のソリッドカードにする。</summary>
+        public void SetBranchRouteStyle(bool on)
+        {
+            if (_branchRouteStyle == on) return;
+            _branchRouteStyle = on;
+            RefreshDisplay();
         }
 
         public void Configure(SquareType type, string boundEventId, string titleFallback)
@@ -175,6 +188,11 @@ namespace Sugoroku.Board
             var accent = squareType == SquareType.Branch
                 ? EventTagColors.GetSquareTypePanelColor(SquareType.Branch)
                 : EventTagColors.GetBorderColor(ev.Tags);
+            if (_branchRouteStyle)
+            {
+                panel  = EventTagColors.BranchRouteWater;
+                accent = EventTagColors.BranchRouteAccent;
+            }
             if (background != null)
                 background.color = panel;
             if (border != null)
@@ -217,12 +235,17 @@ namespace Sugoroku.Board
                 markerText.text = Waypoint.GetTypeShortLabel(type);
 
             var panel = EventTagColors.GetSquareTypePanelColor(type);
-            if (background != null) background.color = panel;
             var accent = new Color(
                 Mathf.Min(panel.r * 1.2f, 1f),
                 Mathf.Min(panel.g * 1.2f, 1f),
                 Mathf.Min(panel.b * 1.2f, 1f),
                 1f);
+            if (_branchRouteStyle)
+            {
+                panel  = EventTagColors.BranchRouteWater;
+                accent = EventTagColors.BranchRouteAccent;
+            }
+            if (background != null) background.color = panel;
             if (border != null)
                 border.color = accent;
             ApplyCardDecoration(panel, accent);
@@ -252,8 +275,18 @@ namespace Sugoroku.Board
             MassTextCardArtLayout.ApplySprite(massArtImage, sprite);
             SetMassArtPresentation(true);
 
-            if (background != null)
-                background.color = new Color(0.06f, 0.07f, 0.09f, 1f);
+            // 分岐ルートは event-MASU アートを残し、薄い水色を重ねて「分岐」と分かるようにする。
+            // 研究室ルート＝プレゼン/研究の絵、バイトルート＝接客の絵で、ルートの区別もつく。
+            if (_branchRouteStyle)
+            {
+                massArtImage.color = BranchArtTint;
+                if (background != null) background.color = BranchArtFrame;
+            }
+            else
+            {
+                massArtImage.color = Color.white;
+                if (background != null) background.color = new Color(0.06f, 0.07f, 0.09f, 1f);
+            }
         }
 
         private void SetMassArtPresentation(bool artActive)

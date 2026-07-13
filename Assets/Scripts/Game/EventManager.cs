@@ -129,15 +129,25 @@ namespace Sugoroku.Game
 
             OnEventTriggered?.Invoke(ev, player);
 
+            StartCoroutine(PresentEvent(ev, player, modal, hasListeners));
+        }
+
+        /// <summary>カットイン演出を先に再生してから、イベントモーダル（または直接処理）へ進む。</summary>
+        private IEnumerator PresentEvent(EventMaster ev, PlayerData player, Sugoroku.UI.EventModalUI modal, bool hasListeners)
+        {
+            yield return Sugoroku.UI.EventIntroPresenter.Play(ev, player);
+
             if (modal != null)
             {
                 if (player != null && player.IsCpu)
-                    StartCoroutine(RunCpuEvent(ev, player));
+                    yield return RunCpuEvent(ev, player);
                 else
                     modal.ShowEventFromManager(ev, player);
             }
             else if (!hasListeners)
+            {
                 Sugoroku.UI.EventModalUI.ShowEventDirect(ev, player);
+            }
         }
 
         public IEnumerator ApplyChoiceSequence(PlayerData player, EventChoice choice)

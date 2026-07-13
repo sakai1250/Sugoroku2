@@ -40,7 +40,7 @@ namespace Sugoroku.Editor
                 AssignTmpFrom(so, "_virtueText", bar.Find("VirtueText"));
             }
             AssignTmp(so, "_playerNameText", "PlayerNameText", hud.transform);
-            AssignTmp(so, "_turnStateText", "TurnStateText", hud.transform);
+            AssignTmp(so, "_turnStateText", "HudText", hud.transform);
             AssignTmp(so, "_goalDistanceText", "GoalDistanceText", hud.transform);
             AssignTmp(so, "_tuitionDistanceText", "TuitionDistanceText", hud.transform);
             AssignTmp(so, "_skipTurnsText", "SkipTurnsText", hud.transform);

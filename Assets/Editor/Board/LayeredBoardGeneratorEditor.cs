@@ -110,13 +110,6 @@ namespace Sugoroku.Editor.Board
                 }
             }
 
-            var spacing = so.FindProperty("_cellSpacing");
-            if (spacing != null && spacing.floatValue < 2.5f)
-            {
-                spacing.floatValue = 3f;
-                so.ApplyModifiedPropertiesWithoutUndo();
-            }
-
             var dim = so.FindProperty("_dimBackgroundArt");
             if (dim != null && !dim.boolValue)
             {

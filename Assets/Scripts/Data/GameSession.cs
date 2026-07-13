@@ -35,7 +35,7 @@ namespace Sugoroku.Data
         public static void LoadSettings()
         {
             BoardCellCount = UnityEngine.PlayerPrefs.GetInt(PrefBoardCells, (int)BoardLengthOption.Standard);
-            if (BoardCellCount != 16 && BoardCellCount != 20 && BoardCellCount != 24 && BoardCellCount != 40)
+            if (BoardCellCount != 16 && BoardCellCount != 24 && BoardCellCount != 28 && BoardCellCount != 40)
                 BoardCellCount = (int)BoardLengthOption.Standard;
 
             int diff = UnityEngine.PlayerPrefs.GetInt(PrefDifficulty, (int)GameDifficulty.Normal);

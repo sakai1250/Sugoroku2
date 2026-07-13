@@ -86,9 +86,15 @@ namespace Sugoroku.UI
                 hudRt.offsetMin = hudRt.offsetMax = Vector2.zero;
             }
 
+            // CharacterTypeText はコード管理外のシーン置き去りラベルで、プレイヤー名と
+            // 内容が重複したまま盤面中央に浮く。左パネルの PlayerNameText が同じ情報を
+            // 表示するため非表示にする。
+            var strayType = FindDeep(canvas, "CharacterTypeText");
+            if (strayType != null) strayType.gameObject.SetActive(false);
+
             foreach (var name in new[]
             {
-                "PlayerNameText", "TurnStateText", "GoalDistanceText",
+                "PlayerNameText", "HudText", "GoalDistanceText",
                 "TuitionDistanceText", "SkipTurnsText", "IgnoreEventsText", "MentalSlider"
             })
             {
@@ -98,7 +104,7 @@ namespace Sugoroku.UI
 
             float y = -14f;
             y = PlaceInfoText(panel.transform, "PlayerNameText",  y, 40f, HudTextStyle.PlayerNameSize, true);
-            y = PlaceInfoText(panel.transform, "TurnStateText",   y, 42f, HudTextStyle.JuiceStatusFontSize, true);
+            y = PlaceInfoText(panel.transform, "HudText",         y, 42f, HudTextStyle.JuiceStatusFontSize, true);
             y = PlaceInfoText(panel.transform, "MentalSlider",    y, 22f, 0f, false, new Vector2(314f, 18f));
             y = PlaceInfoText(panel.transform, "GoalDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
             y = PlaceInfoText(panel.transform, "TuitionDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
@@ -139,7 +145,7 @@ namespace Sugoroku.UI
             if (name != null)
                 HudTextStyle.ApplyReadable(name, HudTextStyle.PlayerNameSize, new Color(1f, 0.95f, 0.7f), true);
 
-            var turn = panel.Find("TurnStateText")?.GetComponent<TextMeshProUGUI>();
+            var turn = panel.Find("HudText")?.GetComponent<TextMeshProUGUI>();
             if (turn != null)
                 HudTextStyle.ApplyReadable(turn, HudTextStyle.JuiceStatusFontSize, new Color(0.55f, 1f, 0.75f), true);
 
@@ -493,6 +499,17 @@ namespace Sugoroku.UI
             rt.sizeDelta = new Vector2(150f, 60f);
             var le = child.GetComponent<LayoutElement>() ?? child.gameObject.AddComponent<LayoutElement>();
             le.ignoreLayout = true;
+
+            // 「気分転換ドリンク ×0」のような長いラベルが 2 行に折り返さないよう、
+            // 1 行維持のまま幅に収まるフォントへ自動縮小する。
+            var label = child.Find("Label")?.GetComponent<TextMeshProUGUI>();
+            if (label != null)
+            {
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 11f;
+                if (label.fontSizeMax < label.fontSize) label.fontSizeMax = label.fontSize;
+            }
         }
 
         private static void LayoutDiceIcon(Transform dice)

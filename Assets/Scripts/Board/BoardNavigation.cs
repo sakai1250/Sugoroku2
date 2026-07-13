@@ -6,7 +6,7 @@ namespace Sugoroku.Board
     /// <summary>論理マス位置と物理ウェイポイント（分岐レーン）の対応。</summary>
     public static class BoardNavigation
     {
-        /// <summary>フォークの行の直下に確保する分岐レーン専用帯の本数（研究室・バイトの2本）。</summary>
+        /// <summary>フォークの行の直後に確保する分岐レーン専用帯の本数（研究室・バイトの2本）。</summary>
         public const int BranchBandCount = 2;
 
         public static int LogicalCellCount => BoardLayoutGenerator.Current.CellCount;
@@ -84,8 +84,8 @@ namespace Sugoroku.Board
             var forkPos = SnakeBoardLayout.GetGridWorldPosition(d.ForkIndex, spacingX, spacingY);
 
             // フォークの行が進んでいた向きへ、専用帯（研究室=1帯目、バイト=2帯目）を
-            // 本線グリッドの下に確保して等間隔に配置する。本線とは重ならない。
-            float direction = (d.ForkIndex / d.Columns) % 2 == 0 ? 1f : -1f;
+            // フォークの行の下に確保して等間隔に配置する。本線とは重ならない。
+            float direction = (d.ForkIndex / SnakeBoardLayout.Columns) % 2 == 0 ? 1f : -1f;
             int step = logical - d.BranchRangeStart;
             int band = branch == BranchRoute.Lab ? 1 : 2;
 

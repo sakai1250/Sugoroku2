@@ -36,6 +36,11 @@ namespace Sugoroku.Board
                 1f);
         }
 
+        /// <summary>分岐ルート（分岐点・両レーン）共通の水色パネル。</summary>
+        public static readonly Color BranchRouteWater  = new(0.42f, 0.70f, 0.87f, 0.96f);
+        /// <summary>分岐ルートの縁・装飾用の明るい水色。</summary>
+        public static readonly Color BranchRouteAccent = new(0.64f, 0.85f, 0.96f, 1f);
+
         public static Color GetSquareTypePanelColor(Sugoroku.Data.SquareType type) => type switch
         {
             Sugoroku.Data.SquareType.Start   => new Color(0.30f, 0.66f, 0.44f, 0.94f),
@@ -47,7 +52,7 @@ namespace Sugoroku.Board
             Sugoroku.Data.SquareType.PartTime => new Color(0.68f, 0.56f, 0.22f, 0.94f),
             Sugoroku.Data.SquareType.Bonus    => new Color(0.76f, 0.58f, 0.20f, 0.94f),
             Sugoroku.Data.SquareType.Penalty => new Color(0.68f, 0.36f, 0.24f, 0.94f),
-            Sugoroku.Data.SquareType.Branch  => new Color(0.36f, 0.70f, 0.42f, 0.94f),
+            Sugoroku.Data.SquareType.Branch  => BranchRouteWater,
             _                              => new Color(0.44f, 0.48f, 0.58f, 0.92f),
         };
 

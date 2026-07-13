@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Sugoroku.Data;
 
 namespace Sugoroku.Board
@@ -17,8 +16,6 @@ namespace Sugoroku.Board
 
         [Header("生成")]
         [SerializeField] private bool  _generateOnAwake    = true;
-        [FormerlySerializedAs("_tileWorldWidth")]
-        [SerializeField] private float _cellSpacing        = 3f;
         [SerializeField] private bool  _centerRouteOnBoard = true;
         [SerializeField] private bool  _dimBackgroundArt   = true;
         [SerializeField] private bool  _avoidCardOverlap   = true;
@@ -39,8 +36,9 @@ namespace Sugoroku.Board
 
         private Transform _boardRoot;
 
-        private float SpacingX => Mathf.Max(_cellSpacing, MassTextCardPrefabFactory.RecommendedSpacingX);
-        private float SpacingY => Mathf.Max(_cellSpacing, MassTextCardPrefabFactory.RecommendedSpacingY);
+        // カード実寸ベースの密集間隔を使う（レガシーの _cellSpacing には依存しない）。
+        private float SpacingX => MassTextCardPrefabFactory.RecommendedSpacingX;
+        private float SpacingY => MassTextCardPrefabFactory.RecommendedSpacingY;
         private float RouteSpacing => Mathf.Max(SpacingX, SpacingY);
 
         private void Awake()
@@ -78,12 +76,30 @@ namespace Sugoroku.Board
             if (_boardManager != null)
                 _boardManager.SetRoute(route);
             ApplyOverlapAvoidanceToRoute(route);
+            ApplyBranchRouteStyling(route);
             if (_buildRouteConnectors)
                 BuildRouteConnectors(route.transform, route);
 
             var depth = GetComponent<BoardDepthPresentation>();
             if (depth == null) depth = gameObject.AddComponent<BoardDepthPresentation>();
             depth.Rebuild(route);
+
+            var cam = FindFirstObjectByType<BoardCameraController>();
+            cam?.FrameBoard();
+        }
+
+        /// <summary>分岐点・両レーンのカードを水色のソリッド表示にする（参照画像準拠）。</summary>
+        private static void ApplyBranchRouteStyling(WaypointRoute route)
+        {
+            if (route == null) return;
+            for (int p = 0; p < route.Count; p++)
+            {
+                var wp = route.GetWaypoint(p);
+                if (wp == null) continue;
+                bool isBranch = BoardNavigation.GetLane(p) != BranchRoute.None
+                                || wp.Type == SquareType.Branch;
+                if (isBranch) wp.ApplyBranchRouteStyle();
+            }
         }
 
         /// <summary>シーンに手置きされたマスを S字グリッドへ再配置（重なり解消）。</summary>
@@ -141,6 +157,8 @@ namespace Sugoroku.Board
 
             if (_boardManager != null)
                 _boardManager.SetRoute(route);
+
+            ApplyBranchRouteStyling(route);
 
             var cam = FindFirstObjectByType<BoardCameraController>();
             cam?.FrameBoard();
@@ -283,9 +301,10 @@ namespace Sugoroku.Board
 
         private static bool OverlapsAnyCard(Vector3 pos, List<Vector3> placedPositions)
         {
-            const float margin = 0.45f;
-            float minXDistance = MassTextCardPrefabFactory.CardWorldWidth + margin;
-            float minYDistance = MassTextCardPrefabFactory.CardWorldHeight + margin;
+            // 密集グリッドでは隣接カードは 1 セル分だけ離れて接する。真の重なり
+            // （中央がカード実寸の 85% より近い）だけを検出し、格子配置は許容する。
+            float minXDistance = MassTextCardPrefabFactory.CardWorldWidth  * 0.85f;
+            float minYDistance = MassTextCardPrefabFactory.CardWorldHeight * 0.85f;
 
             foreach (var other in placedPositions)
             {
