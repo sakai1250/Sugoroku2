@@ -9,6 +9,11 @@ namespace Sugoroku.Editor
     {
         private static readonly string[] Folders =
         {
+            "Assets/character",
+            "Assets/Resources/character",
+            "Assets/Titles",
+            "Assets/Resources/Titles",
+            "Assets/Resources/event-MASU",
             "Assets/ThirdParty/Kenney/Originalchar",
             "Assets/Resources/ThirdParty/Kenney/Originalchar",
             "Assets/ThirdParty/Kenney/BoardgamePack/Dice",

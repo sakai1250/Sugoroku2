@@ -23,22 +23,24 @@ namespace Sugoroku.Board
 
         [Header("ルート表示")]
         [SerializeField] private bool  _buildRouteConnectors = true;
-        [SerializeField] private float _connectorWidth       = 0.28f;
-        [SerializeField] private Color _connectorColor       = new(0.30f, 0.72f, 0.24f, 0.94f);
-        [SerializeField] private Color _connectorEdgeColor   = new(0.38f, 0.22f, 0.12f, 0.84f);
+        [SerializeField] private float _connectorWidth       = 0.12f;
+        [SerializeField] private Color _connectorColor       = new(0.96f, 0.82f, 0.40f, 0.80f);
+        [SerializeField] private Color _connectorEdgeColor   = new(0.25f, 0.18f, 0.10f, 0.50f);
 
         [Header("プレハブ")]
         [SerializeField] private Waypoint _waypointPrefab;
-        [SerializeField] private bool _preferTextCardPrefab = true;
+        [SerializeField] private bool _preferTextCardPrefab = false;
 
         [Header("参照")]
         [SerializeField] private BoardManager _boardManager;
 
         private Transform _boardRoot;
 
-        // カード実寸ベースの密集間隔を使う（レガシーの _cellSpacing には依存しない）。
-        private float SpacingX => MassTextCardPrefabFactory.RecommendedSpacingX;
-        private float SpacingY => MassTextCardPrefabFactory.RecommendedSpacingY;
+        // イラスト背景に最適化された等間隔S字ピン配置（イラストを遮らないコンパクト配置）
+        public const float PinSpacingX = 1.85f;
+        public const float PinSpacingY = 1.55f;
+        private float SpacingX => PinSpacingX;
+        private float SpacingY => PinSpacingY;
         private float RouteSpacing => Mathf.Max(SpacingX, SpacingY);
 
         private void Awake()
@@ -196,12 +198,16 @@ namespace Sugoroku.Board
 
         private void ResolveWaypointPrefab()
         {
-            if (_waypointPrefab != null) return;
 #if UNITY_EDITOR
+            // イラスト背景の盤面では、円形の Waypoint_Base を最優先
+            var pinPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Waypoint>(WaypointPrefabPath);
+            if (pinPrefab != null)
+            {
+                _waypointPrefab = pinPrefab;
+                return;
+            }
             if (_preferTextCardPrefab)
                 _waypointPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Waypoint>(MassTextCardPrefabPath);
-            if (_waypointPrefab == null)
-                _waypointPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Waypoint>(WaypointPrefabPath);
 #endif
         }
 
@@ -235,6 +241,9 @@ namespace Sugoroku.Board
 
         private Vector3 ResolveCardPosition(Vector3 basePos, int physicalIndex, List<Vector3> placedPositions)
         {
+            if (!_preferTextCardPrefab)
+                return basePos;
+
             // 分岐レーンは専用レイアウトで間隔を確保済み
             if (BoardNavigation.GetLane(physicalIndex) != BranchRoute.None)
                 return basePos;
@@ -252,6 +261,7 @@ namespace Sugoroku.Board
 
         private void ApplyOverlapAvoidanceToRoute(WaypointRoute route)
         {
+            if (!_preferTextCardPrefab) return;
             if (!_avoidCardOverlap || route == null || route.Count < 2) return;
 
             var placedPositions = new List<Vector3>(route.Count);
@@ -332,7 +342,19 @@ namespace Sugoroku.Board
             }
             else
             {
-                wp = MassTextCardPrefabFactory.CreateRuntimeInstance(parent, $"W{physicalIndex:D2}{laneTag}");
+#if UNITY_EDITOR
+                var basePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Waypoint>(WaypointPrefabPath);
+                if (basePrefab != null)
+                {
+                    wp = !Application.isPlaying
+                        ? UnityEditor.PrefabUtility.InstantiatePrefab(basePrefab, parent) as Waypoint
+                        : Instantiate(basePrefab, parent);
+                }
+                else
+#endif
+                {
+                    wp = MassTextCardPrefabFactory.CreateRuntimeInstance(parent, $"W{physicalIndex:D2}{laneTag}");
+                }
             }
 
             wp.transform.position = pos;

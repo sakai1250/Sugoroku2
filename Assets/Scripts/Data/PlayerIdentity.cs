@@ -3,51 +3,27 @@ using UnityEngine;
 
 namespace Sugoroku.Data
 {
-    /// <summary>同一キャラの区別（1P/2P…）と駒の色分け。</summary>
+    /// <summary>同一キャラの区別（1P/2P…）とスロット識別色。</summary>
     public static class PlayerIdentity
     {
         public static readonly Color[] SlotColors =
         {
-            Color.white,
-            new Color(0.45f, 0.85f, 1f),
-            new Color(1f, 0.88f, 0.35f),
-            new Color(1f, 0.55f, 0.82f),
+            new Color(0.95f, 0.32f, 0.32f), // 1P: 赤
+            new Color(0.28f, 0.62f, 0.98f), // 2P: 青
+            new Color(0.32f, 0.82f, 0.42f), // 3P: 緑
+            new Color(0.98f, 0.78f, 0.22f), // 4P: 黄
         };
 
         public static void Apply(PlayerData[] players)
         {
             if (players == null || players.Length == 0) return;
 
-            var groups = new Dictionary<CharacterType, List<PlayerData>>();
-            foreach (var p in players)
-            {
-                if (!groups.TryGetValue(p.Character, out var list))
-                {
-                    list = new List<PlayerData>();
-                    groups[p.Character] = list;
-                }
-                list.Add(p);
-            }
-
-            foreach (var list in groups.Values)
-            {
-                list.Sort((a, b) => a.Index.CompareTo(b.Index));
-                if (list.Count > 1)
-                {
-                    for (int i = 0; i < list.Count; i++)
-                        list[i].Name = $"{i + 1}P";
-                }
-                else
-                {
-                    var p = list[0];
-                    p.Name = p.IsCpu
-                        ? $"CPU（{p.Character.DisplayName()}）"
-                        : p.Character.DisplayName();
-                }
-            }
-
             for (int i = 0; i < players.Length; i++)
-                players[i].PieceTint = SlotColors[i % SlotColors.Length];
+            {
+                var p = players[i];
+                p.Name = $"{p.Index + 1}P";
+                p.PieceTint = SlotColors[i % SlotColors.Length];
+            }
         }
 
         public static string FormatHudLabel(PlayerData player)
@@ -60,7 +36,6 @@ namespace Sugoroku.Data
             if (string.IsNullOrWhiteSpace(name))
                 return typeLabel;
 
-            // Apply() で単独プレイヤー／CPU は既にクラス名を含む
             if (name == typeLabel || name.Contains($"（{typeLabel}）"))
                 return name;
 

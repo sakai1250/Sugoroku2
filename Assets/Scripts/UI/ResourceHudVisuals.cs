@@ -9,13 +9,13 @@ namespace Sugoroku.UI
     /// <summary>screen.md §3.2 — 4大リソース HUD の表記とアイコン色。</summary>
     public static class ResourceHudVisuals
     {
-        public const float TopBarHeight = 90f;
+        public static float TopBarHeight => UiSafeLayout.TopBarHeight;
 
         public static readonly Color MoneyTextColor  = new(1f, 0.92f, 0.45f);
         public static readonly Color IfTextColor     = new(0.55f, 0.85f, 1f);
         public static readonly Color MentalTextColor = new(0.75f, 0.95f, 0.8f);
         public static readonly Color VirtueTextColor  = new(0.82f, 0.65f, 1f);
-        public static readonly Color PinchTextColor   = new(1f, 0.22f, 0.22f, 1f);
+        public static readonly Color PinchTextColor   = new(1f, 0.45f, 0.45f, 1f);
 
         public static readonly Color MoneyIconTint  = new(1f, 0.82f, 0.2f);
         public static readonly Color IfIconTint     = new(0.35f, 0.78f, 1f);

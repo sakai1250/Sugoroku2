@@ -321,7 +321,7 @@ namespace Sugoroku.Board
 
         private void ApplyFauxDepthBank()
         {
-            if (!_useFauxDepthBanking)
+            if (!_useFauxDepthBanking || Sugoroku.Data.GameSession.ReduceMotion)
             {
                 transform.rotation = _baseRotation;
                 _lastCameraPosition = transform.position;

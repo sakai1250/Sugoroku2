@@ -1,5 +1,6 @@
 using UnityEngine;
 using Sugoroku.Data;
+using Sugoroku.UI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -81,13 +82,6 @@ namespace Sugoroku.Board
 
         public void RefreshPresentation()
         {
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                QueueEditorVisualUpdate();
-                return;
-            }
-#endif
             ApplyPresentation();
         }
 
@@ -101,6 +95,8 @@ namespace Sugoroku.Board
             if (_cardView != null) _cardView.SetBranchRouteStyle(true);
         }
 
+        private SpriteRenderer _ringRenderer;
+
         private void ApplyPresentation()
         {
             _cardView = GetComponentInChildren<MassTextCardView>(true);
@@ -109,6 +105,10 @@ namespace Sugoroku.Board
             if (_cardView != null)
             {
                 if (_spriteRenderer != null) _spriteRenderer.enabled = false;
+                var ringTr = transform.Find("WaypointPinRing");
+                if (ringTr != null) ringTr.gameObject.SetActive(false);
+                var labelTr = transform.Find("WaypointPinLabel");
+                if (labelTr != null) labelTr.gameObject.SetActive(false);
                 _cardView.Configure(Type, boundEventId, displayName);
                 return;
             }
@@ -122,48 +122,127 @@ namespace Sugoroku.Board
 
         private void ApplyLegacySpriteVisual()
         {
+            int baseOrder = BoardSortingLayers.WaypointBaseOrder + routeIndex * 4;
+
+            var style = GetVisualStyle(Type);
+            if (_spriteRenderer.sprite == null || _spriteRenderer.sprite != style.sprite)
+                _spriteRenderer.sprite = style.sprite != null ? style.sprite : BoardVisualUtility.GetCircleSprite();
+
+            _spriteRenderer.color = style.color;
+
+            // スプライトのネイティブサイズ（128px / 32PPU = 4.0f units）
+            float nativeSize = _spriteRenderer.sprite != null ? _spriteRenderer.sprite.bounds.size.x : 4.0f;
+            if (nativeSize <= 0.01f) nativeSize = 4.0f;
+
+            // マスの直径: 約 0.92 unit（隣マスとの間に約 0.9 unit の適度な隙間を確保し、イラストを活かす）
+            float desiredDiameter = Mathf.Min(cellSpacing * 0.50f, 0.92f) * (style.sizeRatio / 0.50f);
+            float scale = desiredDiameter / nativeSize;
+            transform.localScale = Vector3.one * scale;
+
+            EnsureRingRenderer(baseOrder);
             BoardVisualUtility.ApplySpriteRenderer(
                 _spriteRenderer,
                 BoardSortingLayers.Board,
-                BoardSortingLayers.WaypointBaseOrder + routeIndex);
+                baseOrder + 1);
 
-            var style = GetVisualStyle(Type);
-            if (_spriteRenderer.sprite != style.sprite)
-                _spriteRenderer.sprite = style.sprite;
+            UpdatePinLabel(baseOrder + 2);
+        }
 
-            _spriteRenderer.color = style.color;
-            transform.localScale = Vector3.one * (cellSpacing * style.sizeRatio);
+        private void EnsureRingRenderer(int baseOrder)
+        {
+            if (_ringRenderer == null)
+            {
+                var ringTr = transform.Find("WaypointPinRing");
+                if (ringTr != null) _ringRenderer = ringTr.GetComponent<SpriteRenderer>();
+                else
+                {
+                    var ringGo = new GameObject("WaypointPinRing");
+                    ringGo.transform.SetParent(transform, false);
+                    ringGo.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+                    ringGo.transform.localScale = Vector3.one * 1.22f;
+                    _ringRenderer = ringGo.AddComponent<SpriteRenderer>();
+                }
+            }
+            if (_ringRenderer != null)
+            {
+                _ringRenderer.gameObject.SetActive(true);
+                _ringRenderer.sprite = BoardVisualUtility.GetCircleSprite();
+                _ringRenderer.color = new Color(1f, 1f, 1f, 0.94f);
+                BoardVisualUtility.ApplySpriteRenderer(_ringRenderer, BoardSortingLayers.Board, baseOrder);
+            }
+        }
+
+        private void UpdatePinLabel(int order)
+        {
+            var labelTr = transform.Find("WaypointPinLabel");
+            TMPro.TextMeshPro tmp = null;
+            if (labelTr != null)
+            {
+                labelTr.gameObject.SetActive(true);
+                tmp = labelTr.GetComponent<TMPro.TextMeshPro>();
+            }
+            else
+            {
+                var labelGo = new GameObject("WaypointPinLabel");
+                labelGo.transform.SetParent(transform, false);
+                labelGo.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+                labelGo.transform.localScale = Vector3.one;
+                tmp = labelGo.AddComponent<TMPro.TextMeshPro>();
+            }
+
+            if (tmp != null)
+            {
+                var font = JapaneseFontProvider.Get();
+                if (font != null) tmp.font = font;
+
+                string text = GetTypeShortLabel(Type);
+                tmp.text = text;
+                tmp.fontStyle = TMPro.FontStyles.Bold;
+                tmp.enableAutoSizing = true;
+                tmp.fontSizeMin = 4f;
+                tmp.fontSizeMax = 8.5f;
+                tmp.alignment = TMPro.TextAlignmentOptions.Center;
+                bool isLightBackground = Type == SquareType.Start || Type == SquareType.Normal ||
+                                         Type == SquareType.Goal  || Type == SquareType.Event  ||
+                                         Type == SquareType.Rest;
+                tmp.color = isLightBackground
+                    ? new Color(0.10f, 0.14f, 0.22f, 0.98f)
+                    : Color.white;
+                tmp.sortingLayerID = SortingLayer.NameToID(BoardSortingLayers.Board);
+                tmp.sortingOrder = order;
+                tmp.rectTransform.sizeDelta = new Vector2(3.5f, 3.5f);
+            }
         }
 
         private static (Sprite sprite, Color color, float sizeRatio) GetVisualStyle(SquareType type) => type switch
         {
-            SquareType.Start => (BoardVisualUtility.GetCircleSprite(), new Color(0.35f, 0.85f, 0.45f), 0.50f),
-            SquareType.Goal => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.82f, 0.15f), 0.55f),
-            SquareType.Normal => (BoardVisualUtility.GetCircleSprite(), new Color(0.82f, 0.82f, 0.84f), 0.42f),
-            SquareType.Event => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.88f, 0.2f), 0.50f),
-            SquareType.Tuition => (BoardVisualUtility.GetSquareSprite(), new Color(0.95f, 0.25f, 0.25f), 0.46f),
-            SquareType.Journal => (BoardVisualUtility.GetCircleSprite(), new Color(0.2f, 0.55f, 1.0f), 0.48f),
-            SquareType.Lecture => (BoardVisualUtility.GetCircleSprite(), new Color(0.45f, 0.75f, 0.9f), 0.44f),
-            SquareType.Rest => (BoardVisualUtility.GetCircleSprite(), new Color(0.45f, 0.9f, 0.55f), 0.44f),
-            SquareType.PartTime => (BoardVisualUtility.GetSquareSprite(), new Color(0.95f, 0.78f, 0.2f), 0.44f),
-            SquareType.Bonus => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.65f, 0.2f), 0.44f),
-            SquareType.Penalty => (BoardVisualUtility.GetSquareSprite(), new Color(0.85f, 0.45f, 0.2f), 0.44f),
-            SquareType.Branch => (BoardVisualUtility.GetSquareSprite(), new Color(0.55f, 0.85f, 0.45f), 0.52f),
-            _ => (BoardVisualUtility.GetCircleSprite(), Color.white, 0.42f),
+            SquareType.Start => (BoardVisualUtility.GetCircleSprite(), new Color(0.28f, 0.82f, 0.40f), 0.52f),
+            SquareType.Goal => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.80f, 0.15f), 0.54f),
+            SquareType.Normal => (BoardVisualUtility.GetCircleSprite(), new Color(0.92f, 0.92f, 0.94f), 0.46f),
+            SquareType.Event => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.86f, 0.22f), 0.48f),
+            SquareType.Tuition => (BoardVisualUtility.GetCircleSprite(), new Color(0.95f, 0.28f, 0.28f), 0.48f),
+            SquareType.Journal => (BoardVisualUtility.GetCircleSprite(), new Color(0.22f, 0.58f, 0.96f), 0.48f),
+            SquareType.Lecture => (BoardVisualUtility.GetCircleSprite(), new Color(0.40f, 0.75f, 0.92f), 0.48f),
+            SquareType.Rest => (BoardVisualUtility.GetCircleSprite(), new Color(0.40f, 0.88f, 0.60f), 0.48f),
+            SquareType.PartTime => (BoardVisualUtility.GetCircleSprite(), new Color(0.98f, 0.72f, 0.22f), 0.48f),
+            SquareType.Bonus => (BoardVisualUtility.GetCircleSprite(), new Color(1.0f, 0.65f, 0.20f), 0.48f),
+            SquareType.Penalty => (BoardVisualUtility.GetCircleSprite(), new Color(0.88f, 0.40f, 0.25f), 0.48f),
+            SquareType.Branch => (BoardVisualUtility.GetCircleSprite(), new Color(0.45f, 0.82f, 0.50f), 0.52f),
+            _ => (BoardVisualUtility.GetCircleSprite(), Color.white, 0.46f),
         };
 
         public static string GetTypeShortLabel(SquareType type) => type switch
         {
-            SquareType.Start   => "ST",
-            SquareType.Goal    => "GL",
-            SquareType.Event   => "EV",
+            SquareType.Start   => "START",
+            SquareType.Goal    => "GOAL",
+            SquareType.Event   => "？",
             SquareType.Tuition => "学費",
             SquareType.Journal => "論文",
             SquareType.Lecture => "ゼミ",
             SquareType.Rest     => "休",
-            SquareType.PartTime => "バ",
-            SquareType.Bonus    => "バ",
-            SquareType.Penalty => "↓",
+            SquareType.PartTime => "バイト",
+            SquareType.Bonus    => "＋",
+            SquareType.Penalty => "−",
             SquareType.Branch  => "分岐",
             _                  => ""
         };
@@ -179,6 +258,7 @@ namespace Sugoroku.Board
             foreach (var tmp in GetComponentsInChildren<TMPro.TextMeshPro>(true))
             {
                 if (tmp.GetComponentInParent<MassTextCardView>() != null) continue;
+                if (tmp.gameObject.name == "WaypointPinLabel") continue;
                 DestroyLabelObject(tmp.gameObject);
             }
         }

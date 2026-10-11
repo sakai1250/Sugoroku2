@@ -15,7 +15,11 @@ namespace Sugoroku.UI
             if (canvas == null) return;
 
             foreach (var btn in canvas.GetComponentsInChildren<Button>(includeInactive))
+            {
+                // 全画面の透明タップ領域はボタン装飾しない（塗られると画面全体が黄色になる）
+                if (btn.name == "TapToStartButton") continue;
                 StyleButton(btn, IsPrimaryButton(btn));
+            }
 
             foreach (var slider in canvas.GetComponentsInChildren<Slider>(includeInactive))
                 StyleSlider(slider);

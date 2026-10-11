@@ -67,6 +67,8 @@ namespace Sugoroku.UI
         public static void Ensure(Transform canvas)
         {
             if (canvas == null) return;
+            // 静的に TitleBackgroundArt が配置されている場合、動的デコレーションは生成不要
+            if (canvas.Find("TitleBackgroundArt") != null) return;
             if (canvas.GetComponentInChildren<TitleSceneDecorations>(true) != null) return;
 
             var go = new GameObject(nameof(TitleSceneDecorations), typeof(RectTransform));
@@ -82,6 +84,13 @@ namespace Sugoroku.UI
 
         private void Build()
         {
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas != null && canvas.transform.Find("TitleBackgroundArt") != null)
+            {
+                // 静的に背景が存在するため動的生成をスキップ
+                return;
+            }
+
             var existing = transform.Find(RootName);
             if (existing != null)
                 Destroy(existing.gameObject);
@@ -92,9 +101,15 @@ namespace Sugoroku.UI
             Stretch(rootRt);
             root.transform.SetAsFirstSibling();
 
-            var canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
                 transform.SetAsFirstSibling();
+
+            var titleSprite = LoadTitle1Sprite();
+            if (titleSprite != null)
+            {
+                CreateTitleBackgroundArt(root.transform, titleSprite);
+                return;
+            }
 
             for (int i = 0; i < MassSpecs.Length; i++)
             {
@@ -113,6 +128,41 @@ namespace Sugoroku.UI
 
             var drift = root.AddComponent<TitleScatterDrift>();
             drift.Configure(root.transform);
+        }
+
+        private static Sprite LoadTitle1Sprite()
+        {
+            var sprite = Resources.Load<Sprite>("Titles/Title1");
+            if (sprite != null) return sprite;
+
+            var tex = Resources.Load<Texture2D>("Titles/Title1");
+            if (tex != null)
+            {
+                return Sprite.Create(
+                    tex,
+                    new Rect(0f, 0f, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f);
+            }
+
+            return null;
+        }
+
+        private static void CreateTitleBackgroundArt(Transform parent, Sprite sprite)
+        {
+            var go = new GameObject("TitleBackgroundArt", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            Stretch(rt);
+
+            var img = go.AddComponent<Image>();
+            img.sprite = sprite;
+            img.color = Color.white;
+            img.raycastTarget = false;
+
+            var fitter = go.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fitter.aspectRatio = sprite.rect.width / Mathf.Max(1f, sprite.rect.height);
         }
 
         private static void CreateMassCard(Transform parent, string name, ScatterSpec spec, Sprite sprite)

@@ -40,11 +40,20 @@ namespace Sugoroku.UI
         private Button[]      _cardButtons;
         private CharacterSelectJuice _juice;
         private bool _confirming;
+        private bool _backConfirmArmed;
+        private Coroutine _backConfirmResetCo;
+        private string _backButtonOriginalLabel;
         private RectTransform _profileMeterGroup;
         private RectTransform _roleBadgeGroup;
         private RectTransform _playerSlotBadge;
         private RectTransform _pagerPips;
         private RectTransform _focusPlaque;
+
+        private Button _dailyModeButton;
+        private Button _helpMenuButton;
+        private Button _achievementsMenuButton;
+        private Button _settingsMenuButton;
+        private CharacterSelectMenuOverlay _menuOverlay;
 
         private void Awake()
         {
@@ -65,6 +74,7 @@ namespace Sugoroku.UI
             _humanSlot = 0;
             _selected  = GameSession.GetHumanCharacter(0);
             _index     = IndexOfCharacter(_selected);
+            EnsureMenuOverlayAndButtons();
             ApplySceneLayout();
             BuildCardButtons();
             WireButtons();
@@ -72,6 +82,19 @@ namespace Sugoroku.UI
             if (canvas != null) KenneyUiStyler.StyleCanvas(canvas);
             ApplyScreenChrome();
             RefreshPanel(playJuice: false);
+            UpdateMenuButtonsState();
+            SetInitialKeyboardFocus();
+        }
+
+        /// <summary>画面表示直後に選択中カードへキーボードフォーカスを置く（WCAG 2.4.3）。</summary>
+        private void SetInitialKeyboardFocus()
+        {
+            var es = EventSystem.current;
+            if (es == null) return;
+            if (_cardButtons == null || _cardButtons.Length == 0) return;
+            var btn = _cardButtons[Mathf.Clamp(_index, 0, _cardButtons.Length - 1)];
+            if (btn != null && btn.interactable)
+                es.SetSelectedGameObject(btn.gameObject);
         }
 
         private void DisableRootRaycastBlocker()
@@ -213,9 +236,15 @@ namespace Sugoroku.UI
             PlaceButton(_nextButton, new Vector2(-60f, -466f), new Vector2(180f, 58f), HudTextStyle.Scale(18f));
             PlaceButton(_confirmButton, new Vector2(530f, -466f), new Vector2(340f, 58f), HudTextStyle.Scale(16f));
 
-            PlaceText(_screenTitle, new Vector2(0f, 480f), new Vector2(760f, 52f), HudTextStyle.Scale(24f),
+            PlaceText(_screenTitle, new Vector2(-120f, 480f), new Vector2(440f, 52f), HudTextStyle.Scale(24f),
                 TextAlignmentOptions.Center);
             PlaceRect(_playerSlotBadge, new Vector2(-790f, 480f), new Vector2(154f, 46f));
+
+            // 右上メニューボタン群（ふちに配置）
+            PlaceButton(_dailyModeButton,        new Vector2(245f, 480f), new Vector2(154f, 44f), HudTextStyle.Scale(14f));
+            PlaceButton(_helpMenuButton,         new Vector2(415f, 480f), new Vector2(110f, 44f), HudTextStyle.Scale(14f));
+            PlaceButton(_achievementsMenuButton, new Vector2(560f, 480f), new Vector2(136f, 44f), HudTextStyle.Scale(14f));
+            PlaceButton(_settingsMenuButton,     new Vector2(720f, 480f), new Vector2(110f, 44f), HudTextStyle.Scale(14f));
 
             PlaceRect(_focusPlaque, new Vector2(430f, 352f), new Vector2(390f, 44f));
             PlaceImage(_portraitImage, new Vector2(430f, 250f), new Vector2(168f, 168f));
@@ -277,7 +306,7 @@ namespace Sugoroku.UI
             {
                 tmp.fontSize = labelSize;
                 tmp.enableAutoSizing = true;
-                tmp.fontSizeMin = Mathf.Min(labelSize, 13f);
+                tmp.fontSizeMin = Mathf.Min(labelSize, 16f);
                 tmp.fontSizeMax = labelSize;
                 tmp.textWrappingMode = TextWrappingModes.NoWrap;
                 tmp.overflowMode = TextOverflowModes.Ellipsis;
@@ -506,7 +535,7 @@ namespace Sugoroku.UI
                 var numberLabel = EnsureCardLabel(numberBadge.transform, "Label");
                 numberLabel.text = $"{i + 1:00}";
                 numberLabel.fontSize = HudTextStyle.Scale(9f);
-                numberLabel.fontSizeMin = 7f;
+                numberLabel.fontSizeMin = HudTextStyle.Scale(9f);
                 numberLabel.fontSizeMax = HudTextStyle.Scale(9f);
                 StretchRect(numberLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(3f, 0f), new Vector2(-3f, 0f));
 
@@ -517,9 +546,22 @@ namespace Sugoroku.UI
                 var selectedTabLabel = EnsureCardLabel(selectedTab.transform, "Label");
                 selectedTabLabel.text = "選択中";
                 selectedTabLabel.fontSize = HudTextStyle.Scale(9f);
-                selectedTabLabel.fontSizeMin = 7f;
+                selectedTabLabel.fontSizeMin = HudTextStyle.Scale(9f);
                 selectedTabLabel.fontSizeMax = HudTextStyle.Scale(9f);
                 StretchRect(selectedTabLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(4f, 0f), new Vector2(-4f, 0f));
+
+                // 先に確定したプレイヤーが選んだキャラの目印（ダブり選択の可視化）
+                var takenBadge = EnsureCardImage(go.transform, "TakenBadge", BoardVisualUtility.GetPixelCardSprite(),
+                    new Color(0.08f, 0.10f, 0.16f, 0.95f), Image.Type.Sliced);
+                SetRect(takenBadge.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f),
+                    new Vector2(1f, 1f), new Vector2(78f, 20f), new Vector2(-7f, -8f));
+                takenBadge.gameObject.SetActive(false);
+                var takenLabel = EnsureCardLabel(takenBadge.transform, "Label");
+                takenLabel.text = "";
+                takenLabel.fontSize = HudTextStyle.Scale(9f);
+                takenLabel.fontSizeMin = HudTextStyle.Scale(9f);
+                takenLabel.fontSizeMax = HudTextStyle.Scale(9f);
+                StretchRect(takenLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(3f, 0f), new Vector2(-3f, 0f));
 
                 var portraitWindow = EnsureCardImage(go.transform, "PortraitWindow", BoardVisualUtility.GetPixelCardSprite(),
                     new Color(0.08f, 0.11f, 0.17f, 0.94f), Image.Type.Sliced);
@@ -539,9 +581,9 @@ namespace Sugoroku.UI
                     new Vector2(0.5f, 0.5f), new Vector2(96f, 19f), new Vector2(0f, 80f));
                 var roleRibbonLabel = EnsureCardLabel(roleRibbon.transform, "Label");
                 roleRibbonLabel.text = RoleTag(type);
-                roleRibbonLabel.fontSize = HudTextStyle.Scale(8f);
-                roleRibbonLabel.fontSizeMin = 6f;
-                roleRibbonLabel.fontSizeMax = HudTextStyle.Scale(8f);
+                roleRibbonLabel.fontSize = HudTextStyle.Scale(10f);
+                roleRibbonLabel.fontSizeMin = HudTextStyle.Scale(10f);
+                roleRibbonLabel.fontSizeMax = HudTextStyle.Scale(10f);
                 StretchRect(roleRibbonLabel.rectTransform, Vector2.zero, Vector2.one, new Vector2(5f, 0f), new Vector2(-5f, 0f));
 
                 var chip = EnsureCardImage(go.transform, "TraitChip", BoardVisualUtility.GetPixelCardSprite(),
@@ -552,7 +594,7 @@ namespace Sugoroku.UI
                 var traitText = EnsureCardLabel(chip.transform, "TraitText");
                 traitText.text = type.TraitName();
                 traitText.fontSize = HudTextStyle.Scale(10f);
-                traitText.fontSizeMin = 8f;
+                traitText.fontSizeMin = HudTextStyle.Scale(10f);
                 traitText.fontSizeMax = HudTextStyle.Scale(10f);
                 StretchRect(traitText.rectTransform, Vector2.zero, Vector2.one, new Vector2(6f, 0f), new Vector2(-6f, 0f));
 
@@ -573,7 +615,7 @@ namespace Sugoroku.UI
                 var tmp = EnsureCardLabel(go.transform, "Label");
                 tmp.text = type.DisplayName();
                 tmp.fontSize = HudTextStyle.Scale(13f);
-                tmp.fontSizeMin = 11f;
+                tmp.fontSizeMin = HudTextStyle.Scale(13f);
                 tmp.fontSizeMax = HudTextStyle.Scale(13f);
                 SetRect(tmp.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                     new Vector2(0.5f, 0f), new Vector2(124f, 38f), new Vector2(0f, 8f));
@@ -604,6 +646,14 @@ namespace Sugoroku.UI
             SelectIndex(index, fromHover: true);
         }
 
+        /// <summary>既に確定した人間スロットが該当キャラを選んでいれば、そのスロット番号を返す。</summary>
+        private int FindSlotThatTook(CharacterType type)
+        {
+            for (int slot = 0; slot < _humanSlot; slot++)
+                if (GameSession.GetHumanCharacter(slot) == type) return slot;
+            return -1;
+        }
+
         private void SelectIndex(int index, bool fromHover = false)
         {
             _index    = NormalizeCharacterIndex(index);
@@ -631,8 +681,171 @@ namespace Sugoroku.UI
             if (_backButton != null)
             {
                 _backButton.onClick.RemoveAllListeners();
-                _backButton.onClick.AddListener(() => SceneManager.LoadScene("TitleScene"));
+                _backButton.onClick.AddListener(OnBackButton);
             }
+            if (_dailyModeButton != null)
+            {
+                _dailyModeButton.onClick.RemoveAllListeners();
+                _dailyModeButton.onClick.AddListener(OnToggleDailyMode);
+            }
+            if (_helpMenuButton != null)
+            {
+                _helpMenuButton.onClick.RemoveAllListeners();
+                _helpMenuButton.onClick.AddListener(() => HelpPanelUI.Open());
+            }
+            if (_achievementsMenuButton != null)
+            {
+                _achievementsMenuButton.onClick.RemoveAllListeners();
+                _achievementsMenuButton.onClick.AddListener(() => _menuOverlay?.OpenAchievements());
+            }
+            if (_settingsMenuButton != null)
+            {
+                _settingsMenuButton.onClick.RemoveAllListeners();
+                _settingsMenuButton.onClick.AddListener(() => _menuOverlay?.OpenSettings());
+            }
+        }
+
+        private void EnsureMenuOverlayAndButtons()
+        {
+            if (_menuOverlay == null)
+            {
+                _menuOverlay = gameObject.AddComponent<CharacterSelectMenuOverlay>();
+                _menuOverlay.Bind(OnSettingsChangedFromOverlay);
+            }
+
+            var canvas = GetComponentInParent<Canvas>();
+            var parent = canvas != null ? canvas.transform : transform;
+
+            _dailyModeButton        ??= FindOrCreateMenuButton(parent, "MenuButton_DailyMode", "通常モード");
+            _helpMenuButton         ??= FindOrCreateMenuButton(parent, "MenuButton_Help", "遊び方");
+            _achievementsMenuButton ??= FindOrCreateMenuButton(parent, "MenuButton_Achievements", "実績・図鑑");
+            _settingsMenuButton     ??= FindOrCreateMenuButton(parent, "MenuButton_Settings", "設定");
+
+            UpdateMenuButtonsState();
+        }
+
+        private Button FindOrCreateMenuButton(Transform parent, string name, string label)
+        {
+            var existing = parent.Find(name);
+            if (existing != null)
+            {
+                var btnComp = existing.GetComponent<Button>() ?? existing.gameObject.AddComponent<Button>();
+                return btnComp;
+            }
+
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+
+            var lblGo = new GameObject("Label", typeof(RectTransform));
+            lblGo.transform.SetParent(go.transform, false);
+            var tmp = lblGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = label;
+            tmp.fontSize = 14f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            var lRt = tmp.rectTransform;
+            lRt.anchorMin = Vector2.zero;
+            lRt.anchorMax = Vector2.one;
+            lRt.offsetMin = lRt.offsetMax = Vector2.zero;
+            JapaneseFontProvider.Apply(tmp);
+
+            var btn = go.GetComponent<Button>();
+            GameUiChrome.ApplyButton(btn, primary: false);
+            return btn;
+        }
+
+        private void UpdateMenuButtonsState()
+        {
+            if (_dailyModeButton != null)
+            {
+                var tmp = _dailyModeButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (tmp != null)
+                    tmp.text = GameSession.IsDailyChallenge ? "★ デイリー中" : "通常モード";
+                GameUiChrome.ApplyButton(_dailyModeButton, primary: GameSession.IsDailyChallenge);
+            }
+        }
+
+        private void OnToggleDailyMode()
+        {
+            GameSession.IsDailyChallenge = !GameSession.IsDailyChallenge;
+            if (GameSession.IsDailyChallenge)
+            {
+                GameSession.DailySeed = GameSession.ComputeDailySeed(System.DateTime.UtcNow);
+                GameSession.HumanCount = 1;
+                GameSession.CpuCount = 0;
+                GameSession.ApplyDailyChallengeDefaults();
+            }
+            else
+            {
+                GameSession.HumanCount = 1;
+                GameSession.CpuCount = 1;
+            }
+            BoardLayoutGenerator.Invalidate();
+            GameSession.EnsureHumanCharacters();
+            _humanSlot = 0;
+            _selected = GameSession.GetHumanCharacter(0);
+            _index = IndexOfCharacter(_selected);
+            RefreshPanel(playJuice: true);
+            UpdateMenuButtonsState();
+        }
+
+        private void OnSettingsChangedFromOverlay()
+        {
+            GameSession.EnsureHumanCharacters();
+            _humanSlot = Mathf.Clamp(_humanSlot, 0, GameSession.HumanCount - 1);
+            _selected = GameSession.GetHumanCharacter(_humanSlot);
+            _index = IndexOfCharacter(_selected);
+            RefreshPanel(playJuice: false);
+            UpdateMenuButtonsState();
+        }
+
+        /// <summary>誤タップで選択フローを捨てないよう、戻るは2段階確認（押し直し）にする。</summary>
+        private void OnBackButton()
+        {
+            if (!_backConfirmArmed)
+            {
+                ArmBackConfirm();
+                return;
+            }
+            DisarmBackConfirm();
+            SceneManager.LoadScene("TitleScene");
+        }
+
+        private void ArmBackConfirm()
+        {
+            _backConfirmArmed = true;
+            var label = _backButton != null ? _backButton.GetComponentInChildren<TextMeshProUGUI>() : null;
+            if (label != null)
+            {
+                _backButtonOriginalLabel ??= label.text;
+                label.text = "本当に戻る？ もう一度押す";
+            }
+            if (_backConfirmResetCo != null) StopCoroutine(_backConfirmResetCo);
+            _backConfirmResetCo = StartCoroutine(ResetBackConfirmAfterDelay());
+        }
+
+        private void DisarmBackConfirm()
+        {
+            _backConfirmArmed = false;
+            if (_backConfirmResetCo != null)
+            {
+                StopCoroutine(_backConfirmResetCo);
+                _backConfirmResetCo = null;
+            }
+            if (_backButtonOriginalLabel != null)
+            {
+                var label = _backButton != null ? _backButton.GetComponentInChildren<TextMeshProUGUI>() : null;
+                if (label != null) label.text = _backButtonOriginalLabel;
+            }
+        }
+
+        private System.Collections.IEnumerator ResetBackConfirmAfterDelay()
+        {
+            yield return new WaitForSeconds(3.5f);
+            DisarmBackConfirm();
+            _backConfirmResetCo = null;
         }
 
         private void RefreshPanel(bool playJuice = true, bool isNewSelection = true)
@@ -715,6 +928,15 @@ namespace Sugoroku.UI
                 var roleRibbonLabel = cardTransform.Find("RoleRibbon/Label")?.GetComponent<TextMeshProUGUI>();
                 if (roleRibbonLabel != null)
                     roleRibbonLabel.text = RoleTag(types[i]);
+
+                int takenBySlot = FindSlotThatTook(types[i]);
+                var takenBadge = cardTransform.Find("TakenBadge")?.gameObject;
+                if (takenBadge != null)
+                {
+                    takenBadge.SetActive(takenBySlot >= 0);
+                    var takenText = takenBadge.GetComponentInChildren<TextMeshProUGUI>(true);
+                    if (takenText != null) takenText.text = $"P{takenBySlot + 1}が選択済み";
+                }
 
                 StyleCharacterCardShell(cardTransform, types[i].AccentColor(), sel);
                 cardTransform.localScale = sel ? Vector3.one * 1.10f : Vector3.one * 0.98f;
@@ -802,7 +1024,7 @@ namespace Sugoroku.UI
 
             var label = EnsureCardLabel(rt, "FocusLabel");
             label.fontSize = HudTextStyle.Scale(12f);
-            label.fontSizeMin = 9f;
+            label.fontSizeMin = HudTextStyle.Scale(12f);
             label.fontSizeMax = HudTextStyle.Scale(12f);
             StretchRect(label.rectTransform, Vector2.zero, Vector2.one, new Vector2(12f, 0f), new Vector2(-12f, 0f));
             return rt;
@@ -837,12 +1059,12 @@ namespace Sugoroku.UI
             var rail = EnsureCardImage(rt, "PagerRail", BoardVisualUtility.GetPixelCardSprite(),
                 new Color(0.05f, 0.07f, 0.11f, 0.60f), Image.Type.Sliced);
             SetRect(rail.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(0.5f, 0.5f), new Vector2(254f, 16f), new Vector2(0f, 0f));
+                new Vector2(0.5f, 0.5f), new Vector2(254f, 24f), new Vector2(0f, 0f));
             rail.transform.SetAsFirstSibling();
 
             var types = CharacterTypes;
             float pipCenter = (types.Length - 1) * 0.5f;
-            rail.rectTransform.sizeDelta = new Vector2(Mathf.Max(120f, (types.Length - 1) * 46f + 72f), 16f);
+            rail.rectTransform.sizeDelta = new Vector2(Mathf.Max(120f, (types.Length - 1) * 48f + 72f), 24f);
             for (int i = 0; i < types.Length; i++)
             {
                 int index = i;
@@ -851,7 +1073,7 @@ namespace Sugoroku.UI
                     new Color(0.28f, 0.32f, 0.40f, 0.90f), Image.Type.Sliced);
                 pip.raycastTarget = true;
                 SetRect(pip.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(0.5f, 0.5f), new Vector2(26f, 18f), new Vector2((i - pipCenter) * 46f, 0f));
+                    new Vector2(0.5f, 0.5f), new Vector2(24f, 24f), new Vector2((i - pipCenter) * 48f, 0f));
 
                 var sparkle = EnsureCardImage(pip.transform, "Spark", BoardVisualUtility.GetPixelSparkleSprite(),
                     new Color(type.AccentColor().r, type.AccentColor().g, type.AccentColor().b, 0.0f), Image.Type.Simple);
@@ -892,7 +1114,7 @@ namespace Sugoroku.UI
                 pip.color = selected
                     ? new Color(accent.r, accent.g, accent.b, 0.95f)
                     : new Color(0.22f, 0.26f, 0.34f, 0.82f);
-                pip.rectTransform.sizeDelta = selected ? new Vector2(36f, 22f) : new Vector2(24f, 16f);
+                pip.rectTransform.sizeDelta = selected ? new Vector2(36f, 28f) : new Vector2(24f, 24f);
 
                 var sparkle = pip.transform.Find("Spark")?.GetComponent<Image>();
                 if (sparkle != null)
@@ -922,7 +1144,7 @@ namespace Sugoroku.UI
 
             var label = EnsureCardLabel(rt, "BadgeLabel");
             label.fontSize = HudTextStyle.Scale(13f);
-            label.fontSizeMin = 10f;
+            label.fontSizeMin = HudTextStyle.Scale(13f);
             label.fontSizeMax = HudTextStyle.Scale(13f);
             StretchRect(label.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 0f), new Vector2(-8f, 0f));
             return rt;
@@ -1048,7 +1270,7 @@ namespace Sugoroku.UI
 
             var label = EnsureCardLabel(badge.transform, "Label");
             label.fontSize = HudTextStyle.Scale(11f);
-            label.fontSizeMin = 8f;
+            label.fontSizeMin = HudTextStyle.Scale(11f);
             label.fontSizeMax = HudTextStyle.Scale(11f);
             StretchRect(label.rectTransform, Vector2.zero, Vector2.one, new Vector2(8f, 0f), new Vector2(-8f, 0f));
         }
@@ -1073,7 +1295,7 @@ namespace Sugoroku.UI
 
             var label = EnsureCardLabel(row, "Label");
             label.fontSize = HudTextStyle.Scale(10f);
-            label.fontSizeMin = 8f;
+            label.fontSizeMin = HudTextStyle.Scale(10f);
             label.fontSizeMax = HudTextStyle.Scale(10f);
             label.alignment = TextAlignmentOptions.Left;
             SetRect(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
@@ -1096,7 +1318,7 @@ namespace Sugoroku.UI
 
             var value = EnsureCardLabel(row, "Value");
             value.fontSize = HudTextStyle.Scale(10f);
-            value.fontSizeMin = 8f;
+            value.fontSizeMin = HudTextStyle.Scale(10f);
             value.fontSizeMax = HudTextStyle.Scale(10f);
             value.alignment = TextAlignmentOptions.Right;
             SetRect(value.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),

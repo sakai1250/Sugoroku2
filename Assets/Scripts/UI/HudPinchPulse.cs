@@ -28,10 +28,22 @@ namespace Sugoroku.UI
         private IEnumerator Pulse()
         {
             var danger = new Color(1f, 0.20f, 0.20f, 0.95f);
+            // 動きを減らす設定では明滅せず、危険色の静止表示のみ行う。
+            if (Sugoroku.Data.GameSession.ReduceMotion)
+            {
+                if (_targetImage != null) _targetImage.color = Color.Lerp(_baseColor, danger, 0.55f);
+                yield break;
+            }
+
+            float startTime = Time.unscaledTime;
             while (_targetImage != null)
             {
-                float t = (Mathf.Sin(Time.unscaledTime * 5.8f) + 1f) * 0.5f;
-                _targetImage.color = Color.Lerp(_baseColor, danger, t * 0.55f);
+                // 明滅は最長5秒に制限し、以降は危険色で静止する（WCAG 2.3.3: アニメーション5秒以下）。
+                float elapsed = Time.unscaledTime - startTime;
+                float f = elapsed < 5f
+                    ? (Mathf.Sin(Time.unscaledTime * 5.8f) + 1f) * 0.5f
+                    : 1f;
+                _targetImage.color = Color.Lerp(_baseColor, danger, f * 0.55f);
                 yield return null;
             }
         }

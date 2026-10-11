@@ -35,6 +35,7 @@ namespace Sugoroku.UI
             LayoutBody(root.Find("GameOverBody"), style);
             LayoutAccentPanel(root.Find("AccentPanel"), backdrop, style);
             LayoutButton(root.Find("TitleButton"));
+            LayoutRetryButton(root.Find("RetryButton"));
         }
 
         static void EnsureTextBackdrop(Transform root)
@@ -162,6 +163,19 @@ namespace Sugoroku.UI
             rt.pivot = new Vector2(1f, 0f);
             rt.anchoredPosition = new Vector2(-UiSafeLayout.OuterMargin, UiSafeLayout.OuterMargin);
             rt.sizeDelta = new Vector2(300f, 56f);
+        }
+
+        /// <summary>「もう一回」はタイトルボタンの左に並べる。</summary>
+        static void LayoutRetryButton(Transform button)
+        {
+            if (button is not RectTransform rt) return;
+
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(
+                -UiSafeLayout.OuterMargin - 300f - UiSafeLayout.Gap,
+                UiSafeLayout.OuterMargin);
+            rt.sizeDelta = new Vector2(220f, 56f);
         }
     }
 }

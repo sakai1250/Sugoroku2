@@ -26,16 +26,12 @@ namespace Sugoroku.Game
                 $"現在の首位は {PlayerIdentity.FormatHudLabel(top)}（{ScoreCalculator.Total(top)} pt）",
                 Sugoroku.UI.CutInStyle.Split, strong: false);
 
-            Sugoroku.UI.GameStatusBanner.Show(
-                $"★ 中間発表！ 現在の首位は {PlayerIdentity.FormatHudLabel(top)}（{ScoreCalculator.Total(top)} pt）");
             yield return new WaitForSeconds(GameConfig.AnimationDuration(0.6f));
 
             yield return StatChangeSequencer.Apply(top, 0, TopIfBonus, 0, TopVirtueBonus);
 
             if (bottom != top)
             {
-                Sugoroku.UI.GameStatusBanner.Show(
-                    $"…そして {PlayerIdentity.FormatHudLabel(bottom)} には焦りの色が。メンタル {BottomMentalPenalty}");
                 yield return new WaitForSeconds(GameConfig.AnimationDuration(0.6f));
                 yield return StatChangeSequencer.Apply(bottom, 0, 0, BottomMentalPenalty, 0);
             }

@@ -61,11 +61,11 @@ namespace Sugoroku.Data
 
         public static string TraitDescription(this CharacterType type) => type switch
         {
-            CharacterType.Hobbyist => "1回休みと引き換えにメンタル全快＋次のイベント回避。",
-            CharacterType.Serious  => "講義マスのデバフ無効。IF獲得効率+10%。",
-            CharacterType.Athletic => "メンタル減少値を常に50%カット（端数切捨て）。",
-            CharacterType.Rich     => "マイナスイベントを所持金支払いで無効化。",
-            CharacterType.Genius   => "ジャーナルマス等で IF 獲得時に +1〜6 pt のボーナス（1回の加算は上限あり）。",
+            CharacterType.Hobbyist => "【特性】追い詰められると、1回休みと引き換えにメンタルが0になる。\n【ワザ】メンタル+10と次のイベント回避。",
+            CharacterType.Serious  => "【特性】講義マスでデバフを受けない。\n【ワザ】次のイベントを回避する。",
+            CharacterType.Athletic => "【特性】メンタル減少を半分にする。\n【ワザ】このターンのメンタルダメージを0にする。",
+            CharacterType.Rich     => "【特性】所持金の減少を10万円で相殺できる。\n【ワザ】10万円払って次のイベントを回避する。",
+            CharacterType.Genius   => "【特性】ジャーナルでIF+1〜6 pt。\n【ワザ】次のジャーナルでさらにIFボーナス。",
             _                      => ""
         };
 

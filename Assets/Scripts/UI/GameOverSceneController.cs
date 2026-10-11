@@ -24,7 +24,41 @@ namespace Sugoroku.UI
             if (_juice == null) _juice = gameObject.AddComponent<GameOverSceneJuice>();
             ApplyChrome();
             if (_titleButton != null) _titleButton.onClick.AddListener(() => SceneManager.LoadScene("TitleScene"));
+            EnsureRetryButton();
             ApplyReason(GameSession.LastGameOverReason);
+            SetInitialKeyboardFocus();
+        }
+
+        /// <summary>ResultScene と同じ「もう一回」導線。ゲームオーバー後も勢いでリベンジできるようにする。</summary>
+        private void EnsureRetryButton()
+        {
+            if (transform.Find("RetryButton") != null) return;
+
+            var go = new GameObject("RetryButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(transform, false);
+
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var tmp = labelGo.AddComponent<TextMeshProUGUI>();
+            tmp.text = "もう一回";
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 24f;
+            var labelRt = tmp.rectTransform;
+            labelRt.anchorMin = Vector2.zero;
+            labelRt.anchorMax = Vector2.one;
+            labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+
+            var btn = go.GetComponent<Button>();
+            GameUiChrome.ApplyButton(btn, primary: false);
+            btn.onClick.AddListener(() => SceneManager.LoadScene("CharacterSelectScene"));
+        }
+
+        /// <summary>画面表示直後にタイトルボタンへキーボードフォーカスを置く（WCAG 2.4.3）。</summary>
+        private void SetInitialKeyboardFocus()
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null || _titleButton == null || !_titleButton.interactable) return;
+            es.SetSelectedGameObject(_titleButton.gameObject);
         }
 
         private void ApplyReason(GameOverReason reason)

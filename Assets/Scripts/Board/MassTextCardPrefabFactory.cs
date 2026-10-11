@@ -11,7 +11,7 @@ namespace Sugoroku.Board
     {
         public const float CardAspectWidth  = 4f;
         public const float CardAspectHeight = 3f;
-        public const float CardWorldWidth   = 2.4f;
+        public const float CardWorldWidth   = 2.05f;
         public static float CardWorldHeight => CardWorldWidth * CardAspectHeight / CardAspectWidth;
 
         public const float CardUiWidth  = 240f;

@@ -6,8 +6,6 @@ namespace Sugoroku.UI
     /// <summary>入場/退場スタイルのパラメータ定義と Lerp 評価（純ロジック・副作用なし）。</summary>
     public static class CutInMotion
     {
-        private static float Linear(float t) => t;
-
         /// <summary>入場開始状態（rest への相対オフセット・開始スケール・開始回転Z・イージング）。</summary>
         public static CutInEntrance Entrance(CutInStyle s) => s switch
         {
@@ -31,17 +29,17 @@ namespace Sugoroku.UI
         /// <summary>退場終了状態（rest からの相対）。入場と対になる方向へ抜ける。</summary>
         public static CutInExit Exit(CutInStyle s) => s switch
         {
-            CutInStyle.SlideLeft   => new CutInExit(new Vector2(1000f, 0f),  Vector2.one,             0f,   Linear),
-            CutInStyle.SlideRight  => new CutInExit(new Vector2(-1000f, 0f), Vector2.one,             0f,   Linear),
-            CutInStyle.SlideUp     => new CutInExit(new Vector2(0f, 620f),   Vector2.one,             0f,   Linear),
-            CutInStyle.SlideDown   => new CutInExit(new Vector2(0f, -620f),  Vector2.one,             0f,   Linear),
-            CutInStyle.ZoomIn      => new CutInExit(Vector2.zero,          new Vector2(1.25f, 1.25f), 0f,   Linear),
-            CutInStyle.GrowFromBig => new CutInExit(Vector2.zero,          new Vector2(1.25f, 1.25f), 0f,   Linear),
-            CutInStyle.FlipIn      => new CutInExit(Vector2.zero,          Vector2.one,             100f,   Linear),
-            CutInStyle.Spin        => new CutInExit(Vector2.zero,          new Vector2(0.6f, 0.6f),  360f,  Linear),
-            CutInStyle.Swivel      => new CutInExit(Vector2.zero,          new Vector2(0f, 1f),       0f,   Linear),
-            CutInStyle.Split       => new CutInExit(Vector2.zero,          new Vector2(1f, 0f),       0f,   Linear),
-            _                      => new CutInExit(Vector2.zero,          Vector2.one,               0f,   Linear),
+            CutInStyle.SlideLeft   => new CutInExit(new Vector2(1000f, 0f),  Vector2.one,             0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.SlideRight  => new CutInExit(new Vector2(-1000f, 0f), Vector2.one,             0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.SlideUp     => new CutInExit(new Vector2(0f, 620f),   Vector2.one,             0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.SlideDown   => new CutInExit(new Vector2(0f, -620f),  Vector2.one,             0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.ZoomIn      => new CutInExit(Vector2.zero,          new Vector2(1.25f, 1.25f), 0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.GrowFromBig => new CutInExit(Vector2.zero,          new Vector2(1.25f, 1.25f), 0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.FlipIn      => new CutInExit(Vector2.zero,          Vector2.one,             100f,   JuiceMath.EaseOutCubic),
+            CutInStyle.Spin        => new CutInExit(Vector2.zero,          new Vector2(0.6f, 0.6f),  360f,  JuiceMath.EaseOutCubic),
+            CutInStyle.Swivel      => new CutInExit(Vector2.zero,          new Vector2(0f, 1f),       0f,   JuiceMath.EaseOutCubic),
+            CutInStyle.Split       => new CutInExit(Vector2.zero,          new Vector2(1f, 0f),       0f,   JuiceMath.EaseOutCubic),
+            _                      => new CutInExit(Vector2.zero,          Vector2.one,               0f,   JuiceMath.EaseOutCubic),
         };
 
         /// <summary>

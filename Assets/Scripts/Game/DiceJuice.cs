@@ -42,11 +42,13 @@ namespace Sugoroku.Game
                 setSprite(faces[side]);
                 onFaceShown?.Invoke(side + 1);
 
-                float spin = Mathf.Lerp(720f, 1080f, eased);
-                float wobble = Mathf.Sin(t * Mathf.PI * 6f) * (1f - eased) * 12f;
+                float spinTarget = Mathf.Lerp(720f, 1080f, eased);
+                float spin = GameSession.ReduceMotion ? Mathf.Lerp(30f, 90f, eased) : spinTarget;
+                float wobble = Mathf.Sin(t * Mathf.PI * 6f) * (1f - eased) * (GameSession.ReduceMotion ? 4f : 12f);
                 float pulse = 1f + Mathf.Sin(t * Mathf.PI) * 0.28f;
                 float squash = 1f + Mathf.Sin(t * Mathf.PI * 8f) * 0.12f * (1f - eased);
                 float hop = Mathf.Sin(t * Mathf.PI) * 0.35f * (1f - eased);
+                float flashAmp = GameSession.ReduceMotion ? 1.05f : 1.35f;
 
                 applyTransform(new TransformJuiceState
                 {
@@ -54,7 +56,7 @@ namespace Sugoroku.Game
                     scaleMul    = pulse,
                     scaleSquash = squash,
                     offsetY     = hop,
-                    flash       = Mathf.Lerp(1f, 1.35f, Mathf.Sin(t * Mathf.PI * 4f) * (1f - eased))
+                    flash       = Mathf.Lerp(1f, flashAmp, Mathf.Sin(t * Mathf.PI * 4f) * (1f - eased))
                 });
 
                 float wait = GameConfig.AnimationDuration(Mathf.Lerp(TickInterval * 1.2f, TickInterval * 0.55f, eased));
@@ -75,7 +77,7 @@ namespace Sugoroku.Game
 
                 applyTransform(new TransformJuiceState
                 {
-                    rotationZ   = Mathf.Lerp(1080f, 0f, EaseOutBack(t)),
+                    rotationZ   = Mathf.Lerp(GameSession.ReduceMotion ? 90f : 1080f, 0f, EaseOutBack(t)),
                     scaleMul    = Mathf.Lerp(1.15f, 1f, EaseOutBack(t)) * punch,
                     scaleSquash = 1f,
                     offsetY     = bounce,

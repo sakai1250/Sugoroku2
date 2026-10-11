@@ -143,6 +143,7 @@ namespace Sugoroku.Audio
         public void PlayDiceLand()    => PlaySe(ConfirmSe);
         public void PlayButtonClick() => PlaySe(ButtonClickSe);
         public void PlayConfirm()     => PlaySe(ConfirmSe);
+        public void PlayPositive()    => PlayConfirm();
 
         /// <summary>キャラ選択の切り替え音（レトロなカチッ）。</summary>
         public void PlayRetroSelect() => PlaySeWithPitch(ButtonClickSe, 1.18f, 0.95f);

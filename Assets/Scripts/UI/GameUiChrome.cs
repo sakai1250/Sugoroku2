@@ -15,7 +15,7 @@ namespace Sugoroku.UI
         public static readonly Color Stroke         = new(0.68f, 0.72f, 0.78f, 0.32f);
         public static readonly Color StrokeStrong   = new(0.88f, 0.90f, 0.86f, 0.48f);
         public static readonly Color Primary        = new(0.78f, 0.58f, 0.20f, 0.98f);
-        public static readonly Color PrimaryPressed = new(0.58f, 0.40f, 0.12f, 0.98f);
+        public static readonly Color PrimaryPressed = new(0.74f, 0.52f, 0.16f, 0.98f);
         public static readonly Color MutedText      = new(0.78f, 0.82f, 0.88f, 1f);
         public static readonly Color PrimaryText    = new(0.12f, 0.10f, 0.06f, 1f);
 
@@ -61,8 +61,8 @@ namespace Sugoroku.UI
             var colors = button.colors;
             colors.normalColor = Color.white;
             colors.highlightedColor = primary
-                ? new Color(1.08f, 1.04f, 0.92f, 1f)
-                : new Color(1.08f, 1.08f, 1.08f, 1f);
+                ? new Color(1.18f, 1.10f, 0.94f, 1f)
+                : new Color(1.16f, 1.16f, 1.16f, 1f);
             colors.pressedColor = primary ? PrimaryPressed : SurfacePressed;
             colors.selectedColor = colors.highlightedColor;
             colors.disabledColor = new Color(0.42f, 0.44f, 0.48f, 0.58f);
@@ -86,9 +86,9 @@ namespace Sugoroku.UI
             if (img != null)
                 img.color = interactable
                     ? new Color(0.18f, 0.22f, 0.31f, 0.96f)
-                    : new Color(0.12f, 0.13f, 0.16f, 0.70f);
+                    : new Color(0.08f, 0.09f, 0.11f, 0.72f);
             EnsureEdge(button.transform, "ChoiceAccent", Edge.Left,
-                interactable ? new Color(0.84f, 0.68f, 0.30f, 0.92f) : new Color(0.52f, 0.54f, 0.58f, 0.55f),
+                interactable ? new Color(0.84f, 0.68f, 0.30f, 0.92f) : new Color(0.36f, 0.38f, 0.42f, 0.45f),
                 5f);
         }
 

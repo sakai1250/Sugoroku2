@@ -80,40 +80,55 @@ namespace Sugoroku.Board
             if (category == Category.None)
                 return null;
 
-            string fileName = category switch
+            string baseName = category switch
             {
-                Category.Event    => pixelStyle ? "イベントドット" : "イベント",
-                Category.Research => pixelStyle ? "研究ドット" : "研究",
-                Category.Lab      => pixelStyle ? "ラボドット" : "ラボ",
-                Category.Economy  => pixelStyle ? "経済ドット" : "経済",
+                Category.Event    => "イベント",
+                Category.Research => "研究",
+                Category.Lab      => "ラボ",
+                Category.Economy  => "経済",
                 _                 => null
             };
 
-            if (string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(baseName))
                 return null;
+
+            string fileName = pixelStyle ? $"{baseName}ドット" : baseName;
 
             if (SpriteCache.TryGetValue(fileName, out var cached) && cached != null)
                 return cached;
 
             string path = $"{ResourceFolder}/{fileName}";
-            var sprite = Resources.Load<Sprite>(path);
-            if (sprite == null)
+            var sprite = LoadSpriteOrTexture(path);
+
+            // pixelStyle のファイルが存在しない場合は通常版 (baseName) にフォールバック
+            if (sprite == null && pixelStyle)
             {
-                var tex = Resources.Load<Texture2D>(path);
-                if (tex != null)
-                {
-                    sprite = Sprite.Create(
-                        tex,
-                        new Rect(0f, 0f, tex.width, tex.height),
-                        new Vector2(0.5f, 0.5f),
-                        100f);
-                }
+                if (SpriteCache.TryGetValue(baseName, out var baseCached) && baseCached != null)
+                    return baseCached;
+                sprite = LoadSpriteOrTexture($"{ResourceFolder}/{baseName}");
             }
 
             if (sprite != null)
                 SpriteCache[fileName] = sprite;
 
             return sprite;
+        }
+
+        private static Sprite LoadSpriteOrTexture(string path)
+        {
+            var sprite = Resources.Load<Sprite>(path);
+            if (sprite != null) return sprite;
+
+            var tex = Resources.Load<Texture2D>(path);
+            if (tex != null)
+            {
+                return Sprite.Create(
+                    tex,
+                    new Rect(0f, 0f, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f);
+            }
+            return null;
         }
 
         public static void ClearCache() => SpriteCache.Clear();

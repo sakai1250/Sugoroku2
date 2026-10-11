@@ -40,17 +40,27 @@ namespace Sugoroku.UI
         private TextMeshProUGUI _itemDiceRerollText;
         private TextMeshProUGUI _itemMentalHealText;
         private TextMeshProUGUI _itemMoneyBonusText;
+        private TextMeshProUGUI _playerRoleText;
+        private TextMeshProUGUI _skillInfoTitle;
+        private TextMeshProUGUI _skillInfoDesc;
+        private TextMeshProUGUI _skillInfoState;
+        private TextMeshProUGUI _statusSummaryText;
 
         [Header("ポーズ/詳細")]
         [SerializeField] private PauseMenuUI     _pauseMenu;
         [SerializeField] private TextMeshProUGUI _logText;
 
+        /// <summary>モーダル閉鎖後のキーボードフォーカス復帰先（WCAG 2.4.3）。</summary>
+        public Button RollButton => _rollButton;
+
         private readonly System.Collections.Generic.Queue<string> _logQueue = new();
-        private const int MaxLogLines = 5;
+        private const int MaxLogLines = 8;
         private bool _isSubscribed;
         private DiceHudAnimator _diceHudAnimator;
         private HudStatFlash _statFlash;
         private readonly Dictionary<TextMeshProUGUI, Coroutine> _statCountRoutines = new();
+        private Image _portraitImage;
+        private System.Action<PlayerData, Sugoroku.Visual.CharacterMood> _moodChangedHandler;
         private System.Action<PlayerData> _turnStartedHandler;
         private System.Action<PlayerData, string> _squareEffectHandler;
 
@@ -90,10 +100,18 @@ namespace Sugoroku.UI
         private void ApplyReadableStyles()
         {
             if (_playerNameText != null)
-                HudTextStyle.ApplyReadable(_playerNameText, HudTextStyle.PlayerNameSize, new Color(1f, 0.95f, 0.7f), true);
+            {
+                HudTextStyle.ApplyReadable(_playerNameText, HudTextStyle.Scale(21f), new Color(1f, 0.95f, 0.7f), true);
+                _playerNameText.textWrappingMode = TextWrappingModes.NoWrap;
+                _playerNameText.overflowMode = TextOverflowModes.Ellipsis;
+            }
             if (_turnStateText != null)
-                HudTextStyle.ApplyReadable(_turnStateText, HudTextStyle.JuiceStatusFontSize,
+            {
+                HudTextStyle.ApplyReadable(_turnStateText, HudTextStyle.Scale(22f),
                     new Color(0.55f, 1f, 0.75f), true);
+                _turnStateText.textWrappingMode = TextWrappingModes.NoWrap;
+                _turnStateText.overflowMode = TextOverflowModes.Ellipsis;
+            }
             if (_goalDistanceText != null)
                 HudTextStyle.ApplyInfo(_goalDistanceText, new Color(0.88f, 0.92f, 1f));
             if (_tuitionDistanceText != null)
@@ -164,82 +182,236 @@ namespace Sugoroku.UI
             if (_skillButtonText == null && _skillButton != null)
                 _skillButtonText = _skillButton.GetComponentInChildren<TextMeshProUGUI>(true);
 
-            EnsureItemButtons();
+            EnsureLeftPanelDetails();
+            EnsurePortraitDisplay();
         }
 
-        private void EnsureItemButtons()
+        private void EnsureLeftPanelDetails()
         {
+            var panel = transform.parent?.Find("PlayerInfoPanel") ?? transform.Find("PlayerInfoPanel");
+            if (panel == null) return;
+
+            // 専攻・特性テキスト（名前の下）
+            if (_playerRoleText == null)
+            {
+                var existingRole = panel.Find("PlayerRoleText");
+                if (existingRole != null)
+                {
+                    _playerRoleText = existingRole.GetComponent<TextMeshProUGUI>();
+                }
+                else
+                {
+                    var go = new GameObject("PlayerRoleText", typeof(RectTransform));
+                    go.transform.SetParent(panel, false);
+                    var rt = go.GetComponent<RectTransform>();
+                    rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+                    rt.pivot = new Vector2(0f, 1f);
+                    rt.anchoredPosition = new Vector2(90f, -54f);
+                    rt.sizeDelta = new Vector2(236f, 26f);
+                    _playerRoleText = go.AddComponent<TextMeshProUGUI>();
+                    _playerRoleText.fontSize = 13f;
+                    _playerRoleText.color = new Color(0.65f, 0.85f, 1f);
+                    _playerRoleText.alignment = TextAlignmentOptions.Left;
+                    JapaneseFontProvider.Apply(_playerRoleText);
+                }
+            }
+
+            // スキル情報カード
+            if (_skillInfoTitle == null)
+            {
+                var card = panel.Find("SkillInfoCard");
+                if (card == null)
+                {
+                    var cardGo = new GameObject("SkillInfoCard", typeof(RectTransform), typeof(Image));
+                    cardGo.transform.SetParent(panel, false);
+                    var cRt = cardGo.GetComponent<RectTransform>();
+                    cRt.anchorMin = cRt.anchorMax = new Vector2(0f, 1f);
+                    cRt.pivot = new Vector2(0f, 1f);
+                    cRt.anchoredPosition = new Vector2(14f, -238f);
+                    cRt.sizeDelta = new Vector2(314f, 82f);
+
+                    var bg = cardGo.GetComponent<Image>();
+                    bg.sprite = Board.BoardVisualUtility.GetPixelCardSprite();
+                    bg.type = Image.Type.Sliced;
+                    bg.color = new Color(0.12f, 0.15f, 0.22f, 0.92f);
+                    bg.raycastTarget = false;
+                    GameUiChrome.ApplyAccentRail(cardGo.transform, new Color(0.86f, 0.72f, 0.32f, 0.85f), 3f);
+
+                    _skillInfoTitle = CreateCardText(cardGo.transform, "SkillTitle", new Vector2(10f, -8f), new Vector2(294f, 20f), 13f, new Color(1f, 0.90f, 0.45f), FontStyles.Bold);
+                    _skillInfoDesc  = CreateCardText(cardGo.transform, "SkillDesc",  new Vector2(10f, -28f), new Vector2(294f, 30f), 11f, new Color(0.88f, 0.92f, 0.98f));
+                    _skillInfoState = CreateCardText(cardGo.transform, "SkillState", new Vector2(10f, -58f), new Vector2(294f, 18f), 11f, new Color(0.55f, 1f, 0.75f));
+                }
+                else
+                {
+                    _skillInfoTitle = card.Find("SkillTitle")?.GetComponent<TextMeshProUGUI>();
+                    _skillInfoDesc  = card.Find("SkillDesc")?.GetComponent<TextMeshProUGUI>();
+                    _skillInfoState = card.Find("SkillState")?.GetComponent<TextMeshProUGUI>();
+                }
+            }
+
+            // インベントリカード（所持アイテム枠）
+            var invCard = panel.Find("InventoryCard");
+            if (invCard == null)
+            {
+                var invGo = new GameObject("InventoryCard", typeof(RectTransform), typeof(Image));
+                invGo.transform.SetParent(panel, false);
+                var iRt = invGo.GetComponent<RectTransform>();
+                iRt.anchorMin = iRt.anchorMax = new Vector2(0f, 1f);
+                iRt.pivot = new Vector2(0f, 1f);
+                iRt.anchoredPosition = new Vector2(14f, -326f);
+                iRt.sizeDelta = new Vector2(314f, 222f);
+
+                var bg = invGo.GetComponent<Image>();
+                bg.sprite = Board.BoardVisualUtility.GetPixelCardSprite();
+                bg.type = Image.Type.Sliced;
+                bg.color = new Color(0.12f, 0.15f, 0.22f, 0.92f);
+                bg.raycastTarget = false;
+                GameUiChrome.ApplyAccentRail(invGo.transform, new Color(0.35f, 0.75f, 0.95f, 0.85f), 3f);
+
+                CreateCardText(invGo.transform, "InvHeader", new Vector2(10f, -8f), new Vector2(294f, 20f), 13f, new Color(0.55f, 0.90f, 1f), FontStyles.Bold, "🎒 所持アイテム");
+
+                invCard = invGo.transform;
+            }
+
             if (_itemDiceRerollButton == null)
             {
                 (_itemDiceRerollButton, _itemDiceRerollText) =
-                    FindOrCreateItemButton("ItemButton_DiceReroll", new Vector2(220f, -260f));
-                _itemDiceRerollButton.onClick.RemoveAllListeners();
-                _itemDiceRerollButton.onClick.AddListener(() =>
-                {
-                    var p = GameManager.Instance?.GetCurrentPlayer();
-                    if (p != null && !p.IsCpu) GameManager.Instance.UseDiceRerollItem(p);
-                    RefreshAll();
-                });
+                    CreateItemSlot(invCard, "ItemButton_DiceReroll", -32f, "もう一振り券", "使う", () =>
+                    {
+                        var p = GameManager.Instance?.GetCurrentPlayer();
+                        if (p != null && !p.IsCpu) GameManager.Instance.UseDiceRerollItem(p);
+                        RefreshAll();
+                    });
             }
 
             if (_itemMentalHealButton == null)
             {
                 (_itemMentalHealButton, _itemMentalHealText) =
-                    FindOrCreateItemButton("ItemButton_MentalHeal", new Vector2(220f, -320f));
-                _itemMentalHealButton.onClick.RemoveAllListeners();
-                _itemMentalHealButton.onClick.AddListener(() =>
-                {
-                    var p = GameManager.Instance?.GetCurrentPlayer();
-                    if (p != null && !p.IsCpu) GameManager.Instance.UseMentalHealItem(p);
-                    RefreshAll();
-                });
+                    CreateItemSlot(invCard, "ItemButton_MentalHeal", -94f, "気分転換ドリンク", "飲む", () =>
+                    {
+                        var p = GameManager.Instance?.GetCurrentPlayer();
+                        if (p != null && !p.IsCpu) GameManager.Instance.UseMentalHealItem(p);
+                        RefreshAll();
+                    });
             }
 
             if (_itemMoneyBonusButton == null)
             {
                 (_itemMoneyBonusButton, _itemMoneyBonusText) =
-                    FindOrCreateItemButton("ItemButton_MoneyBonus", new Vector2(220f, -380f));
-                _itemMoneyBonusButton.onClick.RemoveAllListeners();
-                _itemMoneyBonusButton.onClick.AddListener(() =>
+                    CreateItemSlot(invCard, "ItemButton_MoneyBonus", -156f, "臨時収入券", "使う", () =>
+                    {
+                        var p = GameManager.Instance?.GetCurrentPlayer();
+                        if (p != null && !p.IsCpu) GameManager.Instance.UseMoneyBonusItem(p);
+                        RefreshAll();
+                    });
+            }
+
+            // ステータスサマリーカード
+            if (_statusSummaryText == null)
+            {
+                var sumCard = panel.Find("StatusSummaryCard");
+                if (sumCard == null)
                 {
-                    var p = GameManager.Instance?.GetCurrentPlayer();
-                    if (p != null && !p.IsCpu) GameManager.Instance.UseMoneyBonusItem(p);
-                    RefreshAll();
-                });
+                    var sumGo = new GameObject("StatusSummaryCard", typeof(RectTransform), typeof(Image));
+                    sumGo.transform.SetParent(panel, false);
+                    var sRt = sumGo.GetComponent<RectTransform>();
+                    sRt.anchorMin = sRt.anchorMax = new Vector2(0f, 1f);
+                    sRt.pivot = new Vector2(0f, 1f);
+                    sRt.anchoredPosition = new Vector2(14f, -554f);
+                    sRt.sizeDelta = new Vector2(314f, 52f);
+
+                    var bg = sumGo.GetComponent<Image>();
+                    bg.sprite = Board.BoardVisualUtility.GetPixelCardSprite();
+                    bg.type = Image.Type.Sliced;
+                    bg.color = new Color(0.10f, 0.13f, 0.18f, 0.88f);
+                    bg.raycastTarget = false;
+
+                    _statusSummaryText = CreateCardText(sumGo.transform, "SummaryText", new Vector2(8f, -6f), new Vector2(298f, 40f), 12f, new Color(0.85f, 0.90f, 0.98f));
+                }
+                else
+                {
+                    _statusSummaryText = sumCard.Find("SummaryText")?.GetComponent<TextMeshProUGUI>();
+                }
             }
         }
 
-        private (Button, TextMeshProUGUI) FindOrCreateItemButton(string name, Vector2 pos)
+        private TextMeshProUGUI CreateCardText(Transform parent, string name, Vector2 pos, Vector2 size, float fontSize, Color color, FontStyles style = FontStyles.Normal, string defaultText = "")
         {
-            var existingGo = UiBindingUtility.FindObject(name);
-            if (existingGo != null)
-            {
-                var existingBtn = existingGo.GetComponent<Button>() ?? existingGo.AddComponent<Button>();
-                var existingText = existingGo.GetComponentInChildren<TextMeshProUGUI>(true);
-                return (existingBtn, existingText);
-            }
-
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(transform, false);
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
             var rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
             rt.anchoredPosition = pos;
-            rt.sizeDelta = new Vector2(280f, 55f);
+            rt.sizeDelta = size;
 
-            var labelGo = new GameObject("Label", typeof(RectTransform));
-            labelGo.transform.SetParent(go.transform, false);
-            var tmp = labelGo.AddComponent<TextMeshProUGUI>();
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontSize = 18f;
-            var labelRt = tmp.rectTransform;
-            labelRt.anchorMin = Vector2.zero;
-            labelRt.anchorMax = Vector2.one;
-            labelRt.offsetMin = labelRt.offsetMax = Vector2.zero;
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.fontSize = fontSize;
+            tmp.color = color;
+            tmp.fontStyle = style;
+            tmp.text = defaultText;
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            JapaneseFontProvider.Apply(tmp);
+            return tmp;
+        }
+
+        private (Button, TextMeshProUGUI) CreateItemSlot(Transform parent, string buttonName, float yPos, string defaultName, string btnLabel, System.Action onClick)
+        {
+            var slotGo = new GameObject($"Slot_{buttonName}", typeof(RectTransform), typeof(Image));
+            slotGo.transform.SetParent(parent, false);
+            var slotRt = slotGo.GetComponent<RectTransform>();
+            slotRt.anchorMin = slotRt.anchorMax = new Vector2(0f, 1f);
+            slotRt.pivot = new Vector2(0f, 1f);
+            slotRt.anchoredPosition = new Vector2(8f, yPos);
+            slotRt.sizeDelta = new Vector2(298f, 58f);
+
+            var slotBg = slotGo.GetComponent<Image>();
+            slotBg.sprite = Board.BoardVisualUtility.GetPixelCardSprite();
+            slotBg.type = Image.Type.Sliced;
+            slotBg.color = new Color(0.16f, 0.20f, 0.28f, 0.90f);
+            slotBg.raycastTarget = false;
+
+            var textGo = new GameObject("ItemInfoText", typeof(RectTransform));
+            textGo.transform.SetParent(slotGo.transform, false);
+            var tRt = textGo.GetComponent<RectTransform>();
+            tRt.anchorMin = tRt.anchorMax = new Vector2(0f, 0.5f);
+            tRt.pivot = new Vector2(0f, 0.5f);
+            tRt.anchoredPosition = new Vector2(8f, 0f);
+            tRt.sizeDelta = new Vector2(206f, 50f);
+
+            var tmp = textGo.AddComponent<TextMeshProUGUI>();
+            tmp.fontSize = 12f;
+            tmp.text = defaultName;
+            tmp.alignment = TextAlignmentOptions.MidlineLeft;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
             JapaneseFontProvider.Apply(tmp);
 
-            var btn = go.GetComponent<Button>();
-            GameUiChrome.ApplyButton(btn, primary: false);
+            var btnGo = new GameObject(buttonName, typeof(RectTransform), typeof(Image), typeof(Button));
+            btnGo.transform.SetParent(slotGo.transform, false);
+            var btnRt = btnGo.GetComponent<RectTransform>();
+            btnRt.anchorMin = btnRt.anchorMax = new Vector2(1f, 0.5f);
+            btnRt.pivot = new Vector2(1f, 0.5f);
+            btnRt.anchoredPosition = new Vector2(-6f, 0f);
+            btnRt.sizeDelta = new Vector2(74f, 36f);
+
+            var lblGo = new GameObject("Label", typeof(RectTransform));
+            lblGo.transform.SetParent(btnGo.transform, false);
+            var lblTmp = lblGo.AddComponent<TextMeshProUGUI>();
+            lblTmp.text = btnLabel;
+            lblTmp.fontSize = 14f;
+            lblTmp.alignment = TextAlignmentOptions.Center;
+            var lRt = lblTmp.rectTransform;
+            lRt.anchorMin = Vector2.zero;
+            lRt.anchorMax = Vector2.one;
+            lRt.offsetMin = lRt.offsetMax = Vector2.zero;
+            JapaneseFontProvider.Apply(lblTmp);
+
+            var btn = btnGo.GetComponent<Button>();
+            GameUiChrome.ApplyButton(btn, primary: true);
+            btn.onClick.RemoveAllListeners();
+            btn.onClick.AddListener(() => onClick?.Invoke());
+
             return (btn, tmp);
         }
 
@@ -304,6 +476,14 @@ namespace Sugoroku.UI
             if (DiceRoller.Instance != null)
                 DiceRoller.Instance.RegisterHudAnimator(_diceHudAnimator);
 
+            _moodChangedHandler ??= (player, mood) =>
+            {
+                var cur = GameManager.Instance?.GetCurrentPlayer();
+                if (cur != null && cur.Index == player.Index)
+                    RefreshPortrait(player);
+            };
+            CharacterMoodManager.OnMoodChanged += _moodChangedHandler;
+
             _isSubscribed = true;
             return true;
         }
@@ -325,6 +505,10 @@ namespace Sugoroku.UI
                 if (_squareEffectHandler != null)
                     GameManager.Instance.OnSquareEffect -= _squareEffectHandler;
             }
+            if (_moodChangedHandler != null)
+            {
+                CharacterMoodManager.OnMoodChanged -= _moodChangedHandler;
+            }
         }
 
         private void OnStateChanged(TurnState state)
@@ -335,8 +519,10 @@ namespace Sugoroku.UI
             {
                 _turnStateText.text = FormatStateLabel(state);
                 HudTextStyle.ApplyReadable(_turnStateText,
-                    HudTextStyle.JuiceStatusFontSize,
+                    HudTextStyle.Scale(22f),
                     GetStateColor(state), true);
+                _turnStateText.textWrappingMode = TextWrappingModes.NoWrap;
+                _turnStateText.overflowMode = TextOverflowModes.Ellipsis;
             }
         }
 
@@ -441,20 +627,59 @@ namespace Sugoroku.UI
             if (_playerNameText != null)
             {
                 _playerNameText.text = PlayerIdentity.FormatHudLabel(player);
-                HudTextStyle.ApplyReadable(_playerNameText, HudTextStyle.PlayerNameSize, player.PieceTint, true);
+                HudTextStyle.ApplyReadable(_playerNameText, HudTextStyle.Scale(22f), player.PieceTint, true);
             }
 
             int board = Board.BoardManager.Instance?.BoardSize ?? GameConfig.BoardSize;
             int remain = board - 1 - player.BoardPosition;
             if (_goalDistanceText != null) _goalDistanceText.text = $"ゴールまで {remain}マス";
             int tuition = Board.BoardManager.Instance?.GetNextTuitionIndex(player) ?? 0;
-            if (_tuitionDistanceText != null) _tuitionDistanceText.text = $"学費△{tuition}";
+            if (_tuitionDistanceText != null)
+            {
+                bool hasTuitionAhead = Board.BoardManager.Instance != null &&
+                    Board.BoardManager.Instance.HasTuitionAhead(player.BoardPosition, player.ActiveBranch);
+                _tuitionDistanceText.text = hasTuitionAhead
+                    ? $"学費まで あと{tuition}マス"
+                    : "学費マスはもうありません";
+            }
             if (_skipTurnsText != null) _skipTurnsText.text = player.SkipTurns > 0 ? $"休み×{player.SkipTurns}" : "";
-            if (_ignoreEventsText != null) _ignoreEventsText.text = player.IgnoreNextEvents > 0 ? $"回避{player.IgnoreNextEvents}" : "";
+            if (_playerRoleText != null)
+                _playerRoleText.text = $"専攻: {player.Character.DisplayName()}";
+
             if (_skillButtonText != null) _skillButtonText.text = $"ワザ: {player.Character.SkillName()}";
-            if (_itemDiceRerollText != null) _itemDiceRerollText.text = $"もう一振り券 ×{player.ItemDiceRerollCount}";
-            if (_itemMentalHealText != null) _itemMentalHealText.text = $"気分転換ドリンク ×{player.ItemMentalHealCount}";
-            if (_itemMoneyBonusText != null) _itemMoneyBonusText.text = $"臨時収入 ×{player.ItemMoneyBonusCount}";
+
+            if (_skillInfoTitle != null)
+                _skillInfoTitle.text = $"★ 固有ワザ: {player.Character.SkillName()}";
+            if (_skillInfoDesc != null)
+                _skillInfoDesc.text = player.Character.SkillDescription();
+            if (_skillInfoState != null)
+            {
+                bool used = player.SkillUsedThisTurn;
+                _skillInfoState.text = used ? "<color=#888888>【使用済み】</color>" : "<color=#55ff88>【発動可能】（右下アクション）</color>";
+            }
+
+            if (_itemDiceRerollText != null)
+                _itemDiceRerollText.text = $"<b>🎲 もう一振り券</b>  <color=#ffd700>×{player.ItemDiceRerollCount}</color>\n<size=11><color=#b0c4de>ダイスをもう1回振れる</color></size>";
+            if (_itemMentalHealText != null)
+                _itemMentalHealText.text = $"<b>☕ 気分転換ドリンク</b>  <color=#ffd700>×{player.ItemMentalHealCount}</color>\n<size=11><color=#b0c4de>メンタル +{GameConfig.ItemMentalHealAmount} 回復</color></size>";
+            if (_itemMoneyBonusText != null)
+                _itemMoneyBonusText.text = $"<b>💰 臨時収入券</b>  <color=#ffd700>×{player.ItemMoneyBonusCount}</color>\n<size=11><color=#b0c4de>資金 +{GameConfig.ItemMoneyBonusAmount} 万円獲得</color></size>";
+
+            if (_statusSummaryText != null)
+                _statusSummaryText.text = $"資金 {player.Money}万 / IF {player.IfScore}pt / 徳 {player.Virtue}pt";
+
+            RefreshPortrait(player);
+            EnsureAllPlayersStrip()?.Refresh();
+        }
+
+        /// <summary>全員の状況を常時見られるミニ一覧（無ければHUDキャンバスに生成）。</summary>
+        private AllPlayersStatusStrip EnsureAllPlayersStrip()
+        {
+            var existing = FindFirstObjectByType<AllPlayersStatusStrip>(FindObjectsInactive.Exclude);
+            if (existing != null) return existing;
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) return null;
+            return canvas.gameObject.AddComponent<AllPlayersStatusStrip>();
         }
 
         public void AnimateStatChange(PlayerData player, int money, int ifScore, int mental, int virtue)
@@ -513,6 +738,58 @@ namespace Sugoroku.UI
                 _logText.text = string.Join("\n", _logQueue);
                 HudTextStyle.ApplyLog(_logText);
             }
+        }
+
+        private void EnsurePortraitDisplay()
+        {
+            if (_portraitImage != null) return;
+            var panel = transform.parent?.Find("PlayerInfoPanel") ?? transform.Find("PlayerInfoPanel");
+            if (panel == null) return;
+
+            var container = panel.Find("PlayerPortraitContainer");
+            if (container == null)
+            {
+                var go = new GameObject("PlayerPortraitContainer", typeof(RectTransform), typeof(Image));
+                go.transform.SetParent(panel, false);
+                var cRt = go.GetComponent<RectTransform>();
+                cRt.anchorMin = cRt.anchorMax = new Vector2(0f, 1f);
+                cRt.pivot     = new Vector2(0f, 1f);
+                cRt.anchoredPosition = new Vector2(14f, -14f);
+                cRt.sizeDelta = new Vector2(68f, 68f);
+
+                var bg = go.GetComponent<Image>();
+                bg.sprite = Board.BoardVisualUtility.GetPixelCardSprite();
+                bg.type = Image.Type.Sliced;
+                bg.color = new Color(0.12f, 0.15f, 0.22f, 0.95f);
+                bg.raycastTarget = false;
+
+                var portGo = new GameObject("Portrait", typeof(RectTransform), typeof(Image));
+                portGo.transform.SetParent(go.transform, false);
+                var pRt = portGo.GetComponent<RectTransform>();
+                pRt.anchorMin = Vector2.zero;
+                pRt.anchorMax = Vector2.one;
+                pRt.offsetMin = new Vector2(3f, 3f);
+                pRt.offsetMax = new Vector2(-3f, -3f);
+
+                _portraitImage = portGo.GetComponent<Image>();
+                _portraitImage.preserveAspect = true;
+                _portraitImage.raycastTarget = false;
+            }
+            else
+            {
+                _portraitImage = container.Find("Portrait")?.GetComponent<Image>();
+            }
+        }
+
+        private void RefreshPortrait(PlayerData player)
+        {
+            EnsurePortraitDisplay();
+            if (_portraitImage == null || player == null) return;
+
+            var mood = CharacterMoodManager.GetMood(player);
+            var sprite = Sugoroku.Visual.CharacterVisualAssets.GetSprite(player.Character, mood);
+            if (sprite != null)
+                _portraitImage.sprite = sprite;
         }
     }
 }

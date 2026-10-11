@@ -12,6 +12,7 @@ namespace Sugoroku.UI
         public const int SortStatusBanner  = 10;
         public const int SortEventModal    = 40;
         public const int SortToastOverlay  = 50;
+        public const int SortHelpPanel     = 55;
 
         public const string EventModalRootName = "EventModalOverlayRoot";
 

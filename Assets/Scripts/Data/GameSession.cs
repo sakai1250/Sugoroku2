@@ -10,6 +10,8 @@ namespace Sugoroku.Data
         const string PrefBgmVolume    = "sugoroku_bgm_volume";
         const string PrefSeVolume     = "sugoroku_se_volume";
         const string PrefProfessor    = "sugoroku_professor";
+        const string PrefUiTextScale  = "sugoroku_ui_text_scale";
+        const string PrefReduceMotion = "sugoroku_reduce_motion";
 
         public static int           HumanCount     = 1;
         public static int           CpuCount       = 1;
@@ -19,9 +21,18 @@ namespace Sugoroku.Data
         public static int            BoardCellCount = (int)BoardLengthOption.Standard;
         public static GameDifficulty Difficulty     = GameDifficulty.Normal;
 
+        /// <summary>現在のゲームステージ・シーズン（研究執筆 → 学会 → バイト）。</summary>
+        public static SeasonType CurrentSeason = SeasonType.ResearchWriting;
+
         public static float BgmVolume = 0.7f;
         public static float SeVolume  = 1.0f;
         public static ProfessorType SelectedProfessor = ProfessorType.None;
+
+        /// <summary>UI 文字サイズ倍率（0.85〜1.35）。設定画面で変更可能。</summary>
+        public static float UiTextScale = 1f;
+
+        /// <summary>動きを減らすモード。アニメーション時間を短縮して演出負荷を下げる。</summary>
+        public static bool ReduceMotion = false;
 
         public static GameOverReason LastGameOverReason = GameOverReason.None;
         public static PlayerSnapshot[] LastPlayers;
@@ -53,6 +64,9 @@ namespace Sugoroku.Data
             SelectedProfessor = System.Enum.IsDefined(typeof(ProfessorType), professor)
                 ? (ProfessorType)professor
                 : ProfessorType.None;
+
+            UiTextScale  = UnityEngine.Mathf.Clamp(UnityEngine.PlayerPrefs.GetFloat(PrefUiTextScale, 1f), 0.85f, 1.35f);
+            ReduceMotion = UnityEngine.PlayerPrefs.GetInt(PrefReduceMotion, 0) == 1;
         }
 
         public static void SaveSettings()
@@ -62,6 +76,8 @@ namespace Sugoroku.Data
             UnityEngine.PlayerPrefs.SetFloat(PrefBgmVolume, BgmVolume);
             UnityEngine.PlayerPrefs.SetFloat(PrefSeVolume, SeVolume);
             UnityEngine.PlayerPrefs.SetInt(PrefProfessor, (int)SelectedProfessor);
+            UnityEngine.PlayerPrefs.SetFloat(PrefUiTextScale, UiTextScale);
+            UnityEngine.PlayerPrefs.SetInt(PrefReduceMotion, ReduceMotion ? 1 : 0);
             UnityEngine.PlayerPrefs.Save();
         }
 

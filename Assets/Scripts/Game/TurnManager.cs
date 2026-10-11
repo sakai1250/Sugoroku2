@@ -46,6 +46,11 @@ namespace Sugoroku.Game
         private IEnumerator TurnStartCoroutine()
         {
             var player = CurrentPlayer;
+            if (player == null || !player.CanTakeTurn)
+            {
+                EndTurn();
+                yield break;
+            }
             player.LastDiceValue = -1;
             OnTurnStarted?.Invoke(player);
 
@@ -222,6 +227,12 @@ namespace Sugoroku.Game
                     GameManager.Instance.ShowSquareEffect(player, squareType);
                     if (!isSeriousImmune)
                         yield return StatChangeSequencer.Apply(player, 0, -5, -10, 5);
+                    else
+                    {
+                        yield return StatChangeSequencer.Apply(player, 0, 5, 5, 5);
+                        Sugoroku.UI.GameStatusBanner.Show(
+                            $"{PlayerIdentity.FormatHudLabel(player)} — 講義マスター発動！模範的発表でIF・メンタル・徳UP！");
+                    }
                     EndTurn();
                     break;
 
@@ -243,6 +254,7 @@ namespace Sugoroku.Game
                     GameManager.Instance.ShowSquareEffect(player, squareType);
                     yield return StatChangeSequencer.Apply(player,
                         node?.BonusMoney ?? 5, 5, 10, 5);
+                    TryGrantRandomItem(player);
                     EndTurn();
                     break;
 
@@ -260,7 +272,7 @@ namespace Sugoroku.Game
             }
         }
 
-        /// <summary>バイトマス通過時、一定確率で3種のアイテムからランダムに1つ拾得する。</summary>
+        /// <summary>バイトマス・ボーナスマス等で、一定確率で3種のアイテムからランダムに1つ拾得する。</summary>
         private void TryGrantRandomItem(PlayerData player)
         {
             if (GameRng.Value01() >= GameConfig.ItemPickupChance) return;
@@ -279,10 +291,11 @@ namespace Sugoroku.Game
                     break;
                 default:
                     player.ItemMoneyBonusCount++;
-                    itemName = "臨時収入";
+                    itemName = "臨時収入券";
                     break;
             }
 
+            Audio.GameAudioController.Instance?.PlayPositive();
             Sugoroku.UI.GameStatusBanner.Show(
                 $"{PlayerIdentity.FormatHudLabel(player)} — アイテム「{itemName}」を拾った！");
         }

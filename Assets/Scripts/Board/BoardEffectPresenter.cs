@@ -261,6 +261,18 @@ namespace Sugoroku.Board
 
         private IEnumerator CurrentMarkerPulse()
         {
+            if (GameSession.ReduceMotion)
+            {
+                // 動きを減らす設定時は静止表示（WCAG 2.3.3）
+                if (_currentMarker != null)
+                {
+                    SetWorldSize(_currentMarker.transform, 1.20f);
+                    var c = _currentMarker.color;
+                    _currentMarker.color = WithAlpha(c, 0.40f);
+                }
+                yield break;
+            }
+
             while (_currentMarker != null)
             {
                 float pulse = (Mathf.Sin(Time.time * 5.4f) + 1f) * 0.5f;

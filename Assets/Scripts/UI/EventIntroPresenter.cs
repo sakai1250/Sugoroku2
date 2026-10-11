@@ -33,15 +33,18 @@ namespace Sugoroku.UI
             if (ev == null) yield break;
 
             var category = EventMasuArt.ResolveCategory(SquareType.Event, ev.Tags);
+            bool reduceMotion = GameSession.ReduceMotion;
             var req = new CutInRequest
             {
                 Badge    = ev.IsRare ? "★★ 超レアイベント!! ★★" : "★ イベント発生!",
                 Who      = player != null ? PlayerIdentity.FormatHudLabel(player) : "",
                 Title    = ev.Title ?? "",
                 Hero     = EventMasuArt.GetHeroSprite(category),
-                Style    = ev.IsRare ? CutInStyle.Spin : CutInStyleMap.PickEvent(ev),
+                Style    = reduceMotion
+                    ? CutInStyle.Fade
+                    : ev.IsRare ? CutInStyle.Spin : CutInStyleMap.PickEvent(ev),
                 Duration = ev.IsRare ? IntroDuration * 1.35f : IntroDuration,
-                Flash    = ev.IsRare,
+                Flash    = ev.IsRare && !reduceMotion,
             };
 
             yield return PlayCard(req, player);
@@ -99,13 +102,13 @@ namespace Sugoroku.UI
             CreateImage(card.transform, "CardBg", new Color(0.08f, 0.10f, 0.16f, 0f));
             GameUiChrome.ApplySurface(card.transform, new Color(0.08f, 0.10f, 0.16f, 0.96f));
 
-            var badge = CreateTmp(card.transform, "Badge", req.Badge, HudTextStyle.JuiceStatusFontSize, TextAlignmentOptions.Center);
+            var badge = CreateTmp(card.transform, "Badge", req.Badge, HudTextStyle.Scale(28f), TextAlignmentOptions.Center);
             var badgeRt = badge.rectTransform;
             badgeRt.anchorMin = badgeRt.anchorMax = new Vector2(0.5f, 1f);
             badgeRt.pivot = new Vector2(0.5f, 1f);
             badgeRt.anchoredPosition = new Vector2(0f, -16f);
             badgeRt.sizeDelta = new Vector2(680f, 48f);
-            HudTextStyle.ApplyReadable(badge, HudTextStyle.JuiceStatusFontSize, new Color(1f, 0.82f, 0.28f), true);
+            HudTextStyle.ApplyReadable(badge, HudTextStyle.Scale(28f), new Color(1f, 0.82f, 0.28f), true);
             HudTextStyle.ApplyOutlineSafe(badge, HudTextStyle.JuiceOutlineWidth, HudTextStyle.OutlineColor);
 
             var artFrame = new GameObject("ArtFrame", typeof(RectTransform));
@@ -133,7 +136,7 @@ namespace Sugoroku.UI
             whoRt.anchorMin = whoRt.anchorMax = new Vector2(0.5f, 0f);
             whoRt.pivot = new Vector2(0.5f, 0f);
             whoRt.anchoredPosition = new Vector2(0f, 52f);
-            whoRt.sizeDelta = new Vector2(680f, 28f);
+            whoRt.sizeDelta = new Vector2(680f, 34f * GameSession.UiTextScale);
             HudTextStyle.ApplyReadable(whoTmp, HudTextStyle.Scale(16f), new Color(0.82f, 0.88f, 1f), false);
 
             var titleTmp = CreateTmp(card.transform, "Title", req.Title, 28f, TextAlignmentOptions.Center);
@@ -141,11 +144,15 @@ namespace Sugoroku.UI
             titleRt.anchorMin = titleRt.anchorMax = new Vector2(0.5f, 0f);
             titleRt.pivot = new Vector2(0.5f, 0f);
             titleRt.anchoredPosition = new Vector2(0f, 12f);
-            titleRt.sizeDelta = new Vector2(680f, 40f);
+            titleRt.sizeDelta = new Vector2(680f, 48f * GameSession.UiTextScale);
             HudTextStyle.ApplyReadable(titleTmp, HudTextStyle.Scale(28f), Color.white, true);
+            titleTmp.enableAutoSizing = true;
+            titleTmp.fontSizeMax = HudTextStyle.Scale(28f);
+            titleTmp.fontSizeMin = HudTextStyle.Scale(22f);
 
             var (shakeAmp, shakeDur) = CutInStyleMap.Impact(req.Style);
             if (req.Flash) shakeAmp *= 1.6f;
+            if (GameSession.ReduceMotion) shakeAmp = 0f;
             BoardCameraController.ShakeInstance(shakeAmp, shakeDur);
             PulseMasuAtPlayer(player);
 
@@ -171,7 +178,7 @@ namespace Sugoroku.UI
                 backdrop.color = new Color(0f, 0f, 0f, 0.72f * Mathf.Min(alpha * 1.2f, 1f));
                 if (flash != null)
                 {
-                    float flashA = Mathf.Max(0f, 0.85f - t * 4f); // 冒頭で白フラッシュ→素早く消える
+                    float flashA = Mathf.Max(0f, 0.5f - t * 2.2f); // 冒頭で白フラッシュ→素早く消える（光過敏性に配慮し α0.5 に抑制）
                     flash.color = new Color(1f, 1f, 1f, flashA);
                 }
                 yield return null;

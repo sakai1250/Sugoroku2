@@ -30,6 +30,9 @@ namespace Sugoroku.UI
         private Transform _overlayRoot;
         private TextMeshProUGUI _instructionText;
         private Image _rareGlowPanel;
+        private Coroutine _entranceCo;
+        private Coroutine _exitCo;
+        private Vector3 _restScale = Vector3.one;
 
         public static bool HasVisibleModal
         {
@@ -50,6 +53,7 @@ namespace Sugoroku.UI
         private void Awake()
         {
             Instance = this;
+            _restScale = transform.localScale;
             AutoBind();
             EnsureModalShell();
             EnsureCanvasGroup();
@@ -287,7 +291,7 @@ namespace Sugoroku.UI
                     AddStuckFallbackButton(ev, player);
                 if (!player.IsCpu && _buttons.Count == 0)
                 {
-                    EnsureModalInstruction("選択できる肢がありません。積んだ徳が足りるか確認してください。");
+                    EnsureModalInstruction("選べる選択肢がありません。「徳」を5以上貯めると周囲が助けてくれる救済が使えます。");
                     AddForceSkipButton();
                 }
             }
@@ -301,20 +305,100 @@ namespace Sugoroku.UI
 
             _choiceButtonParent.SetAsLastSibling();
             ConfigureModalRaycasts();
-            ClearEventSystemSelection();
+            FitChoiceListHeight();
+            SetInitialSelection();
             BringToFront();
             EnsureMassBackdropLayer();
             EnsureWorldDimmer()?.ShowForEvent();
+
+            PlayChoiceEntrance();
 
             if (player.IsCpu)
                 StartCoroutine(CpuPick(player, ev, generation));
         }
 
-        private static void ClearEventSystemSelection()
+        /// <summary>選択肢の数に合わせてリスト高さを調整し、固定300pxではみ出す3択にも対応する。</summary>
+        private void FitChoiceListHeight()
+        {
+            if (_choiceButtonParent is not RectTransform rt) return;
+            float height = 0f;
+            for (int i = 0; i < _buttons.Count; i++)
+            {
+                if (_buttons[i] == null) continue;
+                var le = _buttons[i].GetComponent<LayoutElement>();
+                height += le != null ? le.preferredHeight : 100f;
+                if (i > 0) height += 10f;
+            }
+            if (height > 0f)
+                rt.sizeDelta = new Vector2(rt.sizeDelta.x, Mathf.Max(120f, height));
+        }
+
+        private void PlayChoiceEntrance()
+        {
+            for (int i = 0; i < _buttons.Count; i++)
+            {
+                var btn = _buttons[i];
+                if (btn == null) continue;
+                var cg = btn.GetComponent<CanvasGroup>();
+                if (cg == null) cg = btn.gameObject.AddComponent<CanvasGroup>();
+                // 入場が終わるまで確定操作を封じる（見えていない選択肢を誤送信しない）
+                btn.interactable = false;
+                cg.alpha = 0f;
+                cg.blocksRaycasts = false;
+                StartCoroutine(ChoiceEntranceRoutine(btn, cg, i * 0.06f));
+            }
+        }
+
+        private System.Collections.IEnumerator ChoiceEntranceRoutine(Button btn, CanvasGroup cg, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (btn == null || cg == null) yield break;
+            float duration = GameConfig.AnimationDuration(0.18f);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float e = JuiceMath.EaseOutCubic(t);
+                cg.alpha = e;
+                var rt = btn.GetComponent<RectTransform>();
+                if (rt != null)
+                    rt.localScale = Vector3.Lerp(new Vector3(0.96f, 0.96f, 1f), Vector3.one, e);
+                yield return null;
+            }
+            if (cg != null)
+            {
+                cg.alpha = 1f;
+                cg.blocksRaycasts = true;
+            }
+            if (btn != null)
+            {
+                btn.interactable = true;
+                var rtCheck = btn.GetComponent<RectTransform>();
+                if (rtCheck != null) rtCheck.localScale = Vector3.one;
+            }
+        }
+
+        /// <summary>最初の選択可能な選択肢へキーボードフォーカスを移す（WCAG 2.1.1 Keyboard）。</summary>
+        private void SetInitialSelection()
         {
             var eventSystem = UnityEngine.EventSystems.EventSystem.current;
-            if (eventSystem != null)
+            if (eventSystem == null) return;
+            var first = _buttons.Find(b => b != null && b.gameObject.activeInHierarchy && b.interactable);
+            if (first != null)
+                eventSystem.SetSelectedGameObject(first.gameObject);
+            else
                 eventSystem.SetSelectedGameObject(null);
+        }
+
+        /// <summary>モーダル配下の選択だけを解放する。既に HUD へ返したフォーカスは壊さない（WCAG 2.4.3）。</summary>
+        private void ClearEventSystemSelection()
+        {
+            var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+            if (eventSystem == null) return;
+            var sel = eventSystem.currentSelectedGameObject;
+            if (sel != null && !sel.transform.IsChildOf(transform)) return;
+            eventSystem.SetSelectedGameObject(null);
         }
 
         private void AddVirtueRescueButton(PlayerData player)
@@ -323,7 +407,7 @@ namespace Sugoroku.UI
 
             var rescueChoice = new EventChoice
             {
-                Label        = "積んだ徳が効く（周囲がフォロー）",
+                Label        = "徳の救済: 周囲が助けてくれる（メンタル+10 / 徳-5）",
                 MoneyChange  = 0,
                 IfScoreChange= 0,
                 MentalChange = 10,
@@ -337,7 +421,10 @@ namespace Sugoroku.UI
 
         private System.Collections.IEnumerator CpuPick(PlayerData player, EventMaster ev, int generation)
         {
-            yield return new WaitForSeconds(1.2f);
+            // 思考まち時間は固定値。AnimationDuration() は 1/0.7 倍に伸びるため使わない。
+            // 「動きを減らす」ON 時のみ短縮し、テンポとアクセシビリティを両立する。
+            float thinkSeconds = GameSession.ReduceMotion ? 0.5f : 1.2f;
+            yield return new WaitForSeconds(thinkSeconds);
             if (generation != _showGeneration || !_hasVisibleContent) yield break;
 
             int idx = EventRobustnessValidator.FirstSelectableIndex(ev, player);
@@ -373,7 +460,7 @@ namespace Sugoroku.UI
         private void AddForceSkipButton()
         {
             var btn = CreateChoiceButton(
-                new EventChoice { Label = "（進行不能のためスキップ）" },
+                new EventChoice { Label = "このイベントはスキップして進む" },
                 true,
                 null);
             btn.onClick.AddListener(CloseAndEndTurn);
@@ -422,6 +509,7 @@ namespace Sugoroku.UI
             HideModal();
             EnsureWorldDimmer()?.Hide();
             Board.BoardCameraController.Instance?.RestoreFramedView();
+            RestoreHudFocus();
             _showGeneration++;
         }
 
@@ -433,13 +521,51 @@ namespace Sugoroku.UI
             Board.BoardCameraController.Instance?.RestoreFramedView();
             TurnManager.Instance.EndTurn();
             FindFirstObjectByType<GameHUD>()?.RefreshAll();
+            RestoreHudFocus();
+        }
+
+        /// <summary>モーダル閉鎖後、キーボード操作者がすぐ行動できるよう HUD の主ボタンへフォーカスを返す（WCAG 2.4.3）。</summary>
+        private static void RestoreHudFocus()
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return;
+            var roll = FindFirstObjectByType<GameHUD>(FindObjectsInactive.Exclude)?.RollButton;
+            if (roll != null && roll.interactable && roll.gameObject.activeInHierarchy)
+                es.SetSelectedGameObject(roll.gameObject);
         }
 
         private void HideModal()
         {
             _hasVisibleContent = false;
-            HideImmediate();
             UiLayerManager.ApplyEventModalClosed();
+            if (_exitCo != null) StopCoroutine(_exitCo);
+            if (_entranceCo != null) StopCoroutine(_entranceCo);
+            var cg = EnsureCanvasGroup();
+            if (cg.alpha <= 0.01f)
+            {
+                HideImmediate();
+                return;
+            }
+            _exitCo = StartCoroutine(ExitRoutine());
+        }
+
+        private System.Collections.IEnumerator ExitRoutine()
+        {
+            var cg = EnsureCanvasGroup();
+            cg.blocksRaycasts = false;
+            cg.interactable = false;
+            float duration = GameConfig.AnimationDuration(0.12f);
+            float elapsed = 0f;
+            float start = cg.alpha;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                cg.alpha = Mathf.Lerp(start, 0f, JuiceMath.EaseOutCubic(t));
+                yield return null;
+            }
+            _exitCo = null;
+            HideImmediate();
         }
 
         private void HideImmediate()
@@ -453,20 +579,48 @@ namespace Sugoroku.UI
                 _modalBackdrop.enabled = false;
             if (_instructionText != null)
                 _instructionText.gameObject.SetActive(false);
+            ClearEventSystemSelection();
         }
 
         private void ShowModalVisuals()
         {
             var cg = EnsureCanvasGroup();
-            cg.alpha = 1f;
+            cg.alpha = 0f;
             cg.blocksRaycasts = true;
             cg.interactable = true;
             if (_modalBackdrop != null)
             {
                 _modalBackdrop.enabled = true;
-                _modalBackdrop.color = new Color(0f, 0f, 0f, 0.42f);
+                _modalBackdrop.color = new Color(0f, 0f, 0f, 0f);
                 _modalBackdrop.transform.SetAsFirstSibling();
             }
+            if (_exitCo != null) StopCoroutine(_exitCo);
+            if (_entranceCo != null) StopCoroutine(_entranceCo);
+            _entranceCo = StartCoroutine(EntranceRoutine());
+        }
+
+        private System.Collections.IEnumerator EntranceRoutine()
+        {
+            float duration = GameConfig.AnimationDuration(0.18f);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float e = JuiceMath.EaseOutCubic(t);
+                var cg = EnsureCanvasGroup();
+                cg.alpha = e;
+                transform.localScale = Vector3.Lerp(_restScale * 1.04f, _restScale, e);
+                if (_modalBackdrop != null)
+                    _modalBackdrop.color = new Color(0f, 0f, 0f, 0.42f * e);
+                yield return null;
+            }
+            _entranceCo = null;
+            var done = EnsureCanvasGroup();
+            done.alpha = 1f;
+            transform.localScale = _restScale;
+            if (_modalBackdrop != null)
+                _modalBackdrop.color = new Color(0f, 0f, 0f, 0.42f);
         }
 
         private void EnsureModalShell()
@@ -686,7 +840,7 @@ namespace Sugoroku.UI
             labelTmp.fontSize = EventModalLayout.ChoiceFontSize;
             labelTmp.fontStyle = FontStyles.Bold;
             labelTmp.alignment = TextAlignmentOptions.Left;
-            labelTmp.color = interactable ? Color.white : new Color(1f, 1f, 1f, 0.65f);
+            labelTmp.color = interactable ? Color.white : new Color(1f, 1f, 1f, 0.55f);
             labelTmp.raycastTarget = false;
             JapaneseFontProvider.Apply(labelTmp);
 
@@ -709,7 +863,35 @@ namespace Sugoroku.UI
                 failLe.preferredHeight = 22f;
             }
 
+            if (!interactable)
+                AddDisabledHitArea(go.transform);
+
             return btn;
+        }
+
+        /// <summary>非活性選択肢のクリックを拾い、エラー音と理由を通知する（無反応を防ぐ）。</summary>
+        private static void AddDisabledHitArea(Transform buttonRoot)
+        {
+            var go = new GameObject("DisabledHitArea", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(buttonRoot, false);
+            var img = go.GetComponent<Image>();
+            img.color = new Color(1f, 1f, 1f, 0f);
+            img.raycastTarget = true;
+            var btn = go.GetComponent<Button>();
+            btn.transition = Selectable.Transition.None;
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            btn.onClick.AddListener(OnDisabledChoiceClicked);
+        }
+
+        private static void OnDisabledChoiceClicked()
+        {
+            GameAudioController.Instance?.PlayError();
+            var modal = Resolve();
+            if (modal != null && modal._instructionText != null)
+                modal._instructionText.text = "この選択肢は条件を満たしていません。他の選択肢を選んでください。";
         }
 
         private static void CreateChoiceEffectRow(Transform parent, EventChoice choice, PlayerData player, bool interactable)

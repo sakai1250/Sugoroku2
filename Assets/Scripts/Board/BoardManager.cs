@@ -68,6 +68,14 @@ namespace Sugoroku.Board
         public int GetNextTuitionIndex(int currentLogicalIndex) =>
             GetNextTuitionIndex(currentLogicalIndex, BranchRoute.None);
 
+        public bool HasTuitionAhead(int currentLogicalIndex, BranchRoute branch)
+        {
+            for (int i = currentLogicalIndex + 1; i < BoardNavigation.LogicalCellCount; i++)
+                if (BoardNavigation.GetSquareType(i, branch) == SquareType.Tuition)
+                    return true;
+            return false;
+        }
+
         public int GetNextTuitionIndex(int currentLogicalIndex, BranchRoute branch)
         {
             for (int i = currentLogicalIndex + 1; i < BoardNavigation.LogicalCellCount; i++)
@@ -90,6 +98,31 @@ namespace Sugoroku.Board
             }
 
             Debug.LogWarning("BoardManager: WaypointRoute が空です。LayeredBoardGenerator を Board に追加してください。");
+        }
+
+        /// <summary>
+        /// シーズン移行時に新しい盤面（マス配置・背景・カメラ）を再構築する。
+        /// </summary>
+        public void RebuildForSeason()
+        {
+            BoardLayoutGenerator.Invalidate();
+            if (_generator != null)
+            {
+                _generator.GenerateLayeredBoard();
+            }
+            else if (_route != null)
+            {
+                _route.SyncRouteIndices(refreshVisuals: true);
+            }
+
+            var env = FindFirstObjectByType<BoardEnvironment>();
+            if (env != null && _route != null)
+            {
+                env.AlignBackgroundToRoute(_route, false);
+            }
+
+            var cam = FindFirstObjectByType<BoardCameraController>();
+            cam?.FrameBoard();
         }
     }
 }

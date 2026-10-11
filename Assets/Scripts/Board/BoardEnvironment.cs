@@ -13,6 +13,8 @@ namespace Sugoroku.Board
         [SerializeField] private Color          _dimmedBackgroundColor = new(0.72f, 0.76f, 0.84f, 0.42f);
         [SerializeField] private bool           _usePixelPlatformBackdrop = true;
         [SerializeField] private Color          _pixelBackdropColor = new(1f, 1f, 1f, 0.96f);
+        [SerializeField] private bool           _useSeasonIllustrations = true;
+        [SerializeField] private bool           _useLaboratoryField = true;
         [SerializeField] private bool           _useFauxDepthParallax = true;
         [SerializeField] private float          _cloudParallax = 0.08f;
         [SerializeField] private float          _foregroundParallax = 0.20f;
@@ -37,35 +39,66 @@ namespace Sugoroku.Board
             if (_backgroundArt == null)
                 _backgroundArt = FindBackgroundRenderer();
 
-            if (_backgroundArt == null && _usePixelPlatformBackdrop)
+            if (_backgroundArt == null)
                 _backgroundArt = CreatePixelBackgroundRenderer();
 
             if (_backgroundArt == null) return;
 
-            if (_usePixelPlatformBackdrop)
+            Sprite seasonIllustration = null;
+            if (_useSeasonIllustrations)
+            {
+                seasonIllustration = Sugoroku.Visual.CampusIllustrationLoader.GetIllustration(Sugoroku.Data.GameSession.CurrentSeason);
+            }
+
+            if (seasonIllustration != null)
+            {
+                _backgroundArt.sprite = seasonIllustration;
+                _backgroundArt.color = Color.white;
+                // イラスト使用時は屋外用の雲/前景レイヤーを無効化
+                if (_cloudDepthLayer != null) _cloudDepthLayer.gameObject.SetActive(false);
+                if (_foregroundDepthLayer != null) _foregroundDepthLayer.gameObject.SetActive(false);
+            }
+            else if (_usePixelPlatformBackdrop)
+            {
                 _backgroundArt.sprite = BoardVisualUtility.GetPixelPlatformBackdropSprite();
+                _backgroundArt.color = _pixelBackdropColor;
+            }
+            else if (dimBackground)
+            {
+                _backgroundArt.color = _dimmedBackgroundColor;
+            }
 
             _backgroundArt.transform.position = new Vector3(bounds.center.x, bounds.center.y, 0f);
             BoardVisualUtility.ApplySpriteRenderer(
                 _backgroundArt, BoardSortingLayers.Background, -100);
 
-            if (_usePixelPlatformBackdrop)
-                _backgroundArt.color = _pixelBackdropColor;
-            else if (dimBackground)
-                _backgroundArt.color = _dimmedBackgroundColor;
-
             float scale = 1f;
             if (_backgroundArt.sprite != null)
             {
                 var size = _backgroundArt.sprite.bounds.size;
-                float scaleX = bounds.size.x / Mathf.Max(size.x, 0.01f);
-                float scaleY = bounds.size.y / Mathf.Max(size.y, 0.01f);
-                scale = Mathf.Max(scaleX, scaleY);
+                float margin = 4.0f;
+                float scaleX = (bounds.size.x + margin * 2f) / Mathf.Max(size.x, 0.01f);
+                float scaleY = (bounds.size.y + margin * 2f) / Mathf.Max(size.y, 0.01f);
+                // 画面全体（16:9 画角）をカバーする最小スケールを確保
+                float minScreenScale = Mathf.Max(14f / Mathf.Max(size.y, 0.01f), 22f / Mathf.Max(size.x, 0.01f));
+                scale = Mathf.Max(scaleX, scaleY, minScreenScale);
                 _backgroundArt.transform.localScale = new Vector3(scale, scale, 1f);
             }
 
-            if (_usePixelPlatformBackdrop && _useFauxDepthParallax)
+            if (seasonIllustration == null && _usePixelPlatformBackdrop && _useFauxDepthParallax)
                 EnsureFauxDepthLayers(bounds, scale);
+
+            if (_useLaboratoryField && seasonIllustration == null)
+            {
+                var lab = GetComponent<LaboratoryField>();
+                if (lab == null) lab = gameObject.AddComponent<LaboratoryField>();
+                lab.Build(bounds);
+            }
+            else
+            {
+                var lab = GetComponent<LaboratoryField>();
+                if (lab != null) lab.Clear();
+            }
         }
 
         private void LateUpdate()

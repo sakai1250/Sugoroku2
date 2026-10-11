@@ -31,6 +31,15 @@ namespace Sugoroku.UI
             ShowResults();
             EnsureShareButtons();
             EnsureStatHistoryChart();
+            SetInitialKeyboardFocus();
+        }
+
+        /// <summary>画面表示直後にタイトルボタンへキーボードフォーカスを置く（WCAG 2.4.3）。</summary>
+        private void SetInitialKeyboardFocus()
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null || _titleButton == null || !_titleButton.interactable) return;
+            es.SetSelectedGameObject(_titleButton.gameObject);
         }
 
         private void ShowResults()
@@ -47,7 +56,7 @@ namespace Sugoroku.UI
             PlayerSnapshot heroPlayer = default;
             var lines = new System.Text.StringBuilder();
             lines.AppendLine("【ランク別進路】");
-            lines.AppendLine("S: 教授  |  A: 大手メーカー  |  B: 修士就職  |  C: 実家稼業");
+            lines.AppendLine("S: 教授職  |  A: 研究・技術・専門職  |  B: 一般職  |  C: 実家稼業");
             lines.AppendLine();
 
             for (int i = 0; i < players.Length; i++)
@@ -80,6 +89,21 @@ namespace Sugoroku.UI
                 lines.AppendLine("────────────────");
                 lines.AppendLine($"あなたの進路: ランク {hero.Value.Rank} → {hero.Value.CareerPath}");
                 lines.AppendLine($"（{hero.Value.Subtitle}）");
+            }
+
+            // 人間プレイヤーが複数いる場合も、全員の進路を明示する
+            var humans = players
+                .Where(p => p.Status == PlayerStatus.Graduated && !p.IsCpu)
+                .ToList();
+            if (humans.Count > 1)
+            {
+                lines.AppendLine("────────────────");
+                foreach (var hp in humans)
+                {
+                    var hOut = GraduationOutcomeResolver.Resolve(hp);
+                    lines.AppendLine($"{hp.Name} の進路: ランク {hOut.Rank} → {hOut.CareerPath}");
+                    lines.AppendLine($"（{hOut.Subtitle}）");
+                }
             }
 
             if (hero != null && !heroPlayer.IsCpu)
@@ -118,15 +142,13 @@ namespace Sugoroku.UI
         /// <summary>「診断メーカー」風の結果カード画像を保存/シェアするボタン。requirements.md §1.1 WebGL 想定。</summary>
         private void EnsureShareButtons()
         {
-            if (_heroOutcome == null) return;
-
             var row = new GameObject("ShareButtonRow", typeof(RectTransform));
             row.transform.SetParent(transform, false);
             var rowRt = row.GetComponent<RectTransform>();
             rowRt.anchorMin = new Vector2(0.5f, 0f);
             rowRt.anchorMax = new Vector2(0.5f, 0f);
             rowRt.pivot = new Vector2(0.5f, 0f);
-            rowRt.sizeDelta = new Vector2(620f, 84f);
+            rowRt.sizeDelta = new Vector2(_heroOutcome != null ? 920f : 300f, 84f);
             rowRt.anchoredPosition = new Vector2(0f, 24f);
 
             var layout = row.AddComponent<HorizontalLayoutGroup>();
@@ -135,14 +157,22 @@ namespace Sugoroku.UI
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            CreateShareButton(row.transform, "画像を保存", SaveShareImage);
-            CreateShareButton(row.transform, "Xでシェア", OpenShareIntent);
+            if (_heroOutcome != null)
+            {
+                CreateShareButton(row.transform, "画像を保存", SaveShareImage);
+                CreateShareButton(row.transform, "Xでシェア", OpenShareIntent);
+            }
+
+            // 勢いでリベンジできるよう、同じ設定のままキャラ選択へ戻るボタンを常設する
+            CreateShareButton(row.transform, "もう一回", RestartToCharacterSelect);
         }
+
+        private void RestartToCharacterSelect() => SceneManager.LoadScene("CharacterSelectScene");
 
         /// <summary>IF/メンタルの推移チャートを1枚追加する。履歴が2件未満なら何も表示しない。</summary>
         private void EnsureStatHistoryChart()
         {
-            if (_heroPlayer.History == null || _heroPlayer.History.Count < 2) return;
+            if (_heroPlayer.History == null) return;
 
             var existing = transform.Find("StatHistoryChart");
             if (existing != null) Destroy(existing.gameObject);

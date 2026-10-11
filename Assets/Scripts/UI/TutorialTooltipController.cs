@@ -10,7 +10,7 @@ namespace Sugoroku.UI
     public class TutorialTooltipController : MonoBehaviour
     {
         private const string PrefsKey = "tutorial_resources_seen";
-        private const int    MaxTurnsToShow = 3;
+        private const int    MaxTurnsToShow = 4;
 
         private static readonly string[] Tips =
         {
@@ -86,18 +86,38 @@ namespace Sugoroku.UI
         private System.Collections.IEnumerator ShowThenHide()
         {
             if (_group != null) _group.alpha = 1f;
-            yield return new WaitForSeconds(5f);
+
+            // 読む速度に合わせられるよう、クリックかキー入力で閉じるまで表示する（最長15秒）。
+            float elapsed = 0f;
+            while (elapsed < 15f)
+            {
+                if (WasDismissInput()) break;
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
 
             float t = 0f;
             const float fade = 0.6f;
             float start = _group != null ? _group.alpha : 0f;
             while (t < fade)
             {
-                t += Time.deltaTime;
+                t += Time.unscaledDeltaTime;
                 if (_group != null) _group.alpha = Mathf.Lerp(start, 0f, t / fade);
                 yield return null;
             }
             if (_group != null) _group.alpha = 0f;
+        }
+
+        private static bool WasDismissInput()
+        {
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse != null && mouse.leftButton.wasPressedThisFrame) return true;
+
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard == null) return false;
+            foreach (var key in keyboard.allKeys)
+                if (key != null && key.wasPressedThisFrame) return true;
+            return false;
         }
 
         private void BuildUi()
@@ -115,6 +135,11 @@ namespace Sugoroku.UI
 
             _group = root.AddComponent<CanvasGroup>();
             _group.alpha = 0f;
+            // 情報表示専用のため下のUI操作を妨げない
+            _group.blocksRaycasts = false;
+            _group.interactable = false;
+            var surfaceImg = root.GetComponent<Image>();
+            if (surfaceImg != null) surfaceImg.raycastTarget = false;
 
             var textGo = new GameObject("Label", typeof(RectTransform));
             textGo.transform.SetParent(root.transform, false);

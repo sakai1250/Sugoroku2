@@ -50,7 +50,10 @@ namespace Sugoroku.Game
             DontDestroyOnLoad(gameObject);
             if (NetworkSessionHost.Instance == null)
                 gameObject.AddComponent<NetworkSessionHost>();
+            if (GetComponent<CharacterMoodManager>() == null)
+                gameObject.AddComponent<CharacterMoodManager>();
             StatChangeNotifier.OnChanged += OnPlayerStatChanged;
+            CharacterMoodManager.OnMoodChanged += HandlePlayerMoodChanged;
         }
 
         private IEnumerator Start()
@@ -141,9 +144,10 @@ namespace Sugoroku.Game
                 Board.BoardVisualUtility.ApplySpriteRenderer(
                     sr, Board.BoardSortingLayers.Player, 10 + i);
 
-                var sprite = OriginalcharAssets.GetSprite(player.Character);
+                var mood = CharacterMoodManager.GetMood(player);
+                var sprite = CharacterVisualAssets.GetSprite(player.Character, mood);
                 sr.sprite  = sprite != null ? sprite : Board.BoardVisualUtility.GetCircleSprite();
-                sr.color   = player.PieceTint;
+                sr.color   = Color.white;
                 go.transform.localScale = Vector3.one * ComputePieceScale(sr.sprite);
                 PlayerPieceLabel.Attach(go.transform, player);
                 _pieces[i] = go;
@@ -221,9 +225,15 @@ namespace Sugoroku.Game
             AddLog($"[脱落] {player.Name} が{label}により脱落...");
             if (!player.IsCpu)
             {
-                GameSession.LastGameOverReason = reason;
-                GameSession.SavePlayers(_players);
-                StartCoroutine(LoadEndScene("GameOverScene"));
+                // 他にプレイ続行できる人間がいればゲームを続ける（脱落者はターンスキップされる）。
+                // 全員の人間が脱落した場合のみゲームオーバー画面へ。
+                bool anyActiveHuman = System.Array.Exists(_players, p => !p.IsCpu && !p.IsFinished);
+                if (!anyActiveHuman)
+                {
+                    GameSession.LastGameOverReason = reason;
+                    GameSession.SavePlayers(_players);
+                    StartCoroutine(LoadEndScene("GameOverScene"));
+                }
             }
             OnGameOver?.Invoke(player);
         }
@@ -263,33 +273,42 @@ namespace Sugoroku.Game
         public void UsePlayerSkill(PlayerData player)
         {
             if (player.SkillUsedThisTurn) return;
+
+            if (player.Character == CharacterType.Rich && player.Money < GameConfig.RichSkillCost)
+            {
+                AddLog($"[スキル] {player.Name} は所持金不足（必要 {GameConfig.RichSkillCost} 万円）のためワザを使えません。");
+                Sugoroku.UI.GameStatusBanner.Show($"{player.Name} 所持金不足でワザを使えません（必要 {GameConfig.RichSkillCost} 万円）");
+                GameAudioController.Instance?.PlayError();
+                return;
+            }
+
             player.SkillUsedThisTurn = true;
             switch (player.Character)
             {
                 case CharacterType.Hobbyist:
                     player.IgnoreNextEvents++;
                     player.ApplyStatChange(0, 0, 10, 0);
-                    AddLog($"[スキル] {player.Name}「一旦逃避」発動！");
+                    AddLog($"[スキル] {player.Name}「{player.Character.SkillName()}」発動！ メンタル+10、次のイベント回避。");
                     break;
                 case CharacterType.Serious:
                     player.IgnoreNextEvents++;
-                    AddLog($"[スキル] {player.Name}「一点突破」発動！ 次の講義マス無効。");
+                    AddLog($"[スキル] {player.Name}「{player.Character.SkillName()}」発動！ 次のイベントを回避。");
                     break;
                 case CharacterType.Athletic:
                     player.AthleticMentalImmunity = true;
-                    AddLog($"[スキル] {player.Name}「根性」発動！ このターンメンタルダメージ0。");
+                    AddLog($"[スキル] {player.Name}「{player.Character.SkillName()}」発動！ このターンメンタルダメージ0。");
                     break;
                 case CharacterType.Rich:
                     if (player.Money >= GameConfig.RichSkillCost)
                     {
                         player.ApplyStatChange(-GameConfig.RichSkillCost, 0, 0, 0);
                         player.IgnoreNextEvents++;
-                        AddLog($"[スキル] {player.Name}「課金解決」発動！");
+                        AddLog($"[スキル] {player.Name}「{player.Character.SkillName()}」発動！ 10万円払って次のイベント回避。");
                     }
                     break;
                 case CharacterType.Genius:
                     player.GeniusBonusActive = true;
-                    AddLog($"[スキル] {player.Name}「閃き」発動！ 次のジャーナルでボーナス。");
+                    AddLog($"[スキル] {player.Name}「{player.Character.SkillName()}」発動！ 次のジャーナルでIFボーナス。");
                     break;
             }
             DiceRoller.Instance.Roll();
@@ -300,7 +319,10 @@ namespace Sugoroku.Game
             if (player == null || player.ItemDiceRerollCount <= 0) return;
             player.ItemDiceRerollCount--;
             player.HasExtraRoll = true;
-            AddLog($"[アイテム] {player.Name}「もう一振り券」使用！");
+            string msg = $"[アイテム] {player.Name}「もう一振り券」使用！ ダイスをもう一度振れます！";
+            AddLog(msg);
+            Sugoroku.UI.GameStatusBanner.Show(msg);
+            Audio.GameAudioController.Instance?.PlayPositive();
         }
 
         public void UseMentalHealItem(PlayerData player)
@@ -308,7 +330,10 @@ namespace Sugoroku.Game
             if (player == null || player.ItemMentalHealCount <= 0) return;
             player.ItemMentalHealCount--;
             player.ApplyStatChange(0, 0, GameConfig.ItemMentalHealAmount, 0);
-            AddLog($"[アイテム] {player.Name}「気分転換ドリンク」使用！");
+            string msg = $"[アイテム] {player.Name}「気分転換ドリンク」使用！ メンタル +{GameConfig.ItemMentalHealAmount}回復！";
+            AddLog(msg);
+            Sugoroku.UI.GameStatusBanner.Show(msg);
+            Audio.GameAudioController.Instance?.PlayPositive();
         }
 
         public void UseMoneyBonusItem(PlayerData player)
@@ -316,14 +341,34 @@ namespace Sugoroku.Game
             if (player == null || player.ItemMoneyBonusCount <= 0) return;
             player.ItemMoneyBonusCount--;
             player.ApplyStatChange(GameConfig.ItemMoneyBonusAmount, 0, 0, 0);
-            AddLog($"[アイテム] {player.Name}「臨時収入」使用！");
+            string msg = $"[アイテム] {player.Name}「臨時収入券」使用！ 資金 +{GameConfig.ItemMoneyBonusAmount}万円！";
+            AddLog(msg);
+            Sugoroku.UI.GameStatusBanner.Show(msg);
+            Audio.GameAudioController.Instance?.PlayPositive();
         }
 
         private bool IsAllFinished() => _players.All(p => p.IsFinished);
         private void AddLog(string msg) => OnLog?.Invoke(msg);
+        private void HandlePlayerMoodChanged(PlayerData player, CharacterMood mood)
+        {
+            if (player == null || _pieces == null || player.Index >= _pieces.Length) return;
+            var piece = _pieces[player.Index];
+            if (piece == null) return;
+            var sr = piece.GetComponent<SpriteRenderer>();
+            if (sr == null) return;
+
+            var sprite = CharacterVisualAssets.GetSprite(player.Character, mood);
+            if (sprite != null)
+            {
+                sr.sprite = sprite;
+                piece.transform.localScale = Vector3.one * ComputePieceScale(sr.sprite);
+            }
+        }
+
         private void OnDestroy()
         {
             StatChangeNotifier.OnChanged -= OnPlayerStatChanged;
+            CharacterMoodManager.OnMoodChanged -= HandlePlayerMoodChanged;
         }
     }
 }

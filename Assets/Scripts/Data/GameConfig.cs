@@ -43,7 +43,7 @@ namespace Sugoroku.Data
         public const float RareEventChance = 0.03f;
 
         /// <summary>バイトマス通過時のアイテム拾得確率(0〜1)。</summary>
-        public const float ItemPickupChance = 0.25f;
+        public const float ItemPickupChance = 0.50f;
         public const int ItemMentalHealAmount = 15;
         public const int ItemMoneyBonusAmount = 10;
 
@@ -53,8 +53,8 @@ namespace Sugoroku.Data
         // スキル使用コスト
         public const int RichSkillCost        = 10;
 
-        // アニメーション時間
-        public const float AnimationSpeed = 0.7f;
+        // アニメーション時間（以前の 0.7f から現在の 30% の速度 0.21f に減速）
+        public const float AnimationSpeed = 0.21f;
         public const float AnimationDurationScale = 1f / AnimationSpeed;
         public const float DiceRollDuration   = 1.0f;
         public const float PieceMoveDuration  = 0.25f;
@@ -67,6 +67,10 @@ namespace Sugoroku.Data
         public const float CameraDiceLookaheadBlend = 0.42f;
         public const float CameraEventZoomScale = 0.72f;
 
-        public static float AnimationDuration(float seconds) => seconds * AnimationDurationScale;
+        public static float AnimationDuration(float seconds)
+        {
+            float scale = AnimationDurationScale * (GameSession.ReduceMotion ? 0.3f : 1f);
+            return seconds * scale;
+        }
     }
 }

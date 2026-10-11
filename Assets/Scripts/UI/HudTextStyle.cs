@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using Sugoroku.Data;
 
 namespace Sugoroku.UI
 {
@@ -19,7 +20,8 @@ namespace Sugoroku.UI
         public const float JuiceOutlineWidth = 0.22f;
         public static readonly Color32 OutlineColor = new(0, 0, 0, 165);
 
-        public static float Scale(float size) => size * TextScale;
+        /// <summary>設定画面の「文字サイズ」設定を反映したスケール付きフォントサイズ。</summary>
+        public static float Scale(float size) => size * TextScale * GameSession.UiTextScale;
 
         public static void ApplyReadable(TextMeshProUGUI tmp, float fontSize, Color color, bool bold = true)
         {
@@ -49,13 +51,16 @@ namespace Sugoroku.UI
             }
         }
 
+        /// <summary>リソース数値（所持金/IF/メンタル/徳）。文字サイズ設定を反映。</summary>
         public static void ApplyResource(TextMeshProUGUI tmp, Color color) =>
-            ApplyReadable(tmp, ResourceFontSize, color, bold: true);
+            ApplyReadable(tmp, Scale(19f), color, bold: true);
 
+        /// <summary>補足情報（ゴールまで/学費まで等）。文字サイズ設定を反映。</summary>
         public static void ApplyInfo(TextMeshProUGUI tmp, Color color) =>
-            ApplyReadable(tmp, InfoFontSize, color, bold: false);
+            ApplyReadable(tmp, Scale(16f), color, bold: false);
 
+        /// <summary>行動ログ。文字サイズ設定を反映。</summary>
         public static void ApplyLog(TextMeshProUGUI tmp) =>
-            ApplyReadable(tmp, LogFontSize, new Color(0.92f, 0.94f, 1f), bold: false);
+            ApplyReadable(tmp, Scale(13f), new Color(0.92f, 0.94f, 1f), bold: false);
     }
 }

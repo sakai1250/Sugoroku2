@@ -92,6 +92,9 @@ namespace Sugoroku.Board
 
         private void CreateFloorPlane(WaypointRoute route)
         {
+            if (Sugoroku.Visual.CampusIllustrationLoader.GetIllustration(Sugoroku.Data.GameSession.CurrentSeason) != null)
+                return;
+
             var bounds = route.GetRouteBounds(1.65f);
 
             var floor = CreateRenderer("DepthFloorPlane", BoardVisualUtility.GetSoftOvalShadowSprite(),
@@ -121,10 +124,16 @@ namespace Sugoroku.Board
                 var wp = route.GetWaypoint(i);
                 if (wp == null) continue;
 
+                bool isCard = wp.GetComponentInChildren<MassTextCardView>(true) != null;
+                float shadowW = isCard ? _shadowWidth : 0.72f;
+                float shadowH = isCard ? _shadowHeight : 0.32f;
+                float offsetX = isCard ? _shadowOffsetX : 0.05f;
+                float offsetY = isCard ? _shadowOffsetY : -0.12f;
+
                 var sr = CreateRenderer($"WaypointDepthShadow_{i:D2}", BoardVisualUtility.GetSoftOvalShadowSprite(),
                     new Color(0f, 0f, 0f, 0.24f), BoardSortingLayers.WaypointBaseOrder - 14);
-                sr.transform.position = wp.transform.position + new Vector3(_shadowOffsetX, _shadowOffsetY, 0f);
-                SetWorldSize(sr.transform, _shadowWidth, _shadowHeight);
+                sr.transform.position = wp.transform.position + new Vector3(offsetX, offsetY, 0f);
+                SetWorldSize(sr.transform, shadowW, shadowH);
 
                 _shadows.Add(new ShadowBinding
                 {

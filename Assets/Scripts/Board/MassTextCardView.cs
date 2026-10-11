@@ -357,9 +357,10 @@ namespace Sugoroku.Board
                 rt.sizeDelta = new Vector2(-28f, 20f);
                 tagText.alignment = TextAlignmentOptions.BottomLeft;
                 tagText.enableAutoSizing = true;
-                tagText.fontSizeMin = 8f;
-                tagText.fontSizeMax = 11f;
-                HudTextStyle.ApplyOutlineSafe(tagText, 0.08f, new Color(0f, 0f, 0f, 0.62f));
+                tagText.fontSizeMin = 10f;
+                tagText.fontSizeMax = 12f;
+                tagText.fontStyle |= FontStyles.Bold;
+                HudTextStyle.ApplyOutlineSafe(tagText, 0.12f, new Color(0f, 0f, 0f, 0.95f));
             }
 
             if (titleText != null)
@@ -372,8 +373,8 @@ namespace Sugoroku.Board
                 rt.offsetMax = new Vector2(-34f, 42f);
                 titleText.alignment = TextAlignmentOptions.BottomLeft;
                 titleText.enableAutoSizing = true;
-                titleText.fontSizeMin = 10f;
-                titleText.fontSizeMax = 14f;
+                titleText.fontSizeMin = 12f;
+                titleText.fontSizeMax = 15f;
                 HudTextStyle.ApplyOutlineSafe(titleText, 0.10f, new Color(0f, 0f, 0f, 0.68f));
             }
         }
@@ -608,9 +609,10 @@ namespace Sugoroku.Board
                 rt.anchoredPosition = new Vector2(18f, -5f);
                 rt.sizeDelta = new Vector2(-54f, 22f);
                 tagText.enableAutoSizing = true;
-                tagText.fontSizeMin = 9f;
-                tagText.fontSizeMax = 13f;
-                HudTextStyle.ApplyOutlineSafe(tagText, 0.08f, new Color(0f, 0f, 0f, 0.62f));
+                tagText.fontSizeMin = 11f;
+                tagText.fontSizeMax = 14f;
+                tagText.fontStyle |= FontStyles.Bold;
+                HudTextStyle.ApplyOutlineSafe(tagText, 0.12f, new Color(0f, 0f, 0f, 0.95f));
             }
 
             if (titleText != null)
@@ -621,16 +623,16 @@ namespace Sugoroku.Board
                 rt.offsetMin = new Vector2(18f, 9f);
                 rt.offsetMax = new Vector2(-12f, -29f);
                 titleText.enableAutoSizing = true;
-                titleText.fontSizeMin = 11f;
-                titleText.fontSizeMax = 17f;
+                titleText.fontSizeMin = 13f;
+                titleText.fontSizeMax = 18f;
                 HudTextStyle.ApplyOutlineSafe(titleText, 0.10f, new Color(0f, 0f, 0f, 0.68f));
             }
 
             if (markerText != null)
             {
                 markerText.enableAutoSizing = true;
-                markerText.fontSizeMin = 7f;
-                markerText.fontSizeMax = 10f;
+                markerText.fontSizeMin = 9f;
+                markerText.fontSizeMax = 11f;
                 HudTextStyle.ApplyOutlineSafe(markerText, 0.04f, new Color(1f, 1f, 1f, 0.30f));
             }
         }
@@ -789,7 +791,8 @@ namespace Sugoroku.Board
                 dt / Mathf.Max(0.01f, clickPunchSeconds));
 
             float time = Time.time + _motionSeed;
-            float idle = Mathf.Sin(time * idleFloatSpeed) * idleFloatAmplitude;
+            bool reduceMotion = GameSession.ReduceMotion;
+            float idle = reduceMotion ? 0f : Mathf.Sin(time * idleFloatSpeed) * idleFloatAmplitude;
             float lift = _hoverAmount * hoverLiftPixels *
                 Mathf.Max(Mathf.Max(_motionRootBaseScale.x, _motionRootBaseScale.y), 0.001f);
             float scale = 1f + _hoverAmount * (hoverScale - 1f);
@@ -812,7 +815,7 @@ namespace Sugoroku.Board
 
         private void AnimateDecoration(float time)
         {
-            float breathe = 0.5f + 0.5f * Mathf.Sin(time * 1.8f);
+            float breathe = GameSession.ReduceMotion ? 1f : 0.5f + 0.5f * Mathf.Sin(time * 1.8f);
             float hoverGlow = _hoverAmount * _hoverAmount;
 
             if (depthShadow != null)
@@ -1027,11 +1030,11 @@ namespace Sugoroku.Board
             go.transform.SetParent(parent, false);
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontSize = 10f;
+            tmp.fontSize = 12f;
             tmp.fontStyle = FontStyles.Bold;
             tmp.enableAutoSizing = true;
-            tmp.fontSizeMin = 7f;
-            tmp.fontSizeMax = 10f;
+            tmp.fontSizeMin = 9f;
+            tmp.fontSizeMax = 12f;
             tmp.raycastTarget = false;
             TitleMenuController.ApplyJapaneseFont(tmp);
             return tmp;

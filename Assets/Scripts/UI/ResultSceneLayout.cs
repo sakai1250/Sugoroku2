@@ -98,7 +98,7 @@ namespace Sugoroku.UI
             rt.anchorMin = new Vector2(1f, 0.5f);
             rt.anchorMax = new Vector2(1f, 0.5f);
             rt.pivot = new Vector2(1f, 0.5f);
-            rt.anchoredPosition = new Vector2(-36f, 24f);
+            rt.anchoredPosition = new Vector2(-36f, 150f);
             rt.sizeDelta = new Vector2(350f, 142f);
         }
 

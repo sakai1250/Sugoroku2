@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Sugoroku.Data
 {
-    public enum PlayerStatus { Active, Graduated, Dropout }
+    public enum PlayerStatus { Active, StageCleared, Graduated, Dropout }
 
     /// <summary>盤面分岐ルート: 研究室(IF重視・メンタル消耗) / バイト(金重視・IF停滞)。</summary>
     public enum BranchRoute { None, Lab, PartTime }
@@ -77,12 +77,17 @@ namespace Sugoroku.Data
                 SkillUsedThisTurn= false,
                 GeniusBonusActive= false,
                 Status           = PlayerStatus.Active,
-                FinishRank       = 0
+                FinishRank       = 0,
+                ItemDiceRerollCount = 1,
+                ItemMentalHealCount = 1,
+                ItemMoneyBonusCount = 1
             };
         }
 
-        public bool IsEliminated => Status == PlayerStatus.Dropout;
-        public bool IsFinished   => Status != PlayerStatus.Active;
+        public bool IsEliminated   => Status == PlayerStatus.Dropout;
+        public bool IsFinished     => Status == PlayerStatus.Graduated || Status == PlayerStatus.Dropout;
+        public bool IsStageWaiting => Status == PlayerStatus.StageCleared;
+        public bool CanTakeTurn    => Status == PlayerStatus.Active;
 
         public void ApplyStatChange(int money, int ifScore, int mental, int virtue)
         {
@@ -93,6 +98,21 @@ namespace Sugoroku.Data
         {
             if (applyCharacterPassives)
             {
+                // シーズン（ステージ）ルール補正の適用
+                var seasonCfg = SeasonConfig.Get(GameSession.CurrentSeason);
+                if (ifScore > 0)
+                    ifScore = seasonCfg.ModifyIfGain(ifScore);
+                if (mental < 0)
+                    mental = seasonCfg.ModifyMentalDrain(mental);
+                else if (mental > 0)
+                    mental = seasonCfg.ModifyMentalRest(mental);
+                if (money < 0)
+                    money = seasonCfg.ModifyMoneyCost(money);
+                else if (money > 0)
+                    money = seasonCfg.ModifyMoneyGain(money);
+                if (virtue > 0)
+                    virtue = seasonCfg.ModifyVirtueGain(virtue);
+
                 if (Character == CharacterType.Athletic && mental < 0)
                 {
                     if (AthleticMentalImmunity || SkillUsedThisTurn)

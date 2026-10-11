@@ -15,11 +15,16 @@ namespace Sugoroku.UI
         private void Awake()
         {
             Bind();
-            if (_button != null)
-                _button.onClick.AddListener(OnToggleClicked);
         }
 
         private void Start() => Bind();
+
+        private void OnEnable() => Bind();
+
+        private void Update()
+        {
+            if (_button == null) Bind();
+        }
 
         private void OnDestroy()
         {
@@ -29,17 +34,33 @@ namespace Sugoroku.UI
 
         private void Bind()
         {
-            var root = transform.Find("OverviewButton");
-            if (root == null)
+            if (_button != null) return;
+
+            var canvas = GetComponent<Canvas>() ?? GetComponentInParent<Canvas>();
+            Transform root = null;
+            if (canvas != null)
             {
-                var canvas = GetComponent<Canvas>() ?? GetComponentInParent<Canvas>();
-                root = canvas != null ? canvas.transform.Find("OverviewButton") : null;
+                foreach (var t in canvas.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == "OverviewButton")
+                    {
+                        root = t;
+                        break;
+                    }
+                }
             }
 
             if (root == null) return;
 
             _button = root.GetComponent<Button>();
             _label  = root.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (_button != null)
+            {
+                _button.onClick.RemoveListener(OnToggleClicked);
+                _button.onClick.AddListener(OnToggleClicked);
+                var cam = BoardCameraController.Instance;
+                if (cam != null) RefreshLabel(cam.IsOverviewMode);
+            }
         }
 
         private void OnToggleClicked()

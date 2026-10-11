@@ -214,10 +214,16 @@ namespace Sugoroku.Game
             {
                 var choice = ev.GetChoice(idx);
                 if (choice != null)
+                {
+                    Sugoroku.UI.GameStatusBanner.Show(
+                        $"{Sugoroku.Data.PlayerIdentity.FormatHudLabel(player)}は「{choice.Label}」を選択");
                     yield return ApplyChoiceSequence(player, choice);
+                }
             }
             else if (player.Virtue >= GameConfig.VirtueRescueThreshold)
             {
+                Sugoroku.UI.GameStatusBanner.Show(
+                    $"{Sugoroku.Data.PlayerIdentity.FormatHudLabel(player)}は「徳の救済」を発動（メンタル+10/徳-5）");
                 yield return StatChangeSequencer.Apply(player, 0, 0, 10, -5);
             }
             else
@@ -227,7 +233,11 @@ namespace Sugoroku.Game
                 {
                     var choice = ev.GetChoice(fallback);
                     if (choice != null)
+                    {
+                        Sugoroku.UI.GameStatusBanner.Show(
+                            $"{Sugoroku.Data.PlayerIdentity.FormatHudLabel(player)}は「{choice.Label}」を選択");
                         yield return ApplyChoiceSequence(player, choice);
+                    }
                 }
             }
 

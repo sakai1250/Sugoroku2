@@ -16,6 +16,11 @@ namespace Sugoroku.UI
         private Button _achievementsTabButton;
         private Button _galleryTabButton;
         private Tab _currentTab = Tab.Achievements;
+        private RectTransform _scrollRt;
+        private ScrollRect _scroll;
+
+        /// <summary>パネル表示時のキーボードフォーカス初期位置（WCAG 2.4.3）。</summary>
+        public Button FirstTabButton => _achievementsTabButton;
 
         public void Refresh()
         {
@@ -73,6 +78,45 @@ namespace Sugoroku.UI
         {
             _bodyText.text = _currentTab == Tab.Achievements ? BuildAchievementsText() : BuildGalleryText();
             JapaneseFontProvider.Apply(_bodyText);
+            UpdateTabHighlight();
+        }
+
+        private void UpdateTabHighlight()
+        {
+            SetTabHighlight(_achievementsTabButton, _currentTab == Tab.Achievements);
+            SetTabHighlight(_galleryTabButton, _currentTab == Tab.CareerGallery);
+        }
+
+        private static void SetTabHighlight(Button button, bool active)
+        {
+            if (button == null) return;
+            var img = button.GetComponent<Image>();
+            if (img != null)
+                img.color = active
+                    ? new Color(0.25f, 0.30f, 0.42f, 0.98f)
+                    : new Color(0.12f, 0.14f, 0.20f, 0.94f);
+            var tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (tmp != null)
+                tmp.color = active ? new Color(1f, 0.94f, 0.70f, 1f) : Color.white;
+
+            // アクティブタブだけ下端にゴールド帯を付ける（色以外のキューで判別・WCAG 1.4.1）
+            var rule = button.transform.Find("ActiveRule");
+            if (active && rule == null)
+            {
+                var go = new GameObject("ActiveRule", typeof(RectTransform), typeof(Image));
+                go.transform.SetParent(button.transform, false);
+                var goImg = go.GetComponent<Image>();
+                goImg.color = new Color(0.86f, 0.68f, 0.28f, 0.95f);
+                goImg.raycastTarget = false;
+                var goRt = go.GetComponent<RectTransform>();
+                goRt.anchorMin = new Vector2(0f, 0f);
+                goRt.anchorMax = new Vector2(1f, 0f);
+                goRt.pivot = new Vector2(0.5f, 0f);
+                goRt.anchoredPosition = Vector2.zero;
+                goRt.sizeDelta = new Vector2(-16f, 4f);
+            }
+            else if (rule != null)
+                rule.gameObject.SetActive(active);
         }
 
         private void ApplySafeLayout()
@@ -82,16 +126,60 @@ namespace Sugoroku.UI
 
             if (_bodyText != null)
             {
+                EnsureScrollContainer();
                 var rt = _bodyText.rectTransform;
-                rt.anchorMin = Vector2.zero;
-                rt.anchorMax = Vector2.one;
-                rt.offsetMin = new Vector2(UiSafeLayout.OuterMargin, 84f);
-                rt.offsetMax = new Vector2(-UiSafeLayout.OuterMargin, -112f);
+                rt.anchorMin = new Vector2(0f, 1f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.anchoredPosition = Vector2.zero;
                 _bodyText.textWrappingMode = TextWrappingModes.Normal;
-                _bodyText.overflowMode = TextOverflowModes.Ellipsis;
+                _bodyText.overflowMode = TextOverflowModes.Overflow;
             }
 
             UiSafeLayout.LayoutCloseButton(transform, transform.Find("CloseButton"));
+        }
+
+        /// <summary>実績本文をスクロール可能なビューポートにラップする（長い一覧の末尾切捨て防止）。</summary>
+        private void EnsureScrollContainer()
+        {
+            if (_scrollRt != null) return;
+
+            var existing = transform.Find("AchScrollView");
+            if (existing != null)
+            {
+                _scrollRt = existing as RectTransform;
+                _scroll = existing.GetComponent<ScrollRect>();
+                if (_scroll == null) _scroll = existing.gameObject.AddComponent<ScrollRect>();
+            }
+            else
+            {
+                var go = new GameObject("AchScrollView", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
+                go.transform.SetParent(transform, false);
+                _scrollRt = go.GetComponent<RectTransform>();
+                _scrollRt.anchorMin = Vector2.zero;
+                _scrollRt.anchorMax = Vector2.one;
+                _scrollRt.offsetMin = new Vector2(UiSafeLayout.OuterMargin, 84f);
+                _scrollRt.offsetMax = new Vector2(-UiSafeLayout.OuterMargin, -112f);
+                var img = go.GetComponent<Image>();
+                img.color = new Color(0f, 0f, 0f, 0f);
+                img.raycastTarget = false;
+
+                var bodyRt = _bodyText.rectTransform;
+                bodyRt.SetParent(_scrollRt, false);
+                bodyRt.gameObject.AddComponent<ContentSizeFitter>().verticalFit =
+                    ContentSizeFitter.FitMode.PreferredSize;
+
+                _scroll = go.GetComponent<ScrollRect>();
+                _scroll.content = bodyRt;
+                _scroll.viewport = _scrollRt;
+                _scroll.horizontal = false;
+                _scroll.vertical = true;
+                _scroll.movementType = ScrollRect.MovementType.Clamped;
+                _scroll.scrollSensitivity = 30f;
+
+                UiSafeLayout.CreateScrollbar(_scroll, _scrollRt,
+                    new Color(0.86f, 0.68f, 0.28f, 0.55f));
+            }
         }
 
         private static void PlaceTab(Button button, float x)
@@ -111,7 +199,7 @@ namespace Sugoroku.UI
             {
                 bool unlocked = AchievementStore.IsUnlocked(def.Id);
                 string mark = unlocked ? "✓" : "・";
-                string title = unlocked ? def.Title : $"？？？（{def.Description}）";
+                string title = unlocked ? def.Title : $"未達成（{def.Description}）";
                 sb.AppendLine($"{mark} {title}");
             }
             return sb.ToString().TrimEnd();
@@ -132,7 +220,7 @@ namespace Sugoroku.UI
                 string label = $"{entry.Character.DisplayName()} × ランク{entry.Rank}";
                 string line = seen
                     ? $"✓ {label}: {entry.CareerPath} — {entry.Subtitle}"
-                    : $"・？？？（条件: {label}）";
+                    : $"・？？？";
                 sb.AppendLine(line);
             }
 

@@ -99,7 +99,9 @@ namespace Sugoroku.UI
         private IEnumerator FlashTextCoroutine(TextMeshProUGUI tmp, bool positive)
         {
             var glow    = positive ? IncreaseGlow : DecreaseGlow;
-            var baseCol = Color.white;
+            // 白でなく「フラッシュ前の固有色」を記憶する（所持金=黄・IF=水色等の色識別を守る）
+            var baseCol = tmp.color;
+            var baseStyle = tmp.fontStyle;
             var rt      = tmp.rectTransform;
             var baseScale = rt.localScale;
             var basePos   = rt.anchoredPosition;
@@ -111,7 +113,7 @@ namespace Sugoroku.UI
                 elapsed += Time.deltaTime;
                 float t = elapsed / flashIn;
                 tmp.color = Color.Lerp(baseCol, glow, t);
-                tmp.fontStyle = FontStyles.Bold;
+                tmp.fontStyle = baseStyle | FontStyles.Bold;
                 yield return null;
             }
 
@@ -138,7 +140,7 @@ namespace Sugoroku.UI
             }
 
             tmp.color = baseCol;
-            tmp.fontStyle = FontStyles.Normal;
+            tmp.fontStyle = baseStyle;
             rt.localScale = baseScale;
             rt.anchoredPosition = basePos;
             _textRoutines.Remove(tmp);

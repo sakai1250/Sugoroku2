@@ -23,6 +23,7 @@ namespace Sugoroku.UI
         private Coroutine       _entranceCo;
         private bool            _subscribed;
         private bool            _suppressed;
+        private bool            _lastRolling;
         private string          _lastMessage = "";
 
         private void Awake()
@@ -84,8 +85,9 @@ namespace Sugoroku.UI
             var rt = root.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
             rt.pivot     = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = new Vector2(0f, -(ResourceHudVisuals.TopBarHeight + 6f));
-            rt.sizeDelta = new Vector2(980f, 76f);
+            // ResourceBar および SeasonBadgeRoot の下に配置（重なり防止）
+            rt.anchoredPosition = new Vector2(0f, -(UiSafeLayout.TopBarHeight + 52f));
+            rt.sizeDelta = new Vector2(740f, 64f);
             _bannerRt = rt;
             _restPos = rt.anchoredPosition;
 
@@ -108,8 +110,12 @@ namespace Sugoroku.UI
             _label = textGo.AddComponent<TextMeshProUGUI>();
             _label.alignment = TextAlignmentOptions.Center;
             _label.textWrappingMode = TextWrappingModes.Normal;
-            HudTextStyle.ApplyReadable(_label, HudTextStyle.JuiceStatusFontSize, new Color(1f, 0.96f, 0.78f), true);
+            HudTextStyle.ApplyReadable(_label, HudTextStyle.Scale(28f), new Color(1f, 0.96f, 0.78f), true);
             HudTextStyle.ApplyOutlineSafe(_label, HudTextStyle.JuiceOutlineWidth, HudTextStyle.OutlineColor);
+            _label.enableAutoSizing = true;
+            _label.fontSizeMin = 14f * GameSession.UiTextScale;
+            _label.fontSizeMax = HudTextStyle.Scale(28f);
+            _label.textWrappingMode = TextWrappingModes.Normal;
             SetMessage("ゲーム準備中…");
         }
 
@@ -129,7 +135,6 @@ namespace Sugoroku.UI
             if (Instance == null) return;
             if (Instance._suppressed || EventModalUI.HasVisibleModal) return;
             Instance.SetMessage(message);
-            GameplayUiOverlayQueue.Enqueue(message, dim: false);
         }
 
         private void SetMessage(string message, Color? color = null, bool force = false,
@@ -142,6 +147,7 @@ namespace Sugoroku.UI
             _lastMessage = next;
             if (_label != null) _label.text = _lastMessage;
             if (_label != null && color.HasValue) _label.color = color.Value;
+            UpdateHeight();
 
             // 内容が変わった実メッセージのみ入場演出。空/強制クリア/準備中は即時反映。
             if (changed && !force && isActiveAndEnabled && !string.IsNullOrEmpty(_lastMessage))
@@ -163,8 +169,20 @@ namespace Sugoroku.UI
             {
                 _bannerRt.anchoredPosition = _restPos;
                 _bannerRt.localScale = Vector3.one;
+                _bannerRt.sizeDelta = new Vector2(_bannerRt.sizeDelta.x, 76f);
             }
             if (_group != null) _group.alpha = string.IsNullOrEmpty(_lastMessage) ? 0f : 1f;
+        }
+
+        /// <summary>長いメッセージが2行になる場合だけバナー高さを拡張する（オーバーフロー防止）。</summary>
+        private void UpdateHeight()
+        {
+            if (_bannerRt == null || _label == null) return;
+            _label.ForceMeshUpdate();
+            float preferred = _label.preferredHeight;
+            float h = preferred > 40f ? 104f : 76f;
+            if (Mathf.Abs(_bannerRt.sizeDelta.y - h) > 0.5f)
+                _bannerRt.sizeDelta = new Vector2(_bannerRt.sizeDelta.x, h);
         }
 
         private IEnumerator EntranceRoutine(CutInStyle style)
@@ -220,6 +238,18 @@ namespace Sugoroku.UI
                 situation: BannerSituation.EventLabel);
         }
 
+        private void Update()
+        {
+            // ダイスの回転開始/終了で「ダイスを振ろう!」→「サイコロ中...」を即時反映
+            if (!_subscribed) return;
+            bool rolling = DiceRoller.Instance != null && DiceRoller.Instance.IsRolling;
+            if (rolling != _lastRolling)
+            {
+                _lastRolling = rolling;
+                RefreshForCurrentState();
+            }
+        }
+
         private void OnTurnState(TurnState state) => RefreshForState(state);
 
         private void RefreshForCurrentState()
@@ -240,6 +270,10 @@ namespace Sugoroku.UI
             {
                 case TurnState.WaitAction when !player.IsCpu && !rolling:
                     SetMessage($"★ {name}  ダイスを振ろう!", new Color(1f, 0.92f, 0.42f, 1f),
+                        situation: BannerSituation.RollPrompt);
+                    break;
+                case TurnState.WaitAction when !player.IsCpu && rolling:
+                    SetMessage($"★ {name}  サイコロ中...", new Color(0.92f, 0.88f, 0.70f, 1f),
                         situation: BannerSituation.RollPrompt);
                     break;
                 case TurnState.WaitAction when player.IsCpu:

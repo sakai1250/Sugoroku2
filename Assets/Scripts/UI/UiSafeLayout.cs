@@ -64,5 +64,76 @@ namespace Sugoroku.UI
                     image.raycastTarget = false;
             }
         }
+
+        /// <summary>
+        /// 16:9より狭い(4:3・16:10)画面で左右に必要な余白(リファレンスpx・片側)。
+        /// CanvasScaler.matchWidthOrHeight=0.5 前提。16:9/21:9では0を返し既存レイアウトに無影響。
+        /// </summary>
+        public static float HorizontalInset(float match = 0.5f)
+        {
+            int wpx = Screen.width, hpx = Screen.height;
+            if (wpx <= 0 || hpx <= 0) return 0f;
+            float scale = match * (wpx / ReferenceWidth) + (1f - match) * (hpx / ReferenceHeight);
+            if (scale <= 0f) return 0f;
+            float logicalW = wpx / scale;
+            return Mathf.Max(0f, (ReferenceWidth - logicalW) * 0.5f);
+        }
+
+        /// <summary>16:9より広い(21:9)画面で上下に必要な余白(リファレンスpx・片側)。</summary>
+        public static float VerticalInset(float match = 0.5f)
+        {
+            int wpx = Screen.width, hpx = Screen.height;
+            if (wpx <= 0 || hpx <= 0) return 0f;
+            float scale = match * (wpx / ReferenceWidth) + (1f - match) * (hpx / ReferenceHeight);
+            if (scale <= 0f) return 0f;
+            float logicalH = hpx / scale;
+            return Mathf.Max(0f, (ReferenceHeight - logicalH) * 0.5f);
+        }
+
+        /// <summary>ScrollRect 用の標準スクロールバーを生成し割り当てる。右端・細幅・控えめな配色。</summary>
+        public static Scrollbar CreateScrollbar(ScrollRect scroll, RectTransform viewport, Color handleColor)
+        {
+            if (scroll == null || viewport == null) return null;
+
+            var barGo = new GameObject("Scrollbar", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+            barGo.transform.SetParent(viewport, false);
+            var barRt = barGo.GetComponent<RectTransform>();
+            barRt.anchorMin = new Vector2(1f, 0f);
+            barRt.anchorMax = new Vector2(1f, 1f);
+            barRt.pivot = new Vector2(1f, 0.5f);
+            barRt.anchoredPosition = Vector2.zero;
+            barRt.sizeDelta = new Vector2(8f, 0f);
+            var barImg = barGo.GetComponent<Image>();
+            barImg.color = new Color(0f, 0f, 0f, 0.25f);
+            barImg.raycastTarget = false;
+
+            var slidingGo = new GameObject("Sliding Area", typeof(RectTransform));
+            slidingGo.transform.SetParent(barGo.transform, false);
+            var slidingRt = slidingGo.GetComponent<RectTransform>();
+            slidingRt.anchorMin = Vector2.zero;
+            slidingRt.anchorMax = Vector2.one;
+            slidingRt.offsetMin = slidingRt.offsetMax = new Vector2(1f, 1f);
+
+            var handleGo = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handleGo.transform.SetParent(slidingRt, false);
+            var handleImg = handleGo.GetComponent<Image>();
+            handleImg.color = handleColor;
+            handleImg.raycastTarget = true;
+            var handleRt = handleImg.rectTransform;
+            handleRt.anchorMin = Vector2.zero;
+            handleRt.anchorMax = Vector2.one;
+            handleRt.pivot = new Vector2(0.5f, 0.5f);
+            handleRt.offsetMin = handleRt.offsetMax = Vector2.zero;
+
+            var bar = barGo.GetComponent<Scrollbar>();
+            bar.direction = Scrollbar.Direction.BottomToTop;
+            bar.handleRect = handleRt;
+            bar.targetGraphic = handleImg;
+            bar.size = 0.3f;
+
+            scroll.verticalScrollbar = bar;
+            scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+            return bar;
+        }
     }
 }

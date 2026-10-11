@@ -71,8 +71,9 @@ namespace Sugoroku.UI
             panelRt.anchorMin = Vector2.zero;
             panelRt.anchorMax = new Vector2(0f, 1f);
             panelRt.pivot     = new Vector2(0f, 1f);
-            panelRt.offsetMin = Vector2.zero;
-            panelRt.offsetMax = new Vector2(UiSafeLayout.LeftPanelWidth, -UiSafeLayout.TopBarHeight);
+            float inset = UiSafeLayout.HorizontalInset();
+            panelRt.offsetMin = new Vector2(inset, 0f);
+            panelRt.offsetMax = new Vector2(UiSafeLayout.LeftPanelWidth + inset, -UiSafeLayout.TopBarHeight);
 
             var hud = canvas.Find("GameHUD");
             if (hud != null)
@@ -102,20 +103,42 @@ namespace Sugoroku.UI
                 if (t != null) t.SetParent(panel.transform, false);
             }
 
-            float y = -14f;
-            y = PlaceInfoText(panel.transform, "PlayerNameText",  y, 40f, HudTextStyle.PlayerNameSize, true);
-            y = PlaceInfoText(panel.transform, "HudText",         y, 42f, HudTextStyle.JuiceStatusFontSize, true);
-            y = PlaceInfoText(panel.transform, "MentalSlider",    y, 22f, 0f, false, new Vector2(314f, 18f));
-            y = PlaceInfoText(panel.transform, "GoalDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
-            y = PlaceInfoText(panel.transform, "TuitionDistanceText", y, 31f, HudTextStyle.InfoFontSize, false);
-            y = PlaceInfoText(panel.transform, "SkipTurnsText",   y, 28f, HudTextStyle.InfoFontSize, false);
-            PlaceInfoText(panel.transform, "IgnoreEventsText", y, 28f, HudTextStyle.InfoFontSize, false);
+            // ポートレート枠（表情表示）
+            var portraitContainer = panel.transform.Find("PlayerPortraitContainer");
+            if (portraitContainer != null)
+            {
+                var pcRt = portraitContainer.GetComponent<RectTransform>();
+                pcRt.anchorMin = pcRt.anchorMax = new Vector2(0f, 1f);
+                pcRt.pivot     = new Vector2(0f, 1f);
+                pcRt.anchoredPosition = new Vector2(14f, -14f);
+                pcRt.sizeDelta = new Vector2(68f, 68f);
+
+                PlaceInfoText(panel.transform, "PlayerNameText",  -24f, 36f, HudTextStyle.Scale(21f), true,
+                    new Vector2(236f, 36f), xOffset: 90f);
+            }
+            else
+            {
+                PlaceInfoText(panel.transform, "PlayerNameText",  -16f, 38f, HudTextStyle.Scale(22f), true,
+                    new Vector2(314f, 38f), xOffset: 14f);
+            }
+
+            // HudText（ターン状態・ダイス待ち等の黄色い文字）: 上段のプレイヤー名/ポートレートと被らないよう下に独立配置
+            float y = -92f;
+            y = PlaceInfoText(panel.transform, "HudText",         y, 32f, HudTextStyle.Scale(22f), true,
+                new Vector2(314f, 32f), xOffset: 14f);
+
+            // メンタルスライダーおよび各距離・状態テキストを下方向へ順次配置
+            y = PlaceInfoText(panel.transform, "MentalSlider",    y, 20f, 0f, false, new Vector2(314f, 18f));
+            y = PlaceInfoText(panel.transform, "GoalDistanceText", y, 28f, HudTextStyle.Scale(16f), false);
+            y = PlaceInfoText(panel.transform, "TuitionDistanceText", y, 28f, HudTextStyle.Scale(16f), false);
+            y = PlaceInfoText(panel.transform, "SkipTurnsText",   y, 26f, HudTextStyle.Scale(16f), false);
+            PlaceInfoText(panel.transform, "IgnoreEventsText", y, 26f, HudTextStyle.Scale(16f), false);
 
             StyleInfoTexts(panel.transform);
         }
 
         private static float PlaceInfoText(Transform panel, string name, float y, float height,
-            float fontSize, bool bold, Vector2? sizeOverride = null)
+            float fontSize, bool bold, Vector2? sizeOverride = null, float xOffset = 14f)
         {
             var t = panel.Find(name);
             if (t == null) return y;
@@ -123,14 +146,18 @@ namespace Sugoroku.UI
             var rt = t.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot     = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(14f, y);
+            rt.anchoredPosition = new Vector2(xOffset, y);
             rt.sizeDelta = sizeOverride ?? new Vector2(314f, height);
 
             if (fontSize > 0f)
             {
                 var tmp = t.GetComponent<TextMeshProUGUI>();
                 if (tmp != null)
+                {
                     HudTextStyle.ApplyReadable(tmp, fontSize, Color.white, bold);
+                    tmp.textWrappingMode = TextWrappingModes.NoWrap;
+                    tmp.overflowMode = TextOverflowModes.Ellipsis;
+                }
             }
 
             var slider = t.GetComponent<Slider>();
@@ -143,17 +170,29 @@ namespace Sugoroku.UI
         {
             var name = panel.Find("PlayerNameText")?.GetComponent<TextMeshProUGUI>();
             if (name != null)
-                HudTextStyle.ApplyReadable(name, HudTextStyle.PlayerNameSize, new Color(1f, 0.95f, 0.7f), true);
+            {
+                HudTextStyle.ApplyReadable(name, HudTextStyle.Scale(21f), new Color(1f, 0.95f, 0.7f), true);
+                name.textWrappingMode = TextWrappingModes.NoWrap;
+                name.overflowMode = TextOverflowModes.Ellipsis;
+            }
 
             var turn = panel.Find("HudText")?.GetComponent<TextMeshProUGUI>();
             if (turn != null)
-                HudTextStyle.ApplyReadable(turn, HudTextStyle.JuiceStatusFontSize, new Color(0.55f, 1f, 0.75f), true);
+            {
+                HudTextStyle.ApplyReadable(turn, HudTextStyle.Scale(22f), new Color(0.55f, 1f, 0.75f), true);
+                turn.textWrappingMode = TextWrappingModes.NoWrap;
+                turn.overflowMode = TextOverflowModes.Ellipsis;
+            }
 
             foreach (var n in new[] { "GoalDistanceText", "TuitionDistanceText", "SkipTurnsText", "IgnoreEventsText" })
             {
                 var tmp = panel.Find(n)?.GetComponent<TextMeshProUGUI>();
                 if (tmp != null)
+                {
                     HudTextStyle.ApplyInfo(tmp, new Color(0.88f, 0.92f, 1f));
+                    tmp.textWrappingMode = TextWrappingModes.NoWrap;
+                    tmp.overflowMode = TextOverflowModes.Ellipsis;
+                }
             }
         }
 
@@ -507,7 +546,7 @@ namespace Sugoroku.UI
             {
                 label.textWrappingMode = TextWrappingModes.NoWrap;
                 label.enableAutoSizing = true;
-                label.fontSizeMin = 11f;
+                label.fontSizeMin = 13f;
                 if (label.fontSizeMax < label.fontSize) label.fontSizeMax = label.fontSize;
             }
         }

@@ -135,7 +135,7 @@ namespace Sugoroku.UI
                 plotRt.offsetMin = new Vector2(16f, 12f);
                 plotRt.offsetMax = new Vector2(-16f, -12f);
 
-                StatHistoryChartView.Draw(plotRt, player.History, player.MaxMental);
+                StatHistoryChartView.Draw(plotRt, player.History, player.MaxMental, showPlaceholder: false);
             }
 
             CreateLabel(root, "Footer", "#すごろく研究者人生", 24f,

@@ -18,6 +18,7 @@ namespace Sugoroku.UI
         private CanvasGroup _group;
         private Image _dimmer;
         private TextMeshProUGUI _label;
+        private RectTransform _cardRt;
         private Coroutine _runner;
 
         private struct PopupData
@@ -101,25 +102,64 @@ namespace Sugoroku.UI
             _label.text = data.message;
             _label.color = data.color;
             _dimmer.color = data.dim ? new Color(0f, 0f, 0f, 0.60f) : new Color(0f, 0f, 0f, 0.18f);
-            _group.blocksRaycasts = false;
+            _dimmer.raycastTarget = data.dim;
+            _group.blocksRaycasts = data.dim;
 
-            yield return Fade(0f, 1f, 0.12f);
-            yield return new WaitForSeconds(GameConfigDuration(data.duration));
-            yield return Fade(1f, 0f, 0.18f);
-        }
-
-        private IEnumerator Fade(float from, float to, float seconds)
-        {
-            float duration = GameConfigDuration(seconds);
-            float elapsed = 0f;
-            while (elapsed < duration)
+            if (_cardRt != null)
             {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-                _group.alpha = Mathf.Lerp(from, to, t);
+                _cardRt.localScale = new Vector3(0.94f, 0.94f, 1f);
+                _cardRt.anchoredPosition = new Vector2(0f, 36f);
+            }
+            UpdateCardHeight();
+
+            // 入場: フェード＋上へスライド＋スケール収束（他のカットイン演出と質感を統一）
+            float enter = GameConfigDuration(0.18f);
+            float e = 0f;
+            while (e < enter)
+            {
+                e += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(e / enter);
+                float f = JuiceMath.EaseOutCubic(t);
+                if (_group != null) _group.alpha = f;
+                if (_cardRt != null)
+                {
+                    _cardRt.localScale = Vector3.Lerp(new Vector3(0.94f, 0.94f, 1f), Vector3.one, f);
+                    _cardRt.anchoredPosition = new Vector2(0f, Mathf.Lerp(36f, 0f, f));
+                }
                 yield return null;
             }
-            _group.alpha = to;
+            if (_group != null) _group.alpha = 1f;
+            if (_cardRt != null)
+            {
+                _cardRt.localScale = Vector3.one;
+                _cardRt.anchoredPosition = Vector2.zero;
+            }
+
+            yield return new WaitForSeconds(GameConfigDuration(data.duration));
+
+            // 退場: 下へ少し沈みながらフェードアウト
+            float exit = GameConfigDuration(0.14f);
+            float x = 0f;
+            while (x < exit)
+            {
+                x += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(x / exit);
+                float f = JuiceMath.EaseOutCubic(t);
+                if (_group != null) _group.alpha = 1f - f;
+                if (_cardRt != null)
+                    _cardRt.anchoredPosition = new Vector2(0f, Mathf.Lerp(0f, -24f, f));
+                yield return null;
+            }
+            if (_group != null) _group.alpha = 0f;
+        }
+
+        private void UpdateCardHeight()
+        {
+            if (_cardRt == null || _label == null) return;
+            _label.ForceMeshUpdate();
+            float preferred = _label.preferredHeight;
+            float h = Mathf.Clamp(preferred + 24f, 150f, 220f);
+            _cardRt.sizeDelta = new Vector2(_cardRt.sizeDelta.x, h);
         }
 
         private static float GameConfigDuration(float seconds) =>
@@ -136,7 +176,7 @@ namespace Sugoroku.UI
 
             var scaler = root.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280f, 720f);
+            scaler.referenceResolution = new Vector2(UiSafeLayout.ReferenceWidth, UiSafeLayout.ReferenceHeight);
             scaler.matchWidthOrHeight = 0.5f;
 
             var rt = root.GetComponent<RectTransform>();
@@ -165,6 +205,7 @@ namespace Sugoroku.UI
             cardRt.pivot = new Vector2(0.5f, 0.5f);
             cardRt.sizeDelta = new Vector2(840f, 150f);
             cardRt.anchoredPosition = Vector2.zero;
+            _cardRt = cardRt;
             GameUiChrome.ApplySurface(card.transform, new Color(0.11f, 0.14f, 0.20f, 0.96f));
             GameUiChrome.ApplyAccentRail(card.transform, new Color(0.86f, 0.68f, 0.28f, 0.92f), 5f);
 
@@ -181,6 +222,9 @@ namespace Sugoroku.UI
             _label.textWrappingMode = TextWrappingModes.Normal;
             HudTextStyle.ApplyReadable(_label, HudTextStyle.Scale(30f), new Color(1f, 0.96f, 0.78f), true);
             HudTextStyle.ApplyOutlineSafe(_label, 0.14f, new Color(0f, 0f, 0f, 0.82f));
+            _label.enableAutoSizing = true;
+            _label.fontSizeMin = 20f;
+            _label.fontSizeMax = HudTextStyle.Scale(30f);
             JapaneseFontProvider.Apply(_label);
         }
     }

@@ -34,6 +34,8 @@ namespace Sugoroku.UI
         {
             BindAll(resetBase: false);
 
+            if (Sugoroku.Data.GameSession.ReduceMotion) return;
+
             float time = Time.unscaledTime - _startTime;
             AnimateParallax(_cloud, new Vector2(18f, 4f), time * 0.24f);
             AnimateParallax(_foreground, new Vector2(-28f, 0f), time * 0.18f);

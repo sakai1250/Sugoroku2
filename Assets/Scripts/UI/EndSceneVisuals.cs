@@ -240,7 +240,7 @@ namespace Sugoroku.UI
 
             var rank = EnsureLabel(card.transform, "CareerRankLabel");
             rank.text = outcome != null ? $"RANK {outcome.Value.Rank}" : "進路決定";
-            rank.fontSize = 28f;
+            rank.fontSize = HudTextStyle.Scale(28f);
             rank.fontStyle = FontStyles.Bold;
             rank.color = accent;
             SetRect(rank.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
@@ -249,19 +249,19 @@ namespace Sugoroku.UI
 
             var path = EnsureLabel(card.transform, "CareerPathLabel");
             path.text = outcome?.CareerPath ?? "修了判定中";
-            path.fontSize = 18f;
+            path.fontSize = HudTextStyle.Scale(18f);
             path.fontStyle = FontStyles.Bold;
             path.color = Color.white;
             path.enableAutoSizing = true;
-            path.fontSizeMin = 12f;
-            path.fontSizeMax = 18f;
+            path.fontSizeMin = HudTextStyle.Scale(12f);
+            path.fontSizeMax = HudTextStyle.Scale(18f);
             SetRect(path.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 1f),
                 new Vector2(0.5f, 0.5f), new Vector2(-34f, 48f), new Vector2(0f, -6f));
             HudTextStyle.ApplyOutlineSafe(path, 0.10f, new Color(0f, 0f, 0f, 0.78f));
 
             var sub = EnsureLabel(card.transform, "CareerSubtitleLabel");
             sub.text = outcome?.Subtitle ?? "";
-            sub.fontSize = 13f;
+            sub.fontSize = HudTextStyle.Scale(13f);
             sub.color = new Color(0.82f, 0.88f, 0.94f, 1f);
             SetRect(sub.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f),
                 new Vector2(0.5f, 0f), new Vector2(-34f, 26f), new Vector2(0f, 14f));
@@ -288,7 +288,7 @@ namespace Sugoroku.UI
 
             var label = EnsureLabel(plate.transform, "GameOverImpactLabel");
             label.text = outcome.Headline;
-            label.fontSize = 20f;
+            label.fontSize = HudTextStyle.Scale(20f);
             label.fontStyle = FontStyles.Bold;
             label.color = outcome.AccentColor;
             label.enableAutoSizing = true;
