@@ -14,6 +14,16 @@ namespace Sugoroku.UI
         [SerializeField] private Button          _titleButton;
         [SerializeField] private GameOverSceneJuice _juice;
 
+        private void Awake()
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+            {
+                UiCanvasUtility.NormalizeCanvasRoot(canvas);
+                JapaneseFontProvider.ApplyAllInCanvas(canvas);
+            }
+        }
+
         private void Start()
         {
             _titleText   ??= FindTmp("GameOverTitle");

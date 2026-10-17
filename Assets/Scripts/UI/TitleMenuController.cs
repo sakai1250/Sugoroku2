@@ -48,6 +48,7 @@ namespace Sugoroku.UI
             var canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
             {
+                UiCanvasUtility.NormalizeCanvasRoot(canvas);
                 JapaneseFontProvider.ApplyAllInCanvas(canvas);
                 TitleSceneDecorations.Ensure(canvas.transform);
             }

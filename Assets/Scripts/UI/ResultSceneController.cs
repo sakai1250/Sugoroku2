@@ -20,6 +20,16 @@ namespace Sugoroku.UI
         private int                _dailyScore;
         private int                _dailyBestScore;
 
+        private void Awake()
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas != null)
+            {
+                UiCanvasUtility.NormalizeCanvasRoot(canvas);
+                JapaneseFontProvider.ApplyAllInCanvas(canvas);
+            }
+        }
+
         private void Start()
         {
             GameAudioController.Instance?.PlayResultBgm();

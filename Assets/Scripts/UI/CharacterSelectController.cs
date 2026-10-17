@@ -60,7 +60,10 @@ namespace Sugoroku.UI
             JapaneseFontProvider.WarmUp();
             var canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
+            {
+                UiCanvasUtility.NormalizeCanvasRoot(canvas);
                 JapaneseFontProvider.ApplyAllInCanvas(canvas);
+            }
         }
 
         private void Start()
@@ -266,6 +269,7 @@ namespace Sugoroku.UI
         private static void PlaceRect(RectTransform rt, Vector2 pos, Vector2 size)
         {
             if (rt == null) return;
+            if (StaticUiAuthoring.IsBaked(rt)) return;
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos;
@@ -275,6 +279,7 @@ namespace Sugoroku.UI
         private static void PlaceImage(Image image, Vector2 pos, Vector2 size)
         {
             if (image == null) return;
+            if (StaticUiAuthoring.IsBaked(image.transform)) return;
             PlaceRect(image.rectTransform, pos, size);
         }
 
@@ -282,17 +287,37 @@ namespace Sugoroku.UI
             TextAlignmentOptions alignment, bool wrap = false)
         {
             if (tmp == null) return;
+            if (StaticUiAuthoring.IsBaked(tmp.transform))
+            {
+                JapaneseFontProvider.Apply(tmp);
+                tmp.enableAutoSizing = true;
+                tmp.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
+                tmp.overflowMode = TextOverflowModes.Ellipsis;
+                return;
+            }
             PlaceRect(tmp.rectTransform, pos, size);
             tmp.fontSize = fontSize;
             tmp.alignment = alignment;
             tmp.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
             tmp.overflowMode = TextOverflowModes.Ellipsis;
+            tmp.enableAutoSizing = true;
             JapaneseFontProvider.Apply(tmp);
         }
 
         private static void PlaceButton(Button button, Vector2 pos, Vector2 size, float labelSize)
         {
             if (button == null) return;
+            if (StaticUiAuthoring.IsBaked(button.transform))
+            {
+                foreach (var tmp in button.GetComponentsInChildren<TextMeshProUGUI>(true))
+                {
+                    tmp.enableAutoSizing = true;
+                    tmp.textWrappingMode = TextWrappingModes.NoWrap;
+                    tmp.overflowMode = TextOverflowModes.Ellipsis;
+                    JapaneseFontProvider.Apply(tmp);
+                }
+                return;
+            }
             var rt = button.GetComponent<RectTransform>();
             PlaceRect(rt, pos, size);
             var le = button.GetComponent<LayoutElement>();
@@ -307,7 +332,7 @@ namespace Sugoroku.UI
             {
                 tmp.fontSize = labelSize;
                 tmp.enableAutoSizing = true;
-                tmp.fontSizeMin = Mathf.Min(labelSize, 16f);
+                tmp.fontSizeMin = Mathf.Min(labelSize, 12f);
                 tmp.fontSizeMax = labelSize;
                 tmp.textWrappingMode = TextWrappingModes.NoWrap;
                 tmp.overflowMode = TextOverflowModes.Ellipsis;
@@ -469,32 +494,48 @@ namespace Sugoroku.UI
             }
 
             var types = CharacterTypes;
-            if (StaticUiAuthoring.IsBaked(transform))
+            // 静的化されている、または既に子要素が存在する場合は、シーン上のカードをそのまま使用して絶対に破棄・再生成しない
+            if (StaticUiAuthoring.IsBaked(transform) || _cardParent.childCount > 0)
             {
                 _cardButtons = new Button[types.Length];
-                bool complete = true;
+                int boundCount = 0;
                 for (int i = 0; i < types.Length; i++)
                 {
+                    // まず名前で探す
                     var card = _cardParent.Find(types[i].DisplayName());
-                    _cardButtons[i] = card != null ? card.GetComponent<Button>() : null;
-                    if (_cardButtons[i] == null) complete = false;
-                }
-                if (complete)
-                {
-                    for (int i = 0; i < _cardButtons.Length; i++)
+                    // 見つからなければインデックス順で拾う
+                    if (card == null && i < _cardParent.childCount)
+                        card = _cardParent.GetChild(i);
+
+                    var btn = card != null ? card.GetComponent<Button>() : null;
+                    if (btn != null)
                     {
+                        _cardButtons[i] = btn;
                         int capturedIndex = i;
-                        _cardButtons[i].onClick.RemoveAllListeners();
-                        _cardButtons[i].onClick.AddListener(() => SelectIndex(capturedIndex));
-                        var hover = _cardButtons[i].GetComponent<CharacterSelectCardHover>();
-                        if (hover != null) hover.Setup(this, capturedIndex);
+                        btn.onClick.RemoveAllListeners();
+                        btn.onClick.AddListener(() => SelectIndex(capturedIndex));
+                        var hover = btn.GetComponent<CharacterSelectCardHover>() ?? btn.gameObject.AddComponent<CharacterSelectCardHover>();
+                        hover.Setup(this, capturedIndex);
+
+                        // カード内のテキストがはみ出ないように Auto Sizing と日本語フォントを適用
+                        foreach (var tmp in btn.GetComponentsInChildren<TextMeshProUGUI>(true))
+                        {
+                            tmp.enableAutoSizing = true;
+                            if (tmp.fontSizeMin > 8f) tmp.fontSizeMin = 8f;
+                            tmp.overflowMode = TextOverflowModes.Ellipsis;
+                            JapaneseFontProvider.Apply(tmp);
+                        }
+                        boundCount++;
                     }
-                    return;
                 }
-                Debug.LogWarning("[Static UI] Missing baked character card: falling back to runtime construction.");
+
+                if (boundCount > 0)
+                {
+                    return; // シーン上のカード配置・設定を100%維持して終了
+                }
             }
 
-            // Re-baking in Edit mode must not leave stale objects or duplicates.
+            // 万が一シーン上に全くカードが無い場合のみ新規構築（既存の子はDestroy）
             for (int i = _cardParent.childCount - 1; i >= 0; i--)
             {
                 var card = _cardParent.GetChild(i).gameObject;
@@ -893,6 +934,8 @@ namespace Sugoroku.UI
                 else
                     _screenTitle.text = "キャラ選択";
                 _screenTitle.color = slotColor;
+                _screenTitle.enableAutoSizing = true;
+                _screenTitle.overflowMode = TextOverflowModes.Ellipsis;
             }
             UpdatePlayerSlotBadge(slotColor);
             ApplyPixelActionButtons(_selected.AccentColor());
@@ -904,20 +947,36 @@ namespace Sugoroku.UI
                 {
                     bool last = _humanSlot >= GameSession.HumanCount - 1;
                     label.text = last ? "このキャラで開始" : "次のプレイヤーへ";
+                    label.enableAutoSizing = true;
                 }
             }
 
             var p = _selected.GetProfile();
             if (_classNameText != null)
+            {
                 _classNameText.text = _selected.DisplayName();
+                _classNameText.enableAutoSizing = true;
+            }
             if (_traitNameText != null)
+            {
                 _traitNameText.text = $"固有特性: {_selected.TraitName()}";
+                _traitNameText.enableAutoSizing = true;
+            }
             if (_traitDescText != null)
+            {
                 _traitDescText.text = _selected.TraitDescription();
+                _traitDescText.enableAutoSizing = true;
+            }
             if (_roleText != null)
+            {
                 _roleText.text = $"戦略的役割\n{_selected.StrategicRole()}";
+                _roleText.enableAutoSizing = true;
+            }
             if (_statsText != null)
+            {
                 _statsText.text = "初期ステータス / プレイ傾向";
+                _statsText.enableAutoSizing = true;
+            }
 
             UpdateRoleBadges(_selected);
             UpdateProfileMeters(_selected, p);
@@ -1505,21 +1564,21 @@ namespace Sugoroku.UI
 
         private static string RoleTag(CharacterType type) => type switch
         {
-            CharacterType.Hobbyist => "安定回避型",
-            CharacterType.Serious  => "IF堅実型",
-            CharacterType.Athletic => "高負荷突破型",
-            CharacterType.Rich     => "資金解決型",
-            CharacterType.Genius   => "爆発研究型",
+            CharacterType.Hobbyist => "趣味人",
+            CharacterType.Serious  => "堅実",
+            CharacterType.Athletic => "高耐久",
+            CharacterType.Rich     => "資金で解決",
+            CharacterType.Genius   => "天才肌",
             _                      => "標準型"
         };
 
         private static string RiskTag(CharacterType type) => type switch
         {
-            CharacterType.Hobbyist => "リスク低",
-            CharacterType.Serious  => "突発注意",
-            CharacterType.Athletic => "事故耐性",
-            CharacterType.Rich     => "金欠注意",
-            CharacterType.Genius   => "リスク高",
+            CharacterType.Hobbyist => "低リスク",
+            CharacterType.Serious  => "急なイベント注意",
+            CharacterType.Athletic => "低ポイント",
+            CharacterType.Rich     => "メンタル低下注意",
+            CharacterType.Genius   => "高リスク",
             _                      => "標準"
         };
 
@@ -1570,6 +1629,7 @@ namespace Sugoroku.UI
             {
                 rt = existing as RectTransform;
                 if (rt == null) return null;
+                if (StaticUiAuthoring.IsBaked(rt)) return rt;
             }
 
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
