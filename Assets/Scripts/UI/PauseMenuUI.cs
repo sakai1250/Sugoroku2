@@ -231,6 +231,8 @@ namespace Sugoroku.UI
         private Button CreateHelpButton()
         {
             if (_panel == null) return null;
+            var existing = _panel.transform.Find("HelpButton");
+            if (existing != null) return existing.GetComponent<Button>();
             var go = new GameObject("HelpButton", typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(_panel.transform, false);
             var labelGo = new GameObject("Label", typeof(RectTransform));
@@ -249,6 +251,7 @@ namespace Sugoroku.UI
 
         private void ApplySafeLayout()
         {
+            if (StaticUiAuthoring.IsBaked(transform)) return;
             if (_panel is not { } panel || panel.transform is not RectTransform panelRt) return;
             panelRt.anchorMin = panelRt.anchorMax = new Vector2(0.5f, 0.5f);
             panelRt.pivot = new Vector2(0.5f, 0.5f);

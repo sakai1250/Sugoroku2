@@ -57,7 +57,7 @@ namespace Sugoroku.UI
         // ==========================================
         public void OpenSettings()
         {
-            if (_settingsOverlay == null)
+            if (_settingsOverlay == null && !TryBindBakedSettings())
                 BuildSettingsModal();
 
             _settingsOverlay.SetActive(true);
@@ -272,7 +272,7 @@ namespace Sugoroku.UI
         // ==========================================
         public void OpenAchievements()
         {
-            if (_achievementsOverlay == null)
+            if (_achievementsOverlay == null && !TryBindBakedAchievements())
                 BuildAchievementsModal();
 
             _achievementsOverlay.SetActive(true);
@@ -413,6 +413,80 @@ namespace Sugoroku.UI
             GameUiChrome.ApplyButton(_galleryTabBtn, primary: !_isAchievementsTab);
         }
 
+        // Existing modals are authored in Scene. Only callbacks/values are bound at runtime.
+        // Do not destroy/rebuild their RectTransforms when a player opens them.
+        private bool TryBindBakedSettings()
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            var t = (canvas != null ? canvas.transform : transform).Find("SettingsModalOverlay");
+            if (t == null) return false;
+            _settingsOverlay = t.gameObject;
+            var win = t.Find("Window");
+            if (win == null) return false;
+
+            _humanSlider = win.Find("HumanSlider")?.GetComponent<Slider>();
+            _cpuSlider = win.Find("CpuSlider")?.GetComponent<Slider>();
+            _boardSlider = win.Find("BoardSlider")?.GetComponent<Slider>();
+            _difficultySlider = win.Find("DifficultySlider")?.GetComponent<Slider>();
+            _professorSlider = win.Find("ProfessorSlider")?.GetComponent<Slider>();
+            _bgmSlider = win.Find("BgmSlider")?.GetComponent<Slider>();
+            _seSlider = win.Find("SeSlider")?.GetComponent<Slider>();
+            _textSizeSlider = win.Find("TextSizeSlider")?.GetComponent<Slider>();
+            _humanText = win.Find("HumanText")?.GetComponent<TextMeshProUGUI>();
+            _cpuText = win.Find("CpuText")?.GetComponent<TextMeshProUGUI>();
+            _boardText = win.Find("BoardText")?.GetComponent<TextMeshProUGUI>();
+            _difficultyText = win.Find("DifficultyText")?.GetComponent<TextMeshProUGUI>();
+            _professorText = win.Find("ProfessorText")?.GetComponent<TextMeshProUGUI>();
+            _bgmText = win.Find("BgmText")?.GetComponent<TextMeshProUGUI>();
+            _seText = win.Find("SeText")?.GetComponent<TextMeshProUGUI>();
+            _textSizeText = win.Find("TextSizeText")?.GetComponent<TextMeshProUGUI>();
+            _reduceMotionText = win.Find("ReduceMotionButton")?.GetComponentInChildren<TextMeshProUGUI>(true);
+            BindSlider(_humanSlider, v => { GameSession.HumanCount = (int)v; ClampPlayerCounts(); RefreshSettingsValues(); });
+            BindSlider(_cpuSlider, v => { GameSession.CpuCount = (int)v; ClampPlayerCounts(); RefreshSettingsValues(); });
+            BindSlider(_boardSlider, v => { GameSession.BoardCellCount = v >= 0.5f ? (int)BoardLengthOption.ExtraLong : (int)BoardLengthOption.Standard; BoardLayoutGenerator.Invalidate(); RefreshSettingsValues(); });
+            BindSlider(_difficultySlider, v => { GameSession.Difficulty = (GameDifficulty)(int)v; RefreshSettingsValues(); });
+            BindSlider(_professorSlider, v => { GameSession.SelectedProfessor = (ProfessorType)(int)v; RefreshSettingsValues(); });
+            BindSlider(_bgmSlider, v => { GameSession.BgmVolume = v; GameAudioController.Instance?.SetBgmVolume(v); RefreshSettingsValues(); });
+            BindSlider(_seSlider, v => { GameSession.SeVolume = v; GameAudioController.Instance?.SetSeVolume(v); RefreshSettingsValues(); });
+            BindSlider(_textSizeSlider, v => { GameSession.UiTextScale = v <= 0.5f ? 0.85f : (v >= 1.5f ? 1.25f : 1f); RefreshSettingsValues(); });
+            BindButton(win.Find("CloseX"), CloseSettings);
+            BindButton(win.Find("DoneButton"), CloseSettings);
+            BindButton(win.Find("ReduceMotionButton"), () => { GameSession.ReduceMotion = !GameSession.ReduceMotion; RefreshSettingsValues(); });
+            return true;
+        }
+
+        private bool TryBindBakedAchievements()
+        {
+            var canvas = GetComponentInParent<Canvas>();
+            var t = (canvas != null ? canvas.transform : transform).Find("AchievementsModalOverlay");
+            if (t == null) return false;
+            _achievementsOverlay = t.gameObject;
+            var win = t.Find("Window");
+            if (win == null) return false;
+            _achTabBtn = win.Find("AchTabBtn")?.GetComponent<Button>();
+            _galleryTabBtn = win.Find("GalleryTabBtn")?.GetComponent<Button>();
+            _achBodyText = win.Find("ScrollView/BodyText")?.GetComponent<TextMeshProUGUI>();
+            BindButton(win.Find("CloseX"), CloseAchievements);
+            BindButton(win.Find("AchTabBtn"), () => { _isAchievementsTab = true; RenderAchievementsTab(); });
+            BindButton(win.Find("GalleryTabBtn"), () => { _isAchievementsTab = false; RenderAchievementsTab(); });
+            return true;
+        }
+
+        private static void BindSlider(Slider slider, UnityEngine.Events.UnityAction<float> action)
+        {
+            if (slider == null) return;
+            slider.onValueChanged.RemoveAllListeners();
+            slider.onValueChanged.AddListener(action);
+        }
+
+        private static void BindButton(Transform target, UnityEngine.Events.UnityAction action)
+        {
+            var button = target != null ? target.GetComponent<Button>() : null;
+            if (button == null) return;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(action);
+        }
+
         // ==========================================
         //  UI 生成ヘルパー
         // ==========================================
@@ -473,50 +547,68 @@ namespace Sugoroku.UI
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos;
-            rt.sizeDelta = new Vector2(340f, 26f);
+            rt.sizeDelta = new Vector2(320f, 20f);
 
             var slider = go.GetComponent<Slider>();
             slider.minValue = min;
             slider.maxValue = max;
             slider.wholeNumbers = true;
 
-            // 背景バー
+            var sliceSprite = BoardVisualUtility.GetSquareSprite();
+
+            // 背景バー（細くスリムなレール: 高さ 6px）
             var bgGo = new GameObject("Background", typeof(RectTransform), typeof(Image));
             bgGo.transform.SetParent(go.transform, false);
             var bgRt = bgGo.GetComponent<RectTransform>();
-            bgRt.anchorMin = new Vector2(0f, 0.25f);
-            bgRt.anchorMax = new Vector2(1f, 0.75f);
-            bgRt.offsetMin = bgRt.offsetMax = Vector2.zero;
+            bgRt.anchorMin = new Vector2(0f, 0.5f);
+            bgRt.anchorMax = new Vector2(1f, 0.5f);
+            bgRt.pivot = new Vector2(0.5f, 0.5f);
+            bgRt.anchoredPosition = Vector2.zero;
+            bgRt.sizeDelta = new Vector2(0f, 6f);
             var bgImg = bgGo.GetComponent<Image>();
-            bgImg.color = new Color(0.2f, 0.24f, 0.32f, 0.95f);
+            bgImg.sprite = sliceSprite;
+            bgImg.type = Image.Type.Sliced;
+            bgImg.color = new Color(0.10f, 0.13f, 0.20f, 0.95f);
 
-            // 塗りつぶし
+            // 塗りつぶしエリア（高さ 6px）
             var fillArea = new GameObject("Fill Area", typeof(RectTransform));
             fillArea.transform.SetParent(go.transform, false);
             var fRt = fillArea.GetComponent<RectTransform>();
-            fRt.anchorMin = new Vector2(0f, 0.25f);
-            fRt.anchorMax = new Vector2(1f, 0.75f);
-            fRt.offsetMin = fRt.offsetMax = Vector2.zero;
+            fRt.anchorMin = new Vector2(0f, 0.5f);
+            fRt.anchorMax = new Vector2(1f, 0.5f);
+            fRt.pivot = new Vector2(0.5f, 0.5f);
+            fRt.anchoredPosition = Vector2.zero;
+            fRt.sizeDelta = new Vector2(0f, 6f);
 
             var fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
             fillGo.transform.SetParent(fillArea.transform, false);
             var fillImg = fillGo.GetComponent<Image>();
-            fillImg.color = new Color(0.35f, 0.75f, 0.95f, 0.95f);
-            slider.fillRect = fillGo.GetComponent<RectTransform>();
+            fillImg.sprite = sliceSprite;
+            fillImg.type = Image.Type.Sliced;
+            fillImg.color = new Color(0.35f, 0.75f, 0.95f, 1f);
+            var fillRt = fillGo.GetComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.offsetMin = fillRt.offsetMax = Vector2.zero;
+            slider.fillRect = fillRt;
 
-            // つまみ
+            // つまみ移動エリア
             var handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
             handleArea.transform.SetParent(go.transform, false);
             var hRt = handleArea.GetComponent<RectTransform>();
             hRt.anchorMin = Vector2.zero;
             hRt.anchorMax = Vector2.one;
-            hRt.offsetMin = hRt.offsetMax = Vector2.zero;
+            hRt.offsetMin = new Vector2(7f, 0f);
+            hRt.offsetMax = new Vector2(-7f, 0f);
 
+            // つまみ（スリムなノブ: 幅 14px, 高さ 18px）
             var handleGo = new GameObject("Handle", typeof(RectTransform), typeof(Image));
             handleGo.transform.SetParent(handleArea.transform, false);
             var handleRt = handleGo.GetComponent<RectTransform>();
-            handleRt.sizeDelta = new Vector2(24f, 24f);
+            handleRt.sizeDelta = new Vector2(14f, 18f);
             var handleImg = handleGo.GetComponent<Image>();
+            handleImg.sprite = sliceSprite;
+            handleImg.type = Image.Type.Sliced;
             handleImg.color = new Color(1f, 0.92f, 0.65f, 1f);
             slider.handleRect = handleRt;
             slider.targetGraphic = handleImg;

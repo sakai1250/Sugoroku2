@@ -53,14 +53,14 @@ namespace Sugoroku.Data
         // スキル使用コスト
         public const int RichSkillCost        = 10;
 
-        // アニメーション時間（以前の 0.7f から現在の 30% の速度 0.21f に減速）
-        public const float AnimationSpeed = 0.21f;
+        // アニメーション時間・テンポ（快適な2倍速テンポ）
+        public const float AnimationSpeed = 1.0f;
         public const float AnimationDurationScale = 1f / AnimationSpeed;
-        public const float DiceRollDuration   = 1.0f;
-        public const float PieceMoveDuration  = 0.25f;
-        public const float FloatingTextDuration = 0.6f;
-        public const float StatFloatGapSeconds  = 0.3f;
-        public const float HudStatFlashDuration = 1.5f;
+        public const float DiceRollDuration   = 0.5f;
+        public const float PieceMoveDuration  = 0.16f;
+        public const float FloatingTextDuration = 0.35f;
+        public const float StatFloatGapSeconds  = 0.15f;
+        public const float HudStatFlashDuration = 0.8f;
         /// <summary>events.json から算出。1回のイベントで破産・失踪し得る所持金・メンタルの上限。</summary>
         public const int PinchMoneyThresholdFallback  = 40;
         public const int PinchMentalThresholdFallback = 40;

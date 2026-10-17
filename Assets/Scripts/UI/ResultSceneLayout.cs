@@ -16,6 +16,7 @@ namespace Sugoroku.UI
 
         public static void Apply(Transform root)
         {
+            if (StaticUiAuthoring.IsBaked(root)) return;
             if (root == null) return;
 
             EnsureTextBackdrop(root);

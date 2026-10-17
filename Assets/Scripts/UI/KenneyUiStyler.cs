@@ -85,6 +85,12 @@ namespace Sugoroku.UI
 
         public static void StyleResourceBar(Transform canvasRoot)
         {
+            if (canvasRoot == null) return;
+            // Title and CharacterSelect do not have HUD resources. Creating one here
+            // covered their header and was the source of unexpected text collisions.
+            if (canvasRoot.Find("ResourceBar") == null &&
+                canvasRoot.GetComponentInChildren<GameHUD>(true) == null)
+                return;
             ResourceHudVisuals.SetupTopResourceBar(canvasRoot);
         }
 
@@ -98,6 +104,12 @@ namespace Sugoroku.UI
             if (diceText == null) return null;
 
             var iconTransform = FindDeep(canvasRoot, "DiceIcon");
+            if (iconTransform != null && StaticUiAuthoring.IsBaked(canvasRoot))
+            {
+                var existingIcon = iconTransform.GetComponent<Image>();
+                if (existingIcon != null) ApplyDiceIconSprite(existingIcon, 6);
+                return existingIcon;
+            }
             Image img;
 
             if (iconTransform == null)

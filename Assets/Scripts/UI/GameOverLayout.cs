@@ -27,6 +27,7 @@ namespace Sugoroku.UI
 
         public static void ApplyContent(Transform root, GameOverVisualStyle style)
         {
+            if (StaticUiAuthoring.IsBaked(root)) return;
             if (root == null) return;
 
             EnsureTextBackdrop(root);

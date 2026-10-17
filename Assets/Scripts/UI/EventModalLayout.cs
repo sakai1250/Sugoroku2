@@ -19,7 +19,9 @@ namespace Sugoroku.UI
         public static void Apply(Transform modalRoot, EventMaster ev)
         {
             if (modalRoot == null) return;
-
+            var authored = StaticUiAuthoring.Capture(modalRoot);
+            try
+            {
             var canvas = modalRoot.GetComponentInParent<Canvas>();
             if (canvas != null)
                 UiLayerManager.EnsureEventModalRoot(canvas);
@@ -29,6 +31,8 @@ namespace Sugoroku.UI
             ApplyDescriptionStyle(modalRoot);
             EnsureChoiceList(modalRoot);
             UiSafeLayout.DisableDecorativeRaycasts(modalRoot);
+            }
+            finally { authored.Restore(); }
         }
 
         private static void EnsureHeader(Transform root, EventMaster ev)

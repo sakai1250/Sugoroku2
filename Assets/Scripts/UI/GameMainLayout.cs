@@ -21,6 +21,7 @@ namespace Sugoroku.UI
 
         public void ApplyLayout()
         {
+            if (StaticUiAuthoring.IsBaked(transform)) return;
             var canvas = GetComponent<Canvas>() ?? GetComponentInParent<Canvas>();
             if (canvas == null) return;
 

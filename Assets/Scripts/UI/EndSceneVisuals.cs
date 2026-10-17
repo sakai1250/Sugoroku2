@@ -12,6 +12,9 @@ namespace Sugoroku.UI
         public static void ApplyGraduation(Transform root, GraduationOutcome? heroOutcome)
         {
             if (root == null) return;
+            var bakedRects = StaticUiAuthoring.Capture(root);
+            try
+            {
 
             var panel = root.GetComponent<Image>();
             if (panel != null)
@@ -56,11 +59,19 @@ namespace Sugoroku.UI
                 title.color = heroOutcome.Value.AccentColor;
                 HudTextStyle.ApplyOutlineSafe(title, 0.16f, new Color(0f, 0f, 0f, 0.82f));
             }
+            }
+            finally
+            {
+                bakedRects.Restore();
+            }
         }
 
         public static void ApplyGameOver(Transform root, GameOverOutcome outcome)
         {
             if (root == null) return;
+            var bakedRects = StaticUiAuthoring.Capture(root);
+            try
+            {
 
             var panel = root.GetComponent<Image>();
             if (panel != null)
@@ -102,6 +113,11 @@ namespace Sugoroku.UI
             }
 
             BringGameOverContentToFront(root);
+            }
+            finally
+            {
+                bakedRects.Restore();
+            }
         }
 
         /// <summary>演出レイヤーの上にテキスト列・本文・ボタンを重ねる。</summary>

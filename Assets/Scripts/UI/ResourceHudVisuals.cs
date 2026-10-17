@@ -36,6 +36,7 @@ namespace Sugoroku.UI
             if (canvas == null) return null;
 
             var bar = canvas.Find("ResourceBar");
+            if (bar != null && StaticUiAuthoring.IsBaked(canvas)) return bar;
             if (bar == null)
             {
                 var go = new GameObject("ResourceBar", typeof(RectTransform), typeof(Image));

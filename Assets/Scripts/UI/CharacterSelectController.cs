@@ -215,6 +215,7 @@ namespace Sugoroku.UI
 
         private void ApplySceneLayout()
         {
+            if (StaticUiAuthoring.IsBaked(transform)) return;
             _cardParent ??= EnsureCardParent();
             _cardPreferredSize = new Vector2(142f, 226f);
 
@@ -248,9 +249,9 @@ namespace Sugoroku.UI
 
             PlaceRect(_focusPlaque, new Vector2(430f, 352f), new Vector2(390f, 44f));
             PlaceImage(_portraitImage, new Vector2(430f, 250f), new Vector2(168f, 168f));
-            PlaceText(_classNameText, new Vector2(430f, 146f), new Vector2(470f, 46f), HudTextStyle.Scale(24f),
+            PlaceText(_classNameText, new Vector2(430f, 141f), new Vector2(470f, 46f), HudTextStyle.Scale(24f),
                 TextAlignmentOptions.Center);
-            PlaceText(_traitNameText, new Vector2(430f, 100f), new Vector2(470f, 40f), HudTextStyle.Scale(16f),
+            PlaceText(_traitNameText, new Vector2(430f, 95f), new Vector2(470f, 40f), HudTextStyle.Scale(16f),
                 TextAlignmentOptions.Center);
             PlaceText(_traitDescText, new Vector2(430f, 30f), new Vector2(470f, 88f), HudTextStyle.Scale(14f),
                 TextAlignmentOptions.TopLeft, wrap: true);
@@ -467,12 +468,45 @@ namespace Sugoroku.UI
                 return;
             }
 
-            foreach (Transform c in _cardParent)
-                Destroy(c.gameObject);
+            var types = CharacterTypes;
+            if (StaticUiAuthoring.IsBaked(transform))
+            {
+                _cardButtons = new Button[types.Length];
+                bool complete = true;
+                for (int i = 0; i < types.Length; i++)
+                {
+                    var card = _cardParent.Find(types[i].DisplayName());
+                    _cardButtons[i] = card != null ? card.GetComponent<Button>() : null;
+                    if (_cardButtons[i] == null) complete = false;
+                }
+                if (complete)
+                {
+                    for (int i = 0; i < _cardButtons.Length; i++)
+                    {
+                        int capturedIndex = i;
+                        _cardButtons[i].onClick.RemoveAllListeners();
+                        _cardButtons[i].onClick.AddListener(() => SelectIndex(capturedIndex));
+                        var hover = _cardButtons[i].GetComponent<CharacterSelectCardHover>();
+                        if (hover != null) hover.Setup(this, capturedIndex);
+                    }
+                    return;
+                }
+                Debug.LogWarning("[Static UI] Missing baked character card: falling back to runtime construction.");
+            }
+
+            // Re-baking in Edit mode must not leave stale objects or duplicates.
+            for (int i = _cardParent.childCount - 1; i >= 0; i--)
+            {
+                var card = _cardParent.GetChild(i).gameObject;
+#if UNITY_EDITOR
+                if (!Application.isPlaying) DestroyImmediate(card);
+                else
+#endif
+                    Destroy(card);
+            }
 
             var layout = _cardParent.GetComponent<HorizontalLayoutGroup>();
 
-            var types = CharacterTypes;
             _cardButtons = new Button[types.Length];
             for (int i = 0; i < types.Length; i++)
             {
@@ -709,7 +743,8 @@ namespace Sugoroku.UI
         {
             if (_menuOverlay == null)
             {
-                _menuOverlay = gameObject.AddComponent<CharacterSelectMenuOverlay>();
+                _menuOverlay = GetComponent<CharacterSelectMenuOverlay>()
+                    ?? gameObject.AddComponent<CharacterSelectMenuOverlay>();
                 _menuOverlay.Bind(OnSettingsChangedFromOverlay);
             }
 
@@ -954,6 +989,15 @@ namespace Sugoroku.UI
 
         private void ApplyScreenChrome()
         {
+            if (StaticUiAuthoring.IsBaked(transform))
+            {
+                _roleBadgeGroup = FindRectTransform("CharacterRoleBadgeGroup");
+                _profileMeterGroup = FindRectTransform("ProfileMeterGroup");
+                _playerSlotBadge = FindRectTransform("PlayerSlotBadge");
+                _pagerPips = FindRectTransform("CharacterPagerPips");
+                _focusPlaque = FindRectTransform("CharacterFocusPlaque");
+                return;
+            }
             ApplySceneLayout();
             EnsureCharacterSelectDepthBackdrop(_selected.AccentColor());
 

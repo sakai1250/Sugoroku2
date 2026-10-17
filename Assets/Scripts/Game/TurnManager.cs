@@ -59,7 +59,7 @@ namespace Sugoroku.Game
             if (player.SkipTurns > 0)
             {
                 player.SkipTurns--;
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(0.4f));
                 EndTurn();
                 yield break;
             }
@@ -71,7 +71,7 @@ namespace Sugoroku.Game
 
             if (player.IsCpu)
             {
-                yield return new WaitForSeconds(0.8f);
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(0.35f));
                 CpuController.Instance.DecideAction(player);
             }
         }
@@ -179,14 +179,14 @@ namespace Sugoroku.Game
             {
                 player.IgnoreNextEvents--;
                 GameManager.Instance.ShowSquareEffect(player, squareType, ignored: true);
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(0.4f));
                 EndTurn();
                 yield break;
             }
 
             bool isChoiceSquare = squareType == SquareType.Event || squareType == SquareType.Branch;
             SetState(isChoiceSquare ? TurnState.Event : TurnState.Apply);
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(GameConfig.AnimationDuration(0.2f));
 
             switch (squareType)
             {
@@ -331,7 +331,7 @@ namespace Sugoroku.Game
 
             if (player.IsCpu)
             {
-                yield return new WaitForSeconds(0.8f);
+                yield return new WaitForSeconds(GameConfig.AnimationDuration(0.35f));
                 CpuController.Instance.DecideAction(player);
             }
         }

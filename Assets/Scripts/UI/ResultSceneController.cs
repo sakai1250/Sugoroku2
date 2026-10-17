@@ -142,26 +142,30 @@ namespace Sugoroku.UI
         /// <summary>「診断メーカー」風の結果カード画像を保存/シェアするボタン。requirements.md §1.1 WebGL 想定。</summary>
         private void EnsureShareButtons()
         {
-            var row = new GameObject("ShareButtonRow", typeof(RectTransform));
-            row.transform.SetParent(transform, false);
+            var existingRow = transform.Find("ShareButtonRow");
+            var row = existingRow != null ? existingRow.gameObject
+                : new GameObject("ShareButtonRow", typeof(RectTransform));
+            if (existingRow == null) row.transform.SetParent(transform, false);
             var rowRt = row.GetComponent<RectTransform>();
             rowRt.anchorMin = new Vector2(0.5f, 0f);
             rowRt.anchorMax = new Vector2(0.5f, 0f);
             rowRt.pivot = new Vector2(0.5f, 0f);
-            rowRt.sizeDelta = new Vector2(_heroOutcome != null ? 920f : 300f, 84f);
-            rowRt.anchoredPosition = new Vector2(0f, 24f);
+            if (!StaticUiAuthoring.IsBaked(transform))
+            {
+                rowRt.sizeDelta = new Vector2(_heroOutcome != null ? 920f : 300f, 84f);
+                rowRt.anchoredPosition = new Vector2(0f, 24f);
+            }
 
-            var layout = row.AddComponent<HorizontalLayoutGroup>();
+            var layout = row.GetComponent<HorizontalLayoutGroup>() ?? row.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 16f;
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = true;
 
-            if (_heroOutcome != null)
-            {
-                CreateShareButton(row.transform, "画像を保存", SaveShareImage);
-                CreateShareButton(row.transform, "Xでシェア", OpenShareIntent);
-            }
+            var saveBtn = CreateShareButton(row.transform, "画像を保存", SaveShareImage);
+            var shareBtn = CreateShareButton(row.transform, "Xでシェア", OpenShareIntent);
+            saveBtn.gameObject.SetActive(_heroOutcome != null);
+            shareBtn.gameObject.SetActive(_heroOutcome != null);
 
             // 勢いでリベンジできるよう、同じ設定のままキャラ選択へ戻るボタンを常設する
             CreateShareButton(row.transform, "もう一回", RestartToCharacterSelect);
@@ -175,6 +179,13 @@ namespace Sugoroku.UI
             if (_heroPlayer.History == null) return;
 
             var existing = transform.Find("StatHistoryChart");
+            if (existing != null && StaticUiAuthoring.IsBaked(transform))
+            {
+                var plot = existing.Find("PlotArea") as RectTransform;
+                if (plot != null)
+                    StatHistoryChartView.Draw(plot, _heroPlayer.History, _heroPlayer.MaxMental);
+                return;
+            }
             if (existing != null) Destroy(existing.gameObject);
 
             var chartGo = new GameObject("StatHistoryChart", typeof(RectTransform), typeof(Image));
@@ -218,6 +229,17 @@ namespace Sugoroku.UI
 
         private Button CreateShareButton(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
         {
+            var existing = parent.Find($"ShareButton_{label}");
+            if (existing != null)
+            {
+                var bakedButton = existing.GetComponent<Button>();
+                if (bakedButton != null)
+                {
+                    bakedButton.onClick.RemoveAllListeners();
+                    bakedButton.onClick.AddListener(onClick);
+                    return bakedButton;
+                }
+            }
             var go = new GameObject($"ShareButton_{label}", typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
 

@@ -47,6 +47,15 @@ namespace Sugoroku.UI
         private static void EnsureInstance()
         {
             if (_instance != null) return;
+            // Prefer the Scene-authored help overlay. Its RectTransforms stay editable.
+            _instance = Object.FindFirstObjectByType<HelpPanelUI>(FindObjectsInactive.Include);
+            if (_instance != null)
+            {
+                if (_instance.transform.parent != null)
+                    _instance.transform.SetParent(null);
+                DontDestroyOnLoad(_instance.gameObject);
+                return;
+            }
             var go = new GameObject("HelpPanelUI");
             DontDestroyOnLoad(go);
             _instance = go.AddComponent<HelpPanelUI>();
@@ -65,7 +74,18 @@ namespace Sugoroku.UI
 
         private void Show()
         {
-            if (_overlay == null) _overlay = BuildOverlay();
+            if (_overlay == null)
+            {
+                _overlay = transform.Find("HelpOverlayCanvas")?.gameObject;
+                if (_overlay != null)
+                {
+                    var panel = _overlay.transform.Find("HelpPanel");
+                    _panelRt = panel as RectTransform;
+                    _group = panel != null ? panel.GetComponent<CanvasGroup>() : null;
+                    _dimmer = _overlay.transform.Find("Dimmer")?.GetComponent<Image>();
+                }
+                else _overlay = BuildOverlay();
+            }
             if (_transitionCo != null) StopCoroutine(_transitionCo);
             _overlay.SetActive(true);
             if (_group != null) _group.alpha = 0f;

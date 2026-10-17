@@ -33,6 +33,9 @@ namespace Sugoroku.UI
         [SerializeField] private Button          _skillButton;
         [SerializeField] private TextMeshProUGUI _skillButtonText;
         [SerializeField] private Button          _menuButton;
+        private Button                               _speedButton;
+        private TextMeshProUGUI                      _speedButtonText;
+        private static float                         _currentGameSpeed = 1.0f;
 
         private Button _itemDiceRerollButton;
         private Button _itemMentalHealButton;
@@ -81,6 +84,7 @@ namespace Sugoroku.UI
             _rollButton?.onClick.AddListener(OnRollButtonClicked);
             _skillButton?.onClick.AddListener(OnSkillButtonClicked);
             _menuButton?.onClick.AddListener(OnMenuButtonClicked);
+            SetupSpeedToggleButton();
 
             var canvas = GetComponentInParent<Canvas>();
             if (canvas != null)
@@ -143,6 +147,7 @@ namespace Sugoroku.UI
 
         private void EnsureLayout()
         {
+            if (StaticUiAuthoring.IsBaked(transform)) return;
             var layout = GetComponentInParent<GameMainLayout>();
             if (layout == null)
             {
@@ -227,7 +232,7 @@ namespace Sugoroku.UI
                     var cRt = cardGo.GetComponent<RectTransform>();
                     cRt.anchorMin = cRt.anchorMax = new Vector2(0f, 1f);
                     cRt.pivot = new Vector2(0f, 1f);
-                    cRt.anchoredPosition = new Vector2(14f, -238f);
+                    cRt.anchoredPosition = new Vector2(14f, -272f);
                     cRt.sizeDelta = new Vector2(314f, 82f);
 
                     var bg = cardGo.GetComponent<Image>();
@@ -258,7 +263,7 @@ namespace Sugoroku.UI
                 var iRt = invGo.GetComponent<RectTransform>();
                 iRt.anchorMin = iRt.anchorMax = new Vector2(0f, 1f);
                 iRt.pivot = new Vector2(0f, 1f);
-                iRt.anchoredPosition = new Vector2(14f, -326f);
+                iRt.anchoredPosition = new Vector2(14f, -366f);
                 iRt.sizeDelta = new Vector2(314f, 222f);
 
                 var bg = invGo.GetComponent<Image>();
@@ -317,7 +322,7 @@ namespace Sugoroku.UI
                     var sRt = sumGo.GetComponent<RectTransform>();
                     sRt.anchorMin = sRt.anchorMax = new Vector2(0f, 1f);
                     sRt.pivot = new Vector2(0f, 1f);
-                    sRt.anchoredPosition = new Vector2(14f, -554f);
+                    sRt.anchoredPosition = new Vector2(14f, -596f);
                     sRt.sizeDelta = new Vector2(314f, 52f);
 
                     var bg = sumGo.GetComponent<Image>();
@@ -358,6 +363,20 @@ namespace Sugoroku.UI
 
         private (Button, TextMeshProUGUI) CreateItemSlot(Transform parent, string buttonName, float yPos, string defaultName, string btnLabel, System.Action onClick)
         {
+            // The editor-baked slot is a scene object. Reuse it instead of creating
+            // a duplicate during each play session.
+            var bakedSlot = parent.Find($"Slot_{buttonName}");
+            if (bakedSlot != null)
+            {
+                var bakedButton = bakedSlot.Find(buttonName)?.GetComponent<Button>();
+                var bakedText = bakedSlot.Find("ItemInfoText")?.GetComponent<TextMeshProUGUI>();
+                if (bakedButton != null)
+                {
+                    bakedButton.onClick.RemoveAllListeners();
+                    bakedButton.onClick.AddListener(() => onClick?.Invoke());
+                    return (bakedButton, bakedText);
+                }
+            }
             var slotGo = new GameObject($"Slot_{buttonName}", typeof(RectTransform), typeof(Image));
             slotGo.transform.SetParent(parent, false);
             var slotRt = slotGo.GetComponent<RectTransform>();
@@ -490,6 +509,7 @@ namespace Sugoroku.UI
 
         private void OnDestroy()
         {
+            Time.timeScale = 1.0f;
             if (!_isSubscribed) return;
             if (TurnManager.Instance != null)
             {
@@ -790,6 +810,99 @@ namespace Sugoroku.UI
             var sprite = Sugoroku.Visual.CharacterVisualAssets.GetSprite(player.Character, mood);
             if (sprite != null)
                 _portraitImage.sprite = sprite;
+        }
+
+        private void SetupSpeedToggleButton()
+        {
+            if (_speedButton != null) return;
+            var parent = _menuButton != null ? _menuButton.transform.parent : transform;
+            if (parent == null) return;
+
+            var existing = parent.Find("SpeedToggleButton");
+            GameObject go;
+            if (existing != null)
+            {
+                go = existing.gameObject;
+            }
+            else
+            {
+                go = new GameObject("SpeedToggleButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                go.transform.SetParent(parent, false);
+                var rt = go.GetComponent<RectTransform>();
+                if (_menuButton != null)
+                {
+                    var mRt = _menuButton.GetComponent<RectTransform>();
+                    rt.anchorMin = mRt.anchorMin;
+                    rt.anchorMax = mRt.anchorMax;
+                    rt.pivot = mRt.pivot;
+                    // メニューボタンの左隣に配置
+                    rt.anchoredPosition = new Vector2(mRt.anchoredPosition.x - mRt.sizeDelta.x - 12f, mRt.anchoredPosition.y);
+                    rt.sizeDelta = new Vector2(mRt.sizeDelta.x, mRt.sizeDelta.y);
+                }
+                else
+                {
+                    rt.anchorMin = rt.anchorMax = new Vector2(1f, 1f);
+                    rt.pivot = new Vector2(1f, 1f);
+                    rt.anchoredPosition = new Vector2(-130f, -20f);
+                    rt.sizeDelta = new Vector2(80f, 36f);
+                }
+
+                var img = go.GetComponent<Image>();
+                img.sprite = Board.BoardVisualUtility.GetPixelCardSprite();
+                img.type = Image.Type.Sliced;
+                img.color = new Color(0.18f, 0.28f, 0.45f, 0.95f);
+
+                var textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+                textGo.transform.SetParent(go.transform, false);
+                var tRt = textGo.GetComponent<RectTransform>();
+                tRt.anchorMin = Vector2.zero;
+                tRt.anchorMax = Vector2.one;
+                tRt.sizeDelta = Vector2.zero;
+
+                _speedButtonText = textGo.GetComponent<TextMeshProUGUI>();
+                _speedButtonText.fontSize = 14f;
+                _speedButtonText.fontStyle = FontStyles.Bold;
+                _speedButtonText.alignment = TextAlignmentOptions.Center;
+                _speedButtonText.color = Color.white;
+                JapaneseFontProvider.Apply(_speedButtonText);
+            }
+
+            _speedButton = go.GetComponent<Button>();
+            _speedButtonText ??= go.GetComponentInChildren<TextMeshProUGUI>();
+            UpdateSpeedButtonVisual();
+
+            _speedButton.onClick.RemoveAllListeners();
+            _speedButton.onClick.AddListener(ToggleSpeed);
+        }
+
+        private void ToggleSpeed()
+        {
+            if (_currentGameSpeed <= 1.0f)
+            {
+                _currentGameSpeed = 2.0f;
+            }
+            else
+            {
+                _currentGameSpeed = 1.0f;
+            }
+            Time.timeScale = _currentGameSpeed;
+            UpdateSpeedButtonVisual();
+            Sugoroku.Audio.GameAudioController.Instance?.PlayConfirm();
+        }
+
+        private void UpdateSpeedButtonVisual()
+        {
+            if (_speedButtonText != null)
+            {
+                _speedButtonText.text = _currentGameSpeed > 1.0f ? "⏩ 2x" : "▶ 1x";
+            }
+            var img = _speedButton?.GetComponent<Image>();
+            if (img != null)
+            {
+                img.color = _currentGameSpeed > 1.0f 
+                    ? new Color(0.9f, 0.45f, 0.1f, 0.95f) 
+                    : new Color(0.18f, 0.28f, 0.45f, 0.95f);
+            }
         }
     }
 }

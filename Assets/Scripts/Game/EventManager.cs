@@ -203,7 +203,7 @@ namespace Sugoroku.Game
 
         private IEnumerator RunCpuEvent(EventMaster ev, PlayerData player)
         {
-            yield return new WaitForSeconds(1.2f);
+            yield return new WaitForSeconds(Sugoroku.Data.GameConfig.AnimationDuration(0.4f));
             if (ev == null || player == null) yield break;
 
             int idx = CpuController.Instance != null

@@ -32,7 +32,13 @@ namespace Sugoroku.UI
         /// <summary>ResultScene と同じ「もう一回」導線。ゲームオーバー後も勢いでリベンジできるようにする。</summary>
         private void EnsureRetryButton()
         {
-            if (transform.Find("RetryButton") != null) return;
+            var existing = transform.Find("RetryButton")?.GetComponent<Button>();
+            if (existing != null)
+            {
+                existing.onClick.RemoveAllListeners();
+                existing.onClick.AddListener(() => SceneManager.LoadScene("CharacterSelectScene"));
+                return;
+            }
 
             var go = new GameObject("RetryButton", typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(transform, false);
